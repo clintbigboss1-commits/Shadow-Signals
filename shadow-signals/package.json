@@ -1,0 +1,34 @@
+{
+  "name": "shadow-signals",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"nodemon server/index.js\" \"cd client && npm run dev\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm run dev",
+    "start": "node server/index.js",
+    "install:all": "npm install && cd client && npm install",
+    "db:init": "node scripts/initDB.js",
+    "stripe:setup": "node scripts/stripeSetup.js",
+    "test:api": "node scripts/testAPI.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "bcryptjs": "^2.4.3",
+    "concurrently": "^8.2.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "node-cron": "^3.0.3",
+    "pg": "^8.12.0",
+    "resend": "^3.3.0",
+    "socket.io": "^4.7.5",
+    "stripe": "^16.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.3"
+  }
+}

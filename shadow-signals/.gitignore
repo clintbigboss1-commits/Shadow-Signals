@@ -1,0 +1,30 @@
+# CRITICAL — never commit these
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Dependencies
+node_modules/
+client/node_modules/
+client/.next/
+client/out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Build
+dist/
+build/
+.next/
+
+# IDE
+.vscode/
+.idea/
