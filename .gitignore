@@ -1,3 +1,4 @@
 .config/
 uploads/
 shadow-signals/client/tsconfig.tsbuildinfo
+node_modules/
