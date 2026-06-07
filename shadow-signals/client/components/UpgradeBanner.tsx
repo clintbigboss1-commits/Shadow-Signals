@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { getUser } from '../lib/auth';
 
 /**
- * Persistent soft upgrade nudge shown to free/recruit users inside the app.
+ * Persistent soft upgrade nudge shown to free/starter users inside the app.
  * Not aggressive — one line, dismissible, comes back after 24h.
  */
 export default function UpgradeBanner() {

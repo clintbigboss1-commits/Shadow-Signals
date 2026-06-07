@@ -83,7 +83,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Upgrade banner — only for free/recruit users */}
+      {/* Upgrade banner — only for free/starter users */}
       <UpgradeBanner />
     </>
   );
