@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  plan: 'free' | 'recruit' | 'commander' | 'syndicate';
+  plan: 'free' | 'starter' | 'pro' | 'elite';
   created_at: string;
 }
 
@@ -38,7 +38,7 @@ export function isLoggedIn(): boolean {
 
 export const PLAN_LIMITS: Record<string, number> = {
   free: 3,
-  recruit: 5,
-  commander: 999,
-  syndicate: 999,
+  starter: 5,
+  pro: 999,
+  elite: 999,
 };

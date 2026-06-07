@@ -36,7 +36,7 @@ router.post('/register', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
     
-    emails.sendWelcome(user).catch(() => {});
+    // emails.sendWelcome(user).catch(() => {});
     res.status(201).json({ token, user: { ...user, role } });
   } catch (err) {
     res.status(500).json({ error: err.message });

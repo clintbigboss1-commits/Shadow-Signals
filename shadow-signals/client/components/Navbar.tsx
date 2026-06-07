@@ -15,7 +15,7 @@ const NAV = [
 ];
 
 const PLAN_COL: Record<string, string> = {
-  free: '#64748b', recruit: '#22d3ee', commander: '#f59e0b', syndicate: '#8b5cf6',
+  free: '#64748b', starter: '#22d3ee', pro: '#22d3ee', elite: '#8b5cf6',
 };
 
 export default function Navbar() {

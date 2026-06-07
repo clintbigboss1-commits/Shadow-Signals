@@ -5,8 +5,8 @@ const { requirePlan } = require('../middleware/plans');
 const { getCachedArbs } = require('../services/cacheManager');
 const { findArbs } = require('../services/arbFinder');
 
-// GET /api/arb  — Commander plan required
-router.get('/', requireAuth, requirePlan('commander'), async (req, res) => {
+// GET /api/arb  — Pro plan required
+router.get('/', requireAuth, requirePlan('pro'), async (req, res) => {
   try {
     let { data, source } = await getCachedArbs();
 

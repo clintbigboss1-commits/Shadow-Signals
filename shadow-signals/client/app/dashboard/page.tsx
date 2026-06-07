@@ -66,7 +66,7 @@ function Sidebar({ user, activeSport, setActiveSport }: {
   user: User|null; activeSport: string; setActiveSport: (s:string)=>void;
 }) {
   const planCol: Record<string,string> = {
-    free:'#64748b', recruit:'#22d3ee', commander:'#22d3ee', syndicate:'#8b5cf6'
+    free:'#64748b', starter:'#22d3ee', pro:'#22d3ee', elite:'#8b5cf6'
   };
 
   return (
@@ -154,7 +154,7 @@ function Sidebar({ user, activeSport, setActiveSport }: {
 /* ─────────────────────── topbar ──────────────────────────── */
 function TopBar({ user }: { user:User|null }) {
   const planCol: Record<string,string> = {
-    free:'#64748b', recruit:'#22d3ee', commander:'#22d3ee', syndicate:'#8b5cf6'
+    free:'#64748b', starter:'#22d3ee', pro:'#22d3ee', elite:'#8b5cf6'
   };
   return (
     <div className="topbar">
@@ -499,7 +499,7 @@ function DashboardInner() {
           {user?.plan === 'free' && (
             <div style={{ marginTop:16,padding:'14px 18px',background:'linear-gradient(90deg,rgba(34,211,238,.05),rgba(99,102,241,.05))',border:'1px solid rgba(34,211,238,.15)',borderRadius:12,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12 }}>
               <div>
-                <div style={{ fontWeight:700,fontSize:14,marginBottom:3 }}>Upgrade to Commander</div>
+                <div style={{ fontWeight:700,fontSize:14,marginBottom:3 }}>Upgrade to Pro</div>
                 <div style={{ fontSize:13,color:'var(--muted)' }}>Unlock all live edges, arb finder, CLV tracker & alerts</div>
               </div>
               <Link href="/pricing">

@@ -1,5 +1,5 @@
 'use strict';
-const PLAN_RANK = { free: 0, recruit: 1, commander: 2, syndicate: 3 };
+const PLAN_RANK = { free: 0, starter: 1, pro: 2, elite: 3 };
 
 function requirePlan(minPlan) {
   return (req, res, next) => {

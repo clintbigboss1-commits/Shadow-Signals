@@ -136,7 +136,7 @@ async function sendTrialEnding(user) {
 
 // ── 3. Subscription confirmed ──────────────────────────────────────────────
 async function sendSubscriptionConfirmed(user, plan) {
-  const planNames = { recruit: 'Recruit', commander: 'Commander', syndicate: 'Syndicate' };
+  const planNames = { free: 'Free', starter: 'Starter', pro: 'Pro', elite: 'Elite' };
   const planName = planNames[plan] || plan;
   
   const html = `

@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   name VARCHAR(255),
-  plan VARCHAR(20) DEFAULT 'free' CHECK (plan IN ('free','recruit','commander','syndicate')),
+  plan VARCHAR(20) DEFAULT 'free' CHECK (plan IN ('free','starter','pro','elite')),
   stripe_customer_id VARCHAR(255),
   stripe_subscription_id VARCHAR(255),
   subscription_status VARCHAR(20) DEFAULT 'trial',

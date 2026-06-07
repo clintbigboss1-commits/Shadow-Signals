@@ -5,7 +5,7 @@ const { getCachedEV } = require('../services/cacheManager');
 const { computeEVFromCache } = require('../services/evCalculator');
 const { fetchFromOddsAPI } = require('../services/oddsService');
 
-const PLAN_LIMITS = { free: 3, recruit: 5, commander: 999, syndicate: 999 };
+const PLAN_LIMITS = { free: 3, starter: 5, pro: 999, elite: 999 };
 
 // GET /api/ev
 router.get('/', requireAuth, async (req, res) => {

@@ -8,8 +8,8 @@ import { isLoggedIn } from '../../lib/auth';
 
 const PLANS = [
   {
-    key: 'recruit',
-    name: 'Recruit',
+    key: 'starter',
+    name: 'Starter',
     price: '$9.99',
     trial: '7-day free trial',
     desc: 'For casual punters wanting a consistent edge.',
@@ -17,8 +17,8 @@ const PLANS = [
     highlight: false,
   },
   {
-    key: 'commander',
-    name: 'Commander',
+    key: 'pro',
+    name: 'Pro',
     price: '$19.99',
     trial: '7-day free trial',
     desc: 'Everything you need to beat the closing line.',
@@ -34,12 +34,12 @@ const PLANS = [
     highlight: true,
   },
   {
-    key: 'syndicate',
-    name: 'Syndicate',
+    key: 'elite',
+    name: 'Elite',
     price: '$49.99',
     trial: '7-day free trial',
     desc: 'For operators running serious volume.',
-    features: ['Everything in Commander', 'API access', 'Multi-account tools', 'Private Discord'],
+    features: ['Everything in Pro', 'API access', 'Multi-account tools', 'Private Discord'],
     highlight: false,
   },
 ];

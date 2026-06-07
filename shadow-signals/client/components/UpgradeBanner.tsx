@@ -14,7 +14,7 @@ export default function UpgradeBanner() {
 
   useEffect(() => {
     const user = getUser();
-    if (!user || !['free', 'recruit'].includes(user.plan)) return;
+    if (!user || !['free', 'starter'].includes(user.plan)) return;
     setPlan(user.plan);
 
     const dismissed = localStorage.getItem('upgrade_banner_dismissed');
@@ -34,7 +34,7 @@ export default function UpgradeBanner() {
 
   const msg = plan === 'free'
     ? 'You\'re on Free — seeing 3 of all live edges.'
-    : 'You\'re on Recruit — upgrade for arb finder + unlimited scanner.';
+    : 'You\'re on Starter — upgrade for arb finder + unlimited scanner.';
 
   return (
     <div style={{

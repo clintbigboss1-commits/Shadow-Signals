@@ -13,9 +13,10 @@ function stripe() {
 
 function prices() {
   return {
-    recruit:   process.env.STRIPE_PRICE_RECRUIT_MONTH,
-    commander: process.env.STRIPE_PRICE_COMMANDER_MONTH,
-    syndicate: process.env.STRIPE_PRICE_SYNDICATE_MONTH,
+    free:    process.env.STRIPE_PRICE_FREE_MONTH,
+    starter: process.env.STRIPE_PRICE_STARTER_MONTH,
+    pro:     process.env.STRIPE_PRICE_PRO_MONTH,
+    elite:   process.env.STRIPE_PRICE_ELITE_MONTH,
   };
 }
 
