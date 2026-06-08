@@ -127,6 +127,194 @@ input, select, textarea { font-family: var(--font); }
   overflow-y: auto;
 }
 
+/* ── Responsive Sidebar/Topbar overrides ─────────────────── */
+@media (max-width: 1023px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 20px 0 40px rgba(0, 0, 0, 0.6);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .main-area {
+    margin-left: 0 !important;
+  }
+  .topbar {
+    padding: 0 16px;
+  }
+  .sidebar-toggle {
+    display: inline-flex;
+  }
+}
+
+/* ── Responsive Landing Page layouts ────────────────────── */
+.landing-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+@media (max-width: 1023px) {
+  .landing-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+  .landing-hero-grid > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .landing-hero-grid p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ── Responsive Navigation Bar ──────────────────────────── */
+.navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+  position: relative;
+}
+.navbar-links {
+  display: flex;
+  gap: 2px;
+}
+.navbar-hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 8px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background .15s;
+}
+.navbar-hamburger:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 0 16px;
+  }
+  .navbar-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: rgba(8,17,30,.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+    gap: 8px;
+    z-index: 100;
+    box-shadow: 0 20px 40px rgba(0,0,0,.6);
+  }
+  .navbar-links.open {
+    display: flex;
+  }
+  .navbar-hamburger {
+    display: inline-flex;
+  }
+  .navbar-right {
+    display: none !important;
+  }
+  .navbar-right-mobile {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 12px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    gap: 10px;
+  }
+  .navbar-right-mobile > a,
+  .navbar-right-mobile > button {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* ── Sidebar toggle (hamburger) ─────────────────────────── */
+.sidebar-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background .15s;
+}
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Responsive grids ───────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+@media (max-width: 1200px) {
+  .stat-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+@media (max-width: 768px) {
+  .tool-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 1023px) {
+  .dashboard-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Sidebar nav items ──────────────────────────────────── */
 .nav-item {
   display: flex;

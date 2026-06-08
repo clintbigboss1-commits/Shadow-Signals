@@ -170,8 +170,17 @@ function TopBar({ user }: { user:User|null }) {
   const planCol: Record<string,string> = {
     free:'#64748b', starter:'#22d3ee', pro:'#22d3ee', elite:'#8b5cf6'
   };
+
+  const toggleSidebar = () => {
+    document.querySelector('.sidebar')?.classList.toggle('open');
+  };
+
   return (
     <div className="topbar">
+      <button className="sidebar-toggle" onClick={toggleSidebar}>
+        ☰
+      </button>
+
       {/* Search */}
       <div className="search-bar" style={{ flex:1, maxWidth:400 }}>
         <span style={{ color:'var(--muted)', flexShrink:0 }}>🔍</span>
@@ -218,7 +227,7 @@ function StatCards({ bets }: { bets: Bet[] }) {
   ];
 
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:10, marginBottom:18 }}>
+    <div className="stat-grid">
       {cards.map((c,i) => (
         <div key={i} className="stat-card">
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
@@ -242,7 +251,7 @@ function ToolCards() {
     { icon:'🏅', title:'Leaderboard',     sub:'CLV rankings',       href:'/wins',       glow:'#8b5cf6' },
   ];
   return (
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:18 }}>
+    <div className="tool-grid">
       {tools.map((t,i) => (
         <Link key={i} href={t.href}>
           <div style={{ background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',transition:'border-color .15s' }}
@@ -504,7 +513,7 @@ function DashboardInner() {
           </Link>
 
           {/* Two column: wins + radar */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+          <div className="dashboard-panels">
             <RecentWins bets={bets} />
             <LiveRadarPanel evOpps={evOpps} />
           </div>

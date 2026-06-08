@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ExitPopup from '../components/ExitPopup';
+import Navbar from '../components/Navbar';
 
 const BOOKIES = ['Sportsbet','TAB','Bet365 AU','Ladbrokes','Neds','PointsBet','BlueBet','Betfair Exchange'];
 
@@ -31,28 +32,12 @@ export default function Home() {
       </div>
 
       {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(8,17,30,.95)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,.06)', padding: '0 32px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 17, color: '#030711' }}>S</div>
-            <span style={{ fontWeight: 900, fontSize: 17, letterSpacing: -.3 }}>SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span></span>
-          </div>
-          <div style={{ display: 'flex', gap: 4 }}>
-            {[['Markets','/markets'],['Wins','/wins'],['Find My Plan','/pricing'],['Reviews','/reviews'],['Pricing','/pricing']].map(([l,h]) => (
-              <Link key={l} href={h} style={{ padding: '7px 14px', fontSize: 14, fontWeight: 500, color: '#64748b', borderRadius: 8 }}>{l}</Link>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Link href="/login"  style={{ padding: '7px 16px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 14, color: '#94a3b8' }}>Sign In</Link>
-            <Link href="/signup" style={{ padding: '8px 18px', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#030711', background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'flex', alignItems: 'center', gap: 6 }}>⚡ Get Edge →</Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
-      <section style={{ position: 'relative', padding: '80px 32px 64px', overflow: 'hidden' }}>
+      <section style={{ position: 'relative', padding: '80px 24px 64px', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 60% 0%,rgba(34,211,238,.07),transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+        <div className="landing-hero-grid" style={{ maxWidth: 1280, margin: '0 auto' }}>
 
           {/* Left */}
           <div>
