@@ -38,7 +38,7 @@ export default function Navbar() {
           <Link href="/markets" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 17, color: '#030711', flexShrink: 0 }}>S</div>
             <span style={{ fontWeight: 900, fontSize: 17, letterSpacing: -.3, color: '#e2e8f0' }}>
-              SHADOW <span style={{ color: '#22d3ee' }}>SYNDICATE</span>
+              SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span>
             </span>
           </Link>
 

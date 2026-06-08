@@ -306,3 +306,60 @@ input::placeholder { color: var(--faint); }
   border-bottom: 1px solid var(--border2);
 }
 .win-row:last-child { border-bottom: none; }
+
+/* ── Widget cards (API-Sports) ───────────────────────────── */
+.widget-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  overflow: hidden;
+  min-height: 200px;
+}
+.widget-card api-sports-widget {
+  width: 100%;
+  min-height: 200px;
+}
+.widget-card api-sports-widget[data-type="games"],
+.widget-card api-sports-widget[data-type="leagues"] {
+  min-height: 400px;
+}
+.widget-card api-sports-widget[data-type="standings"] {
+  min-height: 500px;
+}
+.widget-card api-sports-widget[data-type="player"] {
+  min-height: 600px;
+}
+.widget-card api-sports-widget[data-type="league"] {
+  min-height: 350px;
+}
+.widget-card api-sports-widget[data-type="team"] {
+  min-height: 400px;
+}
+
+/* ── Football Hub Page ──────────────────────────────────── */
+.football-hero {
+  background: linear-gradient(135deg, rgba(34,211,238,.08), rgba(8,17,30,1) 60%);
+  border-bottom: 1px solid var(--border);
+}
+.football-hero h1 {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -.5px;
+}
+.football-hero p {
+  color: #64748b;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+/* ── Widget dark theme overrides ────────────────────────── */
+api-sports-widget {
+  --widget-bg: #0d1526;
+  --widget-text: #e2e8f0;
+  --widget-border: rgba(255,255,255,.07);
+  --widget-primary: #22d3ee;
+  --widget-secondary: #64748b;
+  --widget-card-bg: #111d35;
+  --widget-hover: rgba(34,211,238,.08);
+}

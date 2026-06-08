@@ -5,7 +5,7 @@ const L1 = new Map();
 
 // ── API Budget Tracker ─────────────────────────────────────────────────────
 const API_BUDGETS = {
-  'the-odds-api': { free_limit: 500, soft_limit: 450, used: 0, month: new Date().getMonth() },
+  'boltodds':     { free_limit: 10000, soft_limit: 9000, used: 0, month: new Date().getMonth() },
   'thesportsdb':  { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
   'balldontlie':  { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
   'espn':         { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },

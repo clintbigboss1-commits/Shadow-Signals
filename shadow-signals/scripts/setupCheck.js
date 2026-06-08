@@ -7,7 +7,27 @@
  * and what to do about it.
  */
 'use strict';
-require('dotenv').config();
+const path = require('path');
+const fs   = require('fs');
+
+// Auto-locate .env — script may be run from project root or shadow-signals/
+function loadEnv() {
+  const candidates = [
+    path.join(process.cwd(), '.env'),
+    path.join(__dirname, '..', '.env'),
+    path.join(__dirname, '..', '..', '.env'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      require('dotenv').config({ path: p });
+      return p;
+    }
+  }
+  require('dotenv').config();
+  return null;
+}
+const envPath = loadEnv();
+
 const https = require('https');
 const http  = require('http');
 
@@ -47,9 +67,9 @@ async function run() {
   const STRIPE_WH      = process.env.STRIPE_WEBHOOK_SECRET;
   const JWT_SECRET     = process.env.JWT_SECRET;
   const FRONTEND_URL   = process.env.FRONTEND_URL;
-  const PRICE_RECRUIT  = process.env.STRIPE_PRICE_RECRUIT_MONTH;
-  const PRICE_CMD      = process.env.STRIPE_PRICE_COMMANDER_MONTH;
-  const PRICE_SYN      = process.env.STRIPE_PRICE_SYNDICATE_MONTH;
+  const PRICE_STARTER  = process.env.STRIPE_PRICE_STARTER_MONTH;
+  const PRICE_PRO      = process.env.STRIPE_PRICE_PRO_MONTH;
+  const PRICE_ELITE    = process.env.STRIPE_PRICE_ELITE_MONTH;
 
   check(DATABASE_URL && !DATABASE_URL.includes('[YOUR-PASSWORD]'),
     'DATABASE_URL is set',
@@ -57,7 +77,7 @@ async function run() {
 
   check(ODDS_API_KEY && ODDS_API_KEY !== 'your_odds_api_key_here',
     'ODDS_API_KEY is set',
-    'ODDS_API_KEY missing — get from the-odds-api.com');
+    'ODDS_API_KEY missing — get from spro.agency (BoltOdds)');
 
   if (STRIPE_SK) {
     if (STRIPE_SK.startsWith('sk_live')) ok('STRIPE_SECRET_KEY set — LIVE mode ✅');
@@ -77,14 +97,14 @@ async function run() {
     'FRONTEND_URL missing or still localhost — set to your Vercel URL',
     true);
 
-  check(PRICE_RECRUIT && PRICE_RECRUIT.startsWith('price_'),
-    'Stripe RECRUIT price ID set',
+  check(PRICE_STARTER && PRICE_STARTER.startsWith('price_'),
+    'Stripe STARTER price ID set',
     'Stripe price IDs missing — run: node scripts/stripeSetup.js');
-  check(PRICE_CMD && PRICE_CMD.startsWith('price_'),
-    'Stripe COMMANDER price ID set',
+  check(PRICE_PRO && PRICE_PRO.startsWith('price_'),
+    'Stripe PRO price ID set',
     'Stripe price IDs missing — run: node scripts/stripeSetup.js');
-  check(PRICE_SYN && PRICE_SYN.startsWith('price_'),
-    'Stripe SYNDICATE price ID set',
+  check(PRICE_ELITE && PRICE_ELITE.startsWith('price_'),
+    'Stripe ELITE price ID set',
     'Stripe price IDs missing — run: node scripts/stripeSetup.js');
 
   // ── 2. Database connection ──────────────────────────────────────────────
@@ -121,34 +141,33 @@ async function run() {
   }
 
   // ── 3. Odds API ─────────────────────────────────────────────────────────
-  head('3. The Odds API');
+  head('3. BoltOdds (spro.agency)');
   if (ODDS_API_KEY && ODDS_API_KEY !== 'your_odds_api_key_here') {
     try {
       const axios = require('axios');
-      const r = await axios.get('https://api.the-odds-api.com/v4/sports', {
-        params: { apiKey: ODDS_API_KEY },
+      const r = await axios.get('https://spro.agency/api/get_info', {
+        params: { key: ODDS_API_KEY },
         timeout: 8000,
       });
-      const remaining = r.headers['x-requests-remaining'];
-      const used      = r.headers['x-requests-used'];
-      ok(`Connected — ${used} calls used, ${remaining} remaining this month`);
+      const sports = r.data?.sports || [];
+      const books  = r.data?.sportsbooks || [];
+      ok(`Connected — ${sports.length} sports, ${books.length} sportsbooks`);
 
-      const auSports = r.data.filter(s =>
-        ['aussierules_afl','rugbyleague_nrl','cricket_t20','soccer_a_league'].includes(s.key)
-      );
-      if (auSports.length === 0) {
-        warn('No AU sports on your plan — free tier only has US books');
-        warn('For real AU odds (Sportsbet, TAB etc) you need the $79 USD/month plan');
-        info('The system still works on free tier — you\'ll get US odds for testing');
+      const supported = ['EPL','NBA','NFL','MLB','UFC','Tennis','Golf','Australian NBL'];
+      const have = supported.filter(s => sports.includes(s));
+      if (have.length === 0) {
+        warn('None of our target sports are on your plan');
       } else {
-        ok(`AU sports available: ${auSports.map(s=>s.title).join(', ')}`);
+        ok(`Supported sports available: ${have.join(', ')}`);
       }
+
+      info('BoltOdds does not carry AFL or NRL data — these are hidden in the UI');
     } catch (err) {
-      fail(`Odds API error: ${err.response?.data?.message || err.message}`);
+      fail(`BoltOdds error: ${err.response?.data?.message || err.message}`);
       issues++;
     }
   } else {
-    warn('Skipping Odds API check — key not set');
+    warn('Skipping BoltOdds check — key not set');
   }
 
   // ── 4. Stripe ───────────────────────────────────────────────────────────
@@ -167,19 +186,27 @@ async function run() {
         info('  3. Copy signing secret → add to Railway as STRIPE_WEBHOOK_SECRET');
       }
 
-      // Check price IDs
-      if (PRICE_CMD && PRICE_CMD !== 'price_xxx') {
-        try {
-          const price = await stripe.prices.retrieve(PRICE_CMD);
-          ok(`Commander price exists: ${price.nickname || price.id} ($${price.unit_amount/100} ${price.currency.toUpperCase()})`);
-        } catch {
-          fail(`Commander price ID invalid: ${PRICE_CMD}`);
-          info('Run: node scripts/stripeSetup.js to create prices');
-          issues++;
+      // Verify each price ID exists in Stripe
+      const prices = [
+        { id: PRICE_STARTER, label: 'Starter' },
+        { id: PRICE_PRO,     label: 'Pro'     },
+        { id: PRICE_ELITE,   label: 'Elite'   },
+      ];
+
+      for (const p of prices) {
+        if (p.id && p.id !== 'price_xxx' && p.id.startsWith('price_')) {
+          try {
+            const price = await stripe.prices.retrieve(p.id);
+            ok(`${p.label} price exists: ${price.nickname || price.id} ($${price.unit_amount/100} ${price.currency.toUpperCase()})`);
+          } catch {
+            fail(`${p.label} price ID invalid: ${p.id}`);
+            info('Run: node scripts/stripeSetup.js to create prices');
+            issues++;
+          }
+        } else {
+          warn(`${p.label} price ID not set — run: node scripts/stripeSetup.js`);
+          warnings++;
         }
-      } else {
-        warn('Price IDs not set — run: node scripts/stripeSetup.js');
-        warnings++;
       }
     } catch (err) {
       fail(`Stripe connection failed: ${err.message}`);

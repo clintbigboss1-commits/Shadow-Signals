@@ -24,19 +24,15 @@ function isGameDay() {
   return [0, 4, 5, 6].includes(new Date().getDay());
 }
 
-function isAFLSeason() {
+function isNBLActiveSeason() {
+  // NBL season runs Oct-June in Australia
   const m = new Date().getMonth() + 1;
-  return m >= 3 && m <= 9;
+  return m >= 10 || m <= 6;
 }
 
-function isNRLSeason() {
-  const m = new Date().getMonth() + 1;
-  return m >= 3 && m <= 10;
-}
-
-function isCricketSeason() {
-  const m = new Date().getMonth() + 1;
-  return m >= 10 || m <= 3;
+function isUFCActiveWeekend() {
+  // UFC events typically Fri/Sat/Sun
+  return [0, 5, 6].includes(new Date().getDay());
 }
 
 // Recompute EV + Arb from cache — ZERO API calls
@@ -89,59 +85,66 @@ function printBudget() {
 }
 
 function initScheduler() {
-  console.log('⏰ Initialising Smart Scheduler...');
+  console.log('⏰ Initialising Smart Scheduler (BoltOdds)...');
   printBudget();
 
   // Recompute EV every 45s — FREE (reads DB only)
   cron.schedule('*/45 * * * * *', recomputeAll);
 
-  // AFL — every 3 min on game days in season
+  // Top-tier sports — every 3 min on game days
   cron.schedule('*/3 * * * *', async () => {
-    if (isAFLSeason() && isGameDay()) {
-      await fetchFromOddsAPI('aussierules_afl');
-    }
-  });
-
-  // NRL — every 3 min on game days in season
-  cron.schedule('*/3 * * * *', async () => {
-    if (isNRLSeason() && isGameDay()) {
-      await fetchFromOddsAPI('rugbyleague_nrl');
-    }
-  });
-
-  // Racing — every 5 min during racing hours (10am-8pm AEST)
-  cron.schedule('*/5 * * * *', async () => {
-    const h = getAUHour();
-    if (h >= 10 && h <= 20) {
-      await fetchFromOddsAPI('horse_racing');
-    }
-  });
-
-  // Cricket — every 10 min in season
-  cron.schedule('*/10 * * * *', async () => {
-    if (isCricketSeason()) {
-      await fetchFromOddsAPI('cricket_t20');
-      await fetchFromOddsAPI('cricket_odi');
-    }
-  });
-
-  // Soccer — every 15 min, only if ESPN shows events today
-  cron.schedule('*/15 * * * *', async () => {
-    const espnEvents = await fetchESPN('aleague');
-    if (espnEvents.length > 0) {
-      await fetchFromOddsAPI('soccer_a_league');
-    }
-    if (API_BUDGETS['the-odds-api'].used < 300) {
+    if (isGameDay()) {
       await fetchFromOddsAPI('soccer_epl');
+      await fetchFromOddsAPI('basketball_nba');
+      await fetchFromOddsAPI('americanfootball_nfl');
     }
   });
 
-  // Tennis/NBA/UFC — every 20 min if budget OK
+  // Soccer leagues — every 10 min
+  cron.schedule('*/10 * * * *', async () => {
+    await fetchFromOddsAPI('soccer_la_liga');
+    await fetchFromOddsAPI('soccer_bundesliga');
+    await fetchFromOddsAPI('soccer_serie_a');
+    await fetchFromOddsAPI('soccer_ucl');
+  });
+
+  // Other soccer — every 20 min
   cron.schedule('*/20 * * * *', async () => {
-    if (API_BUDGETS['the-odds-api'].used < 350) {
+    await fetchFromOddsAPI('soccer_europa');
+    await fetchFromOddsAPI('soccer_ligue_1');
+    await fetchFromOddsAPI('soccer_mls');
+    await fetchFromOddsAPI('soccer_brazil');
+  });
+
+  // Baseball / Hockey — every 30 min
+  cron.schedule('*/30 * * * *', async () => {
+    await fetchFromOddsAPI('baseball_mlb');
+    await fetchFromOddsAPI('icehockey_nhl');
+  });
+
+  // NBL (Australian basketball) — every 30 min in season
+  cron.schedule('*/30 * * * *', async () => {
+    if (isNBLActiveSeason()) {
       await fetchFromOddsAPI('basketball_nbl');
-      await fetchFromOddsAPI('mma_mixed_martial_arts');
     }
+  });
+
+  // UFC / Boxing — every 20 min on event weekends
+  cron.schedule('*/20 * * * *', async () => {
+    if (isUFCActiveWeekend()) {
+      await fetchFromOddsAPI('mma_ufc');
+      await fetchFromOddsAPI('mma_boxing');
+    }
+  });
+
+  // Tennis — every 30 min
+  cron.schedule('*/30 * * * *', async () => {
+    await fetchFromOddsAPI('tennis_atp');
+  });
+
+  // Golf — every 60 min (slower sport)
+  cron.schedule('0 * * * *', async () => {
+    await fetchFromOddsAPI('golf_pga');
   });
 
   // Daily cleanup at midnight AEST (2pm UTC)
@@ -150,7 +153,7 @@ function initScheduler() {
     printBudget();
   });
 
-  console.log('✅ Scheduler running');
+  console.log('✅ Scheduler running (BoltOdds)');
 }
 
 module.exports = { initScheduler, setIO, recomputeAll, printBudget };

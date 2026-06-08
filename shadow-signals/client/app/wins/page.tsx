@@ -24,7 +24,7 @@ export default function WinsPage() {
       <nav style={{ borderBottom: '1px solid rgba(255,255,255,.06)', padding: '0 32px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 60 }}>
           <Link href="/" style={{ fontWeight: 900, fontSize: 17, letterSpacing: -.3 }}>
-            SHADOW <span style={{ color: '#22d3ee' }}>SYNDICATE</span>
+            SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span>
           </Link>
           <div style={{ display: 'flex', gap: 10 }}>
             <Link href="/login"  style={{ padding: '7px 16px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, color: '#94a3b8' }}>Sign In</Link>

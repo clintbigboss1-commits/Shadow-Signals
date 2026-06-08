@@ -51,15 +51,22 @@ function fmtTime(dt: string) {
   });
 }
 
-/* ─────────────────────── sidebar ─────────────────────────── */
+// AFL/NRL/Cricket removed — BoltOdds API does not carry these sports
 const SPORTS_NAV = [
-  { key:'rugbyleague_nrl',        label:'NRL',       icon:'🏉', live:true  },
-  { key:'aussierules_afl',        label:'AFL',       icon:'🏉', live:true  },
-  { key:'cricket_test_match',     label:'Cricket',   icon:'🏏', live:true  },
-  { key:'basketball_nba',         label:'NBA',       icon:'🏀', live:false },
-  { key:'american_football_nfl',  label:'NFL',       icon:'🏈', live:false },
-  { key:'soccer_epl',             label:'EPL / Soccer', icon:'⚽', live:false },
-  { key:'mma_mixed_martial_arts', label:'UFC / MMA', icon:'🥊', live:false },
+  { key:'soccer_epl',             label:'EPL',         icon:'⚽', live:true  },
+  { key:'soccer_la_liga',         label:'La Liga',     icon:'⚽', live:true  },
+  { key:'soccer_bundesliga',      label:'Bundesliga',  icon:'⚽', live:false },
+  { key:'soccer_serie_a',         label:'Serie A',     icon:'⚽', live:false },
+  { key:'soccer_ucl',             label:'Champions League', icon:'⚽', live:true },
+  { key:'basketball_nba',         label:'NBA',         icon:'🏀', live:true  },
+  { key:'basketball_nbl',         label:'NBL (AU)',    icon:'🏀', live:false },
+  { key:'americanfootball_nfl',   label:'NFL',         icon:'🏈', live:true  },
+  { key:'baseball_mlb',           label:'MLB',         icon:'⚾', live:false },
+  { key:'icehockey_nhl',          label:'NHL',         icon:'🏒', live:false },
+  { key:'mma_ufc',                label:'UFC',         icon:'🥊', live:true  },
+  { key:'mma_boxing',             label:'Boxing',      icon:'🥊', live:false },
+  { key:'tennis_atp',             label:'Tennis',      icon:'🎾', live:false },
+  { key:'golf_pga',               label:'Golf',        icon:'⛳', live:false },
 ];
 
 function Sidebar({ user, activeSport, setActiveSport }: {
@@ -75,7 +82,7 @@ function Sidebar({ user, activeSport, setActiveSport }: {
       <div style={{ padding:'18px 16px 12px', borderBottom:'1px solid var(--border)' }}>
         <Link href="/" style={{ display:'flex', alignItems:'center', gap:9 }}>
           <div style={{ width:32,height:32,borderRadius:9,background:'linear-gradient(135deg,#22d3ee,#0891b2)',display:'grid',placeItems:'center',fontWeight:900,fontSize:16,color:'#030711',flexShrink:0 }}>S</div>
-          <span style={{ fontWeight:900,fontSize:15,letterSpacing:-.3 }}>SHADOW <span style={{ color:'#22d3ee' }}>SYNDICATE</span></span>
+          <span style={{ fontWeight:900,fontSize:15,letterSpacing:-.3 }}>SHADOW <span style={{ color:'#22d3ee' }}>ELITE</span></span>
         </Link>
       </div>
 
@@ -107,6 +114,13 @@ function Sidebar({ user, activeSport, setActiveSport }: {
           <button className="nav-item">
             <span>📡</span> Live Radar
             <span className="badge">3</span>
+          </button>
+        </Link>
+
+        {/* Football Hub */}
+        <Link href="/football">
+          <button className="nav-item">
+            <span>⚽</span> Football Hub
           </button>
         </Link>
 
@@ -410,7 +424,7 @@ function DashboardInner() {
   const [bets, setBets]         = useState<Bet[]>([]);
   const [loading, setLoading]   = useState(true);
   const [upgraded, setUpgraded] = useState(false);
-  const [activeSport, setActiveSport] = useState('aussierules_afl');
+  const [activeSport, setActiveSport] = useState('soccer_epl');
 
   useEffect(() => {
     const u = getUser();

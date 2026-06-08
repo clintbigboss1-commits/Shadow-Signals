@@ -34,9 +34,9 @@ Add/update:
 
 Make sure you also have:
   STRIPE_SECRET_KEY     = sk_live_xxxxxxxxxxxx
-  STRIPE_PRICE_RECRUIT_MONTH    = price_xxxx
-  STRIPE_PRICE_COMMANDER_MONTH  = price_xxxx  
-  STRIPE_PRICE_SYNDICATE_MONTH  = price_xxxx
+  STRIPE_PRICE_STARTER_MONTH    = price_xxxx
+  STRIPE_PRICE_PRO_MONTH  = price_xxxx  
+  STRIPE_PRICE_ELITE_MONTH  = price_xxxx
 
 ### Step 3 — Redeploy backend
 
@@ -61,7 +61,7 @@ If webhook still says NOT SET → the env var didn't save correctly in Railway.
 4. Complete payment
 5. You'll be redirected to /dashboard?upgraded=true
 6. The page polls /api/payments/status every 5 seconds
-7. Within 30 seconds your plan should update to commander
+7. Within 30 seconds your plan should update to pro
 
 ### If it still doesn't work
 

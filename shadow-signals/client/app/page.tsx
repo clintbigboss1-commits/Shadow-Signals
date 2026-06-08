@@ -35,7 +35,7 @@ export default function Home() {
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 17, color: '#030711' }}>S</div>
-            <span style={{ fontWeight: 900, fontSize: 17, letterSpacing: -.3 }}>SHADOW <span style={{ color: '#22d3ee' }}>SYNDICATE</span></span>
+            <span style={{ fontWeight: 900, fontSize: 17, letterSpacing: -.3 }}>SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span></span>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
             {[['Markets','/markets'],['Wins','/wins'],['Find My Plan','/pricing'],['Reviews','/reviews'],['Pricing','/pricing']].map(([l,h]) => (
@@ -176,7 +176,7 @@ export default function Home() {
           <h2 style={{ fontSize: 'clamp(24px,3vw,36px)', fontWeight: 900, marginBottom: 8 }}>Start free. Pay when winning.</h2>
           <p style={{ color: '#64748b', marginBottom: 32, fontSize: 15 }}>7-day free trial. No credit card required.</p>
           <div style={{ background: 'rgba(255,255,255,.02)', border: '1px solid rgba(34,211,238,.2)', borderRadius: 20, padding: 32, marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#22d3ee', marginBottom: 10 }}>COMMANDER — MOST POPULAR</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#22d3ee', marginBottom: 10 }}>PRO — MOST POPULAR</div>
             <div style={{ fontSize: 44, fontWeight: 900, marginBottom: 4 }}>$19.99</div>
             <div style={{ color: '#64748b', fontSize: 13, marginBottom: 24 }}>AUD / month</div>
             <ul style={{ listStyle: 'none', textAlign: 'left', marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>

@@ -72,9 +72,9 @@ JWT_EXPIRES_IN        = 7d
 FRONTEND_URL          = https://your-vercel-url.vercel.app
 PORT                  = 3001
 NODE_ENV              = production
-STRIPE_PRICE_RECRUIT_MONTH    = price_xxx (from step 6)
-STRIPE_PRICE_COMMANDER_MONTH  = price_xxx (from step 6)
-STRIPE_PRICE_SYNDICATE_MONTH  = price_xxx (from step 6)
+STRIPE_PRICE_STARTER_MONTH    = price_xxx (from step 6)
+STRIPE_PRICE_PRO_MONTH  = price_xxx (from step 6)
+STRIPE_PRICE_ELITE_MONTH  = price_xxx (from step 6)
 ```
 
 ### Step 5 — Set up Stripe webhook

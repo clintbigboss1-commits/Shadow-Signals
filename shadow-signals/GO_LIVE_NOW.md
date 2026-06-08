@@ -79,9 +79,9 @@ JWT_EXPIRES_IN        = 7d
 FRONTEND_URL          = https://[your-vercel-app].vercel.app
 PORT                  = 3001
 NODE_ENV              = production
-STRIPE_PRICE_RECRUIT_MONTH    = price_xxx
-STRIPE_PRICE_COMMANDER_MONTH  = price_xxx
-STRIPE_PRICE_SYNDICATE_MONTH  = price_xxx
+STRIPE_PRICE_STARTER_MONTH    = price_xxx
+STRIPE_PRICE_PRO_MONTH  = price_xxx
+STRIPE_PRICE_ELITE_MONTH  = price_xxx
 CACHE_ODDS_TTL        = 45
 ```
 
@@ -121,13 +121,13 @@ npm install
 node scripts/stripeSetup.js
 ```
 
-This creates 3 products (Recruit $9.99, Commander $19.99, Syndicate $49.99)
+This creates 3 products (Starter $9.99, Pro $19.99, Elite $49.99)
 and saves their price IDs to your .env file.
 
 Then copy those price IDs to Railway Variables:
-STRIPE_PRICE_RECRUIT_MONTH    = price_xxxx (from .env)
-STRIPE_PRICE_COMMANDER_MONTH  = price_xxxx (from .env)
-STRIPE_PRICE_SYNDICATE_MONTH  = price_xxxx (from .env)
+STRIPE_PRICE_STARTER_MONTH    = price_xxxx (from .env)
+STRIPE_PRICE_PRO_MONTH  = price_xxxx (from .env)
+STRIPE_PRICE_ELITE_MONTH  = price_xxxx (from .env)
 
 Redeploy Railway.
 
@@ -186,11 +186,11 @@ node scripts/setupCheck.js
 
 1. Visit your Vercel URL
 2. Create an account
-3. Try signing up for Commander ($19.99)
+3. Try signing up for Pro ($19.99)
 4. Use test card: 4242 4242 4242 4242 (any future date, any CVC)
    (Switch Stripe to Test mode temporarily to test safely)
 5. After payment, you should be redirected back and your plan should
-   update to "commander" within 30 seconds
+   update to "Pro" within 30 seconds
 
 ---
 

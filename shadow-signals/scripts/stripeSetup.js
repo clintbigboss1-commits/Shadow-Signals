@@ -17,20 +17,20 @@ async function setup() {
 
   const plans = [
     {
-      name: 'Shadow Signals — Recruit',
-      key:  'RECRUIT',
+      name: 'Shadow Signals — Starter',
+      key:  'STARTER',
       amount: 999,       // $9.99 AUD
       description: 'Top 5 +EV plays daily. Perfect for casual punters.',
     },
     {
-      name: 'Shadow Signals — Commander',
-      key:  'COMMANDER',
+      name: 'Shadow Signals — Pro',
+      key:  'PRO',
       amount: 1999,      // $19.99 AUD
       description: 'Full +EV scanner, arb finder, CLV tracker. Unlimited access.',
     },
     {
-      name: 'Shadow Signals — Syndicate',
-      key:  'SYNDICATE',
+      name: 'Shadow Signals — Elite',
+      key:  'ELITE',
       amount: 4999,      // $49.99 AUD
       description: 'API access, multi-account tools, private syndicate Discord.',
     },

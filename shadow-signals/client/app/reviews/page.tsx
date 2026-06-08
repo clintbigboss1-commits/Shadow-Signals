@@ -1,12 +1,12 @@
 import Link from 'next/link';
 
 const REVIEWS = [
-  { name: 'Matt B.', loc: 'Melbourne', plan: 'Commander', stars: 5, text: 'Been using it for 2 months. My CLV is consistently positive. The grade system tells you exactly which bets are worth taking — I only bet Grade A and above now.', badge: 'CLV +4.2% avg' },
-  { name: 'Sarah K.', loc: 'Brisbane', plan: 'Commander', stars: 5, text: 'Finally a product built for AU bookies. Not some US site with DraftKings odds. Real Sportsbet, real TAB, real Ladbrokes prices. Love it.', badge: '3 months verified' },
-  { name: 'Jake T.', loc: 'Sydney', plan: 'Syndicate', stars: 5, text: 'The arb finder alone pays for itself 3x over every month. Found a 2.8% arb on AFL Round 18 that I\'d never have spotted manually.', badge: 'Arb: +$1,240 profit' },
-  { name: 'Chris M.', loc: 'Perth', plan: 'Commander', stars: 5, text: 'I was sceptical about EV betting but the CLV tracker showed me I\'m genuinely beating the market. The data doesn\'t lie.', badge: 'CLV positive 74% of bets' },
-  { name: 'Tom W.', loc: 'Adelaide', plan: 'Recruit', stars: 4, text: 'Great for AFL season. The Grade S+ alerts are the real value — when something is flagged S+ it\'s almost always there at that price for less than an hour.', badge: 'AFL specialist' },
-  { name: 'Liam P.', loc: 'Melbourne', plan: 'Commander', stars: 5, text: 'Setup took 5 minutes. First +EV bet within an hour. Made my subscription cost back in week one. Should have found this years ago.', badge: 'Week 1 ROI: +340%' },
+  { name: 'Matt B.', loc: 'Melbourne', plan: 'Pro', stars: 5, text: 'Been using it for 2 months. My CLV is consistently positive. The grade system tells you exactly which bets are worth taking — I only bet Grade A and above now.', badge: 'CLV +4.2% avg' },
+  { name: 'Sarah K.', loc: 'Brisbane', plan: 'Pro', stars: 5, text: 'Finally a product built for AU bookies. Not some US site with DraftKings odds. Real Sportsbet, real TAB, real Ladbrokes prices. Love it.', badge: '3 months verified' },
+  { name: 'Jake T.', loc: 'Sydney', plan: 'Elite', stars: 5, text: 'The arb finder alone pays for itself 3x over every month. Found a 2.8% arb on AFL Round 18 that I\'d never have spotted manually.', badge: 'Arb: +$1,240 profit' },
+  { name: 'Chris M.', loc: 'Perth', plan: 'Pro', stars: 5, text: 'I was sceptical about EV betting but the CLV tracker showed me I\'m genuinely beating the market. The data doesn\'t lie.', badge: 'CLV positive 74% of bets' },
+  { name: 'Tom W.', loc: 'Adelaide', plan: 'Starter', stars: 4, text: 'Great for AFL season. The Grade S+ alerts are the real value — when something is flagged S+ it\'s almost always there at that price for less than an hour.', badge: 'AFL specialist' },
+  { name: 'Liam P.', loc: 'Melbourne', plan: 'Pro', stars: 5, text: 'Setup took 5 minutes. First +EV bet within an hour. Made my subscription cost back in week one. Should have found this years ago.', badge: 'Week 1 ROI: +340%' },
 ];
 
 export default function ReviewsPage() {
@@ -16,7 +16,7 @@ export default function ReviewsPage() {
       <nav style={{ borderBottom: '1px solid rgba(255,255,255,.06)', padding: '0 32px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 60 }}>
           <Link href="/" style={{ fontWeight: 900, fontSize: 17 }}>
-            SHADOW <span style={{ color: '#22d3ee' }}>SYNDICATE</span>
+            SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span>
           </Link>
           <div style={{ display: 'flex', gap: 10 }}>
             <Link href="/login"  style={{ padding: '7px 16px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, color: '#94a3b8' }}>Sign In</Link>

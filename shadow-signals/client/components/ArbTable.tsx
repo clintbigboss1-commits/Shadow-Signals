@@ -41,8 +41,8 @@ export default function ArbTable() {
     return (
       <div className="card" style={{ textAlign: 'center', padding: 40 }}>
         <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-        <h3 style={{ fontWeight: 800, marginBottom: 8 }}>Commander plan required</h3>
-        <p style={{ color: '#64748b', fontSize: 14, marginBottom: 20 }}>Arb finder is available on Commander ($19.99/mo) and above.</p>
+        <h3 style={{ fontWeight: 800, marginBottom: 8 }}>PRO plan required</h3>
+        <p style={{ color: '#64748b', fontSize: 14, marginBottom: 20 }}>Arb finder is available on PRO ($19.99/mo) and above.</p>
         <Link href="/pricing" className="btn btn-primary">Upgrade →</Link>
       </div>
     );

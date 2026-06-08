@@ -110,7 +110,7 @@ async function sendTrialEnding(user) {
     </p>
 
     <div style="background:#111827;border:1px solid #1e2d45;border-radius:12px;padding:20px;margin:0 0 28px;">
-      <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0 0 14px;">Commander — $19.99 AUD/month</p>
+      <p style="color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0 0 14px;">Pro — $19.99 AUD/month</p>
       ${['Unlimited +EV scanner — all 12 AU bookies', 'Arb finder (guaranteed profit alerts)', 'Full CLV tracker with closing line analysis', 'Live edge alerts the moment markets open', 'Grade S+ confidence ratings'].map(f => `
       <div style="display:flex;gap:10px;margin-bottom:8px;">
         <span style="color:#10b981;font-weight:700;">✓</span>

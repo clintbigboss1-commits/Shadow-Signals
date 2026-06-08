@@ -96,14 +96,23 @@ function fmtTime(dt: string) {
   });
 }
 
+// AFL/NRL/Cricket/A-League removed — BoltOdds API does not carry these sports
 const SPORT_TABS = [
   { key: 'all',                    label: 'All Markets' },
-  { key: 'aussierules_afl',        label: '🏉 AFL' },
-  { key: 'rugbyleague_nrl',        label: '🏉 NRL' },
-  { key: 'cricket_odi',            label: '🏏 Cricket' },
-  { key: 'soccer_a_league',        label: '⚽ A-League' },
-  { key: 'mma_mixed_martial_arts', label: '🥊 UFC' },
+  { key: 'soccer_epl',             label: '⚽ EPL' },
+  { key: 'soccer_la_liga',         label: '⚽ La Liga' },
+  { key: 'soccer_bundesliga',      label: '⚽ Bundesliga' },
+  { key: 'soccer_serie_a',         label: '⚽ Serie A' },
+  { key: 'soccer_ucl',             label: '⚽ UCL' },
+  { key: 'basketball_nba',         label: '🏀 NBA' },
   { key: 'basketball_nbl',         label: '🏀 NBL' },
+  { key: 'americanfootball_nfl',   label: '🏈 NFL' },
+  { key: 'baseball_mlb',           label: '⚾ MLB' },
+  { key: 'icehockey_nhl',          label: '🏒 NHL' },
+  { key: 'mma_ufc',                label: '🥊 UFC' },
+  { key: 'mma_boxing',             label: '🥊 Boxing' },
+  { key: 'tennis_atp',             label: '🎾 Tennis' },
+  { key: 'golf_pga',               label: '⛳ Golf' },
 ];
 
 /* ─── Slip (bet slip state) ───────────────────────────────────────────── */
