@@ -1,1 +1,1 @@
-web: node server/index.js
+web: cd shadow-signals && node server/index.js
