@@ -1,8 +1,6 @@
-[phases.setup]
+﻿[phases.setup]
 nixPkgs = ["nodejs_20"]
-
 [phases.install]
-cmds = ["cd shadow-signals && npm install"]
-
+cmds = ["npm install"]
 [start]
-cmd = "cd shadow-signals && node server/index.js"
+cmd = "node server/index.js"
