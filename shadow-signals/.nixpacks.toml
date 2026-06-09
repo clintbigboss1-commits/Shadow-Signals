@@ -1,4 +1,0 @@
-﻿[phases.setup]
-nixPkgs = ["nodejs_20"]
-[start]
-cmd = "ls -la && ls -la server && node server/index.js"
