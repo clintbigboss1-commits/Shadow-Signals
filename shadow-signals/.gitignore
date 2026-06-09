@@ -9,3 +9,7 @@ build/
 .vercel/
 uploads/
 generated/
+.venv/
+.vscode/
+.streamlit/
+tsc-result.txt
