@@ -1,0 +1,11 @@
+scheduling build on Metal builder "production-builderv3-us-west1-xxnf"
+scheduling build on Metal builder "production-builderv3-us-west1-xxnf"
+fetched snapshot sha256:4c462db9dd727162c5bc0e097e8cc661671471091e8b36e63608a0e17411ec52 (162 kB bytes)
+[INFO] fetching snapshot
+[INFO] unpacking archive
+using build driver nixpacks-v1.41.0
+Error: Failed to read app source directory
+
+Caused by:
+    No such file or directory (os error 2)
+nixpacks exited with an error
