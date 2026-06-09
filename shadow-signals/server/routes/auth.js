@@ -60,6 +60,12 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     
     const role = ADMIN_EMAILS.includes(user.email.toLowerCase()) ? 'admin' : 'customer';
+    
+    // Auto-grant Elite to Admins
+    if (role === 'admin') {
+      user.plan = 'elite';
+    }
+
     const token = jwt.sign(
       { userId: user.id, plan: user.plan, email: user.email, role },
       process.env.JWT_SECRET,
@@ -86,7 +92,42 @@ router.get('/me', requireAuth, async (req, res) => {
     
     const user = result.rows[0];
     user.role = ADMIN_EMAILS.includes(user.email.toLowerCase()) ? 'admin' : 'customer';
+    if (user.role === 'admin') {
+      user.plan = 'elite';
+    }
     res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/admin/upgrade (Admin only)
+router.post('/admin/upgrade', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Admins only' });
+    }
+    
+    const { email, plan } = req.body;
+    if (!email || !plan) {
+      return res.status(400).json({ error: 'Email and plan are required' });
+    }
+    
+    const validPlans = ['free', 'starter', 'pro', 'elite'];
+    if (!validPlans.includes(plan.toLowerCase())) {
+      return res.status(400).json({ error: 'Invalid plan tier' });
+    }
+    
+    const result = await db.query(
+      'UPDATE users SET plan = $1 WHERE email = $2 RETURNING id, email, plan',
+      [plan.toLowerCase(), email.toLowerCase()]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ success: true, user: result.rows[0] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -245,25 +245,36 @@ function StatCards({ bets }: { bets: Bet[] }) {
 /* ─────────────────────── tool cards ─────────────────────── */
 function ToolCards() {
   const tools = [
-    { icon:'📡', title:'Live Radar',      sub:'6 active targets',   href:'/markets',    glow:'#22d3ee' },
-    { icon:'🏇', title:'Racing Signals',  sub:'3 picks today',      href:'/markets',    glow:'#f59e0b' },
-    { icon:'🧮', title:'OmniCalc',        sub:'Free EV calculator', href:'/clv',        glow:'#10b981' },
-    { icon:'🏅', title:'Leaderboard',     sub:'CLV rankings',       href:'/wins',       glow:'#8b5cf6' },
+    { icon:'📡', title:'Live Radar',      sub:'6 active targets',   href:'/markets',    glow:'#22d3ee', bg:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=400&q=80' },
+    { icon:'🏇', title:'Racing Signals',  sub:'3 picks today',      href:'/markets',    glow:'#f59e0b', bg:'https://images.unsplash.com/photo-1596726585149-14a849d44359?auto=format&fit=crop&w=400&q=80' },
+    { icon:'🧮', title:'OmniCalc',        sub:'Free EV calculator', href:'/clv',        glow:'#10b981', bg:'https://images.unsplash.com/photo-1600250395368-dc8152ab5f79?auto=format&fit=crop&w=400&q=80' },
+    { icon:'🏅', title:'Leaderboard',     sub:'CLV rankings',       href:'/wins',       glow:'#8b5cf6', bg:'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80' },
   ];
   return (
     <div className="tool-grid">
       {tools.map((t,i) => (
         <Link key={i} href={t.href}>
-          <div style={{ background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',transition:'border-color .15s' }}
-            onMouseEnter={e=>(e.currentTarget as HTMLElement).style.borderColor=t.glow+'55'}
+          <div style={{ 
+            position:'relative', overflow:'hidden',
+            border:'1px solid var(--border)',borderRadius:12,padding:'16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',transition:'border-color .15s' 
+          }}
+            onMouseEnter={e=>(e.currentTarget as HTMLElement).style.borderColor=t.glow+'88'}
             onMouseLeave={e=>(e.currentTarget as HTMLElement).style.borderColor='var(--border)'}
           >
-            <div style={{ width:38,height:38,borderRadius:10,background:`${t.glow}14`,display:'grid',placeItems:'center',fontSize:18,flexShrink:0 }}>{t.icon}</div>
-            <div style={{ flex:1,minWidth:0 }}>
-              <div style={{ fontWeight:700,fontSize:13,color:'var(--text)' }}>{t.title}</div>
-              <div style={{ fontSize:11,color:'var(--muted)',marginTop:2 }}>{t.sub}</div>
+            {/* Background Image with Overlay */}
+            <div style={{ 
+              position:'absolute', top:0, left:0, right:0, bottom:0, zIndex:0,
+              backgroundImage:`url(${t.bg})`, backgroundSize:'cover', backgroundPosition:'center',
+              opacity:0.15, filter:'grayscale(50%)'
+            }} />
+            <div style={{ position:'absolute', top:0, left:0, right:0, bottom:0, background:`linear-gradient(135deg, var(--bg2) 40%, transparent)` }} />
+
+            <div style={{ position:'relative', zIndex:1, width:42,height:42,borderRadius:10,background:`${t.glow}22`,display:'grid',placeItems:'center',fontSize:20,flexShrink:0, border:`1px solid ${t.glow}55` }}>{t.icon}</div>
+            <div style={{ position:'relative', zIndex:1, flex:1,minWidth:0 }}>
+              <div style={{ fontWeight:800,fontSize:14,color:'#fff',textShadow:'0 2px 4px rgba(0,0,0,0.5)' }}>{t.title}</div>
+              <div style={{ fontSize:12,color:'var(--muted)',marginTop:2 }}>{t.sub}</div>
             </div>
-            <span style={{ color:'var(--muted)',fontSize:16 }}>›</span>
+            <span style={{ position:'relative', zIndex:1, color:'var(--muted)',fontSize:18 }}>›</span>
           </div>
         </Link>
       ))}
@@ -498,16 +509,27 @@ function DashboardInner() {
 
           {/* GET TODAY'S BEST PICK */}
           <Link href="/markets">
-            <div style={{ background:'linear-gradient(135deg,#0a3d20,#053a2a)',border:'1px solid rgba(16,185,129,.3)',borderRadius:14,padding:'20px 28px',marginBottom:18,cursor:'pointer',textAlign:'center',transition:'filter .15s' }}
-              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.filter='brightness(1.1)'}
+            <div style={{ 
+              position:'relative', overflow:'hidden',
+              background:'linear-gradient(135deg,#0a3d20,#053a2a)',border:'1px solid rgba(16,185,129,.5)',borderRadius:14,padding:'30px 28px',marginBottom:18,cursor:'pointer',textAlign:'center',transition:'filter .15s',
+              boxShadow:'0 10px 30px -10px rgba(16,185,129,0.3)'
+            }}
+              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.filter='brightness(1.2)'}
               onMouseLeave={e=>(e.currentTarget as HTMLElement).style.filter='brightness(1)'}
             >
-              <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:6 }}>
-                <span style={{ fontSize:22 }}>⚡</span>
-                <span style={{ fontWeight:900,fontSize:20,color:'#fff',letterSpacing:-.3 }}>GET TODAY&apos;S BEST PICK</span>
-              </div>
-              <div style={{ fontSize:14,color:'rgba(255,255,255,.6)' }}>
-                One-click green light from our algorithm
+              <div style={{
+                position:'absolute', top:0, left:0, right:0, bottom:0,
+                backgroundImage:'url(https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?auto=format&fit=crop&w=1200&q=80)',
+                backgroundSize:'cover', backgroundPosition:'center 30%', opacity:0.25, mixBlendMode:'overlay'
+              }} />
+              <div style={{ position:'relative', zIndex:1 }}>
+                <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:12,marginBottom:8 }}>
+                  <span style={{ fontSize:28, filter:'drop-shadow(0 0 10px rgba(250,204,21,0.8))' }}>⚡</span>
+                  <span style={{ fontWeight:900,fontSize:24,color:'#fff',letterSpacing:-.5,textShadow:'0 2px 10px rgba(0,0,0,0.8)' }}>GET TODAY'S BEST PICK</span>
+                </div>
+                <div style={{ fontSize:15,color:'rgba(255,255,255,.9)',fontWeight:600,textShadow:'0 1px 3px rgba(0,0,0,0.8)' }}>
+                  One-click green light from our algorithm
+                </div>
               </div>
             </div>
           </Link>
@@ -528,6 +550,34 @@ function DashboardInner() {
               <Link href="/pricing">
                 <button className="btn btn-primary" style={{ fontSize:13 }}>Upgrade — $19.99/mo →</button>
               </Link>
+            </div>
+          )}
+
+          {/* Admin Panel */}
+          {(user as any)?.role === 'admin' && (
+            <div style={{ marginTop:24,padding:'20px',background:'rgba(139,92,246,.05)',border:'1px solid rgba(139,92,246,.3)',borderRadius:12 }}>
+              <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:12 }}>
+                <span style={{ fontSize:20 }}>👑</span>
+                <span style={{ fontWeight:800,fontSize:16,color:'var(--purple)' }}>Owner Control Panel</span>
+              </div>
+              <p style={{ fontSize:13,color:'var(--muted)',marginBottom:16 }}>Grant free Elite access to your friends by entering their email below.</p>
+              
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const fd = new FormData(e.currentTarget);
+                const email = fd.get('email') as string;
+                if (!email) return;
+                try {
+                  await API.post('/auth/admin/upgrade', { email, plan:'elite' });
+                  alert(`Successfully upgraded ${email} to Elite!`);
+                  (e.target as HTMLFormElement).reset();
+                } catch (err: any) {
+                  alert(`Failed to upgrade: ${err.response?.data?.error || err.message}`);
+                }
+              }} style={{ display:'flex',gap:10,maxWidth:400 }}>
+                <input name="email" type="email" placeholder="friend@example.com" required style={{ flex:1,padding:'8px 12px',borderRadius:8,border:'1px solid var(--border)',background:'var(--bg)',color:'var(--text)' }} />
+                <button type="submit" className="btn btn-primary" style={{ background:'var(--purple)',borderColor:'var(--purple)' }}>Upgrade to Elite</button>
+              </form>
             </div>
           )}
         </div>
