@@ -5,10 +5,11 @@ const L1 = new Map();
 
 // ── API Budget Tracker ─────────────────────────────────────────────────────
 const API_BUDGETS = {
-  'boltodds':     { free_limit: 10000, soft_limit: 9000, used: 0, month: new Date().getMonth() },
-  'thesportsdb':  { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
-  'balldontlie':  { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
-  'espn':         { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
+  'sportsgameodds': { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
+  'boltodds':       { free_limit: 10000, soft_limit: 9000, used: 0, month: new Date().getMonth() },
+  'thesportsdb':    { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
+  'balldontlie':    { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
+  'espn':           { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
 };
 
 function checkMonthReset() {
@@ -131,7 +132,10 @@ async function setL2Odds(sportKey, events, ttlSeconds, sourceApi) {
     );
 
     for (const event of events) {
-      for (const bookie of (event.bookmakers || [])) {
+      const bookmakers = Array.isArray(event.bookmakers)
+        ? event.bookmakers
+        : Object.values(event.bookmakers || {});
+      for (const bookie of bookmakers) {
         const bookieKey = bookie.key || bookie.title || '';
         for (const market of (bookie.markets || [])) {
           for (const outcome of (market.outcomes || [])) {

@@ -16,9 +16,33 @@ const BOLTODDS_KEY      = process.env.BOLTODDS_KEY || process.env.ODDS_API_KEY;
 const BOLTODDS_WS_URL   = process.env.BOLTODDS_WS_URL  || 'wss://spro.agency/api';
 const BOLTODDS_REST_URL = process.env.BOLTODDS_REST_URL || 'https://spro.agency/api';
 
+const SGO_API_KEY    = process.env.SPORT_GAME_ODDS || '';
+const SGO_BASE       = 'https://api.sportsgameodds.com/v2';
+
 const ESPN_BASE     = 'https://site.api.espn.com/apis/site/v2/sports';
 const SPORTSDB_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
 const BDL_BASE      = 'https://api.balldontlie.io/v1';
+
+// ── SportGameOdds leagueID mapping ──────────────────────────────────────────
+const SGO_LEAGUES = {
+  'soccer_epl':           'EPL',
+  'soccer_ucl':           'UEFA_CHAMPIONS_LEAGUE',
+  'soccer_la_liga':       'LA_LIGA',
+  'soccer_bundesliga':    'BUNDESLIGA',
+  'soccer_serie_a':       'SERIE_A',
+  'soccer_europa':        'UEFA_EUROPA_LEAGUE',
+  'soccer_ligue_1':       'LIGUE_1',
+  'soccer_mls':           'MLS',
+  'soccer_brazil':        'BRASILEIRAO',
+  'basketball_nba':       'NBA',
+  'basketball_nbl':       'NBL',
+  'americanfootball_nfl': 'NFL',
+  'baseball_mlb':         'MLB',
+  'icehockey_nhl':        'NHL',
+  'mma_ufc':              'UFC',
+  'tennis_atp':           'ATP',
+  'golf_pga':             'PGA',
+};
 
 const BOLTODDS_SPORTS = {
   'EPL':                { key: 'soccer_epl',     name: 'EPL',           emoji: '⚽', priority: 1 },
@@ -296,6 +320,121 @@ function generateDemoOdds(sportKey) {
   return events;
 }
 
+// ── SportGameOdds REST API ──────────────────────────────────────────────────
+async function fetchFromSportsGameOdds(sportKey) {
+  if (!SGO_API_KEY) return { events: [], source: 'no-key', callsUsed: 0 };
+
+  const leagueID = SGO_LEAGUES[sportKey];
+  if (!leagueID) return { events: [], source: 'unsupported-league', callsUsed: 0 };
+
+  const sportTitle = BOLTODDS_SPORTS[Object.keys(BOLTODDS_SPORTS).find(k => BOLTODDS_SPORTS[k].key === sportKey)]?.name || sportKey;
+
+  try {
+    const { data: resp } = await axios.get(`${SGO_BASE}/events`, {
+      params: {
+        leagueID,
+        oddsAvailable: true,
+        finalized: false,
+      },
+      headers: { 'x-api-key': SGO_API_KEY },
+      timeout: 10000,
+    });
+
+    const rawEvents = resp && resp.data ? (Array.isArray(resp.data) ? resp.data : []) : [];
+    if (rawEvents.length === 0) return { events: [], source: 'sgo-empty', callsUsed: 1 };
+
+    const events = [];
+    for (const ev of rawEvents) {
+      if (!ev.teams || !ev.status) continue;
+      if (ev.status.started || ev.status.ended || ev.status.completed) continue;
+
+      // Team names are in teams.{home,away}.names.long
+      const homeTeam = ev.teams.home?.names?.long || ev.teams.home?.teamID || 'Home';
+      const awayTeam = ev.teams.away?.names?.long || ev.teams.away?.teamID || 'Away';
+      const eventId  = ev.eventID || `${sportKey}-${homeTeam}-${awayTeam}`;
+      const odds     = ev.odds || {};
+
+      // Build bookmaker map from oddIDs
+      const bookmakers = {};
+      for (const oddID of Object.keys(odds)) {
+        const oddData = odds[oddID];
+        if (!oddData || !oddData.byBookmaker) continue;
+
+        // Parse the oddID: {statID}-{statEntityID}-{periodID}-{betTypeID}-{sideID}
+        // e.g. "points-home-game-ml-home" or "points-home-1h-sp-away"
+        const parts = oddID.split('-');
+        const betTypeID = oddData.betTypeID || (parts.length >= 4 ? parts[parts.length - 2] : null);
+        const sideID    = oddData.sideID || (parts.length >= 5 ? parts[parts.length - 1] : null);
+        const statEntity = oddData.statEntityID || (parts.length >= 2 ? parts[1] : 'all');
+        const periodID = oddData.periodID || (parts.length >= 3 ? parts[parts.length - 3] : 'game');
+
+        // Skip player props (statEntityID not in [home, away, all])
+        if (statEntity !== 'home' && statEntity !== 'away' && statEntity !== 'all') continue;
+
+        // Only full-game markets for now
+        if (periodID !== 'game') continue;
+
+        let market, selection;
+        if (betTypeID === 'ml' || betTypeID === 'ml3way') {
+          market = 'h2h';
+          if (sideID === 'home') selection = homeTeam;
+          else if (sideID === 'away') selection = awayTeam;
+          else if (sideID === 'draw') selection = 'Draw';
+          else continue;
+        } else if (betTypeID === 'sp') {
+          market = 'spreads';
+          if (sideID === 'home') selection = homeTeam;
+          else if (sideID === 'away') selection = awayTeam;
+          else continue;
+        } else if (betTypeID === 'ou') {
+          market = 'totals';
+          selection = sideID === 'over' ? 'Over' : sideID === 'under' ? 'Under' : sideID;
+        } else {
+          continue;
+        }
+
+        for (const [bookID, bookData] of Object.entries(oddData.byBookmaker)) {
+          if (!bookData || !bookData.available || !bookData.odds) continue;
+          const decimalOdds = americanToDecimal(bookData.odds);
+          if (decimalOdds === null) continue;
+
+          const bookKey = bookID.toLowerCase();
+          if (!bookmakers[bookKey]) {
+            bookmakers[bookKey] = { key: bookKey, title: bookID, markets: {} };
+          }
+          if (!bookmakers[bookKey].markets[market]) {
+            bookmakers[bookKey].markets[market] = { key: market, outcomes: [] };
+          }
+          bookmakers[bookKey].markets[market].outcomes.push({ name: selection, price: decimalOdds });
+        }
+      }
+
+      const bookmakersArr = Object.values(bookmakers).map(b => ({
+        ...b,
+        markets: Object.values(b.markets),
+      }));
+
+      // Only include events with at least 2 bookmakers (needed for EV calc)
+      if (bookmakersArr.length < 2) continue;
+
+      events.push({
+        id: eventId,
+        sport_key: sportKey,
+        sport_title: sportTitle,
+        home_team: homeTeam,
+        away_team: awayTeam,
+        commence_time: ev.status.startsAt ? new Date(ev.status.startsAt).toISOString() : new Date().toISOString(),
+        bookmakers: bookmakersArr,
+      });
+    }
+
+    return { events, source: 'sportsgameodds', callsUsed: 1 };
+  } catch (err) {
+    console.warn(`⚠️  SportGameOdds error for ${sportKey}:`, err.message);
+    return { events: [], source: 'sgo-error', callsUsed: 1 };
+  }
+}
+
 async function fetchFromOddsAPI(sportKey) {
   const l1Key = 'oddsapi:' + sportKey;
   const l1 = getL1(l1Key);
@@ -308,53 +447,52 @@ async function fetchFromOddsAPI(sportKey) {
     return { events: l2, source: 'L2-db', callsUsed: 0 };
   }
 
-  // BoltOdds doesn't have this sport
-  const boltName = INTERNAL_TO_BOLTODDS[sportKey];
-  if (!boltName) {
-    return { events: [], source: 'unsupported-sport', callsUsed: 0 };
+  const ttl = parseInt(process.env.CACHE_ODDS_TTL || '45');
+  const sportTitle = BOLTODDS_SPORTS[Object.keys(BOLTODDS_SPORTS).find(k => BOLTODDS_SPORTS[k].key === sportKey)]?.name || sportKey;
+
+  // ── 1) SportGameOdds REST (primary source) ──────────────────────────────
+  if (SGO_API_KEY && SGO_LEAGUES[sportKey]) {
+    console.log(`🌐 Fetching SportGameOdds: ${sportTitle} (${sportKey})`);
+    try {
+      const result = await fetchFromSportsGameOdds(sportKey);
+      if (result.events && result.events.length > 0) {
+        await recordAPICall('sportsgameodds', result.source);
+        setL1(l1Key, result.events, ttl);
+        await setL2Odds(sportKey, result.events, ttl * 6, 'sportsgameodds');
+        console.log(`✅ SportGameOdds: ${result.events.length} events for ${sportTitle}`);
+        return { events: result.events, source: 'sportsgameodds', callsUsed: 1 };
+      }
+      console.log(`ℹ️  SportGameOdds: 0 events for ${sportTitle} (source: ${result.source})`);
+    } catch (err) {
+      console.warn(`⚠️  SportGameOdds error for ${sportTitle}:`, err.message);
+    }
   }
 
-  // Try real BoltOdds WebSocket first (works on paid plans)
-  console.log(`🌐 Trying BoltOdds WebSocket: ${boltName} (${sportKey})`);
-  let realEvents = [];
-  let realSource = '';
-  try {
-    if (canCallAPI('boltodds')) {
+  // ── 2) BoltOdds WebSocket (fallback) ─────────────────────────────────────
+  const boltName = INTERNAL_TO_BOLTODDS[sportKey];
+  if (boltName && canCallAPI('boltodds')) {
+    console.log(`🌐 Trying BoltOdds WebSocket: ${boltName} (${sportKey})`);
+    try {
       const result = await fetchFromBoltOdds(boltName);
       if (result.events && result.events.length > 0) {
-        realEvents = result.events;
-        realSource = result.source;
-      } else {
-        realSource = result.source || 'no-data';
+        await recordAPICall('boltodds', 'ws:' + boltName);
+        setL1(l1Key, result.events, ttl);
+        await setL2Odds(sportKey, result.events, ttl * 6, 'boltodds');
+        console.log(`✅ BoltOdds: ${result.events.length} events for ${boltName}`);
+        return { events: result.events, source: 'boltodds', callsUsed: 1 };
       }
-    } else {
-      realSource = 'budget-exceeded';
-    }
-  } catch (err) {
-    console.warn(`⚠️  BoltOdds error for ${boltName}:`, err.message);
-    realSource = 'error';
-  }
-
-  // Fallback to demo data when real API doesn't return events (Trial plan)
-  if (realEvents.length === 0) {
-    const demoEvents = generateDemoOdds(sportKey);
-    if (demoEvents.length > 0) {
-      const ttl = parseInt(process.env.CACHE_ODDS_TTL || '45');
-      setL1(l1Key, demoEvents, ttl);
-      try { await setL2Odds(sportKey, demoEvents, ttl * 6, 'demo'); } catch (_) {}
-      console.log(`📊 Demo data: ${demoEvents.length} events for ${sportKey} (real source: ${realSource})`);
-      return { events: demoEvents, source: 'demo-fallback', callsUsed: 0 };
+    } catch (err) {
+      console.warn(`⚠️  BoltOdds error for ${boltName}:`, err.message);
     }
   }
 
-  // Real data path
-  if (realEvents.length > 0) {
-    await recordAPICall('boltodds', 'ws:' + boltName);
-    const ttl = parseInt(process.env.CACHE_ODDS_TTL || '45');
-    setL1(l1Key, realEvents, ttl);
-    await setL2Odds(sportKey, realEvents, ttl * 6, 'boltodds');
-    console.log(`✅ BoltOdds: ${realEvents.length} events for ${boltName}`);
-    return { events: realEvents, source: 'boltodds', callsUsed: 1 };
+  // ── 3) Demo data (last resort) ───────────────────────────────────────────
+  const demoEvents = generateDemoOdds(sportKey);
+  if (demoEvents.length > 0) {
+    setL1(l1Key, demoEvents, ttl);
+    try { await setL2Odds(sportKey, demoEvents, ttl * 6, 'demo'); } catch (_) {}
+    console.log(`📊 Demo data: ${demoEvents.length} events for ${sportTitle}`);
+    return { events: demoEvents, source: 'demo-fallback', callsUsed: 0 };
   }
 
   return { events: [], source: 'no-data', callsUsed: 0 };

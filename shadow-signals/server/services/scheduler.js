@@ -85,11 +85,26 @@ function printBudget() {
 }
 
 function initScheduler() {
-  console.log('⏰ Initialising Smart Scheduler (BoltOdds)...');
+  console.log('⏰ Initialising Smart Scheduler (SportGameOdds)...');
   printBudget();
 
   // Recompute EV every 45s — FREE (reads DB only)
   cron.schedule('*/45 * * * * *', recomputeAll);
+
+  // ── Immediate initial fetch (first data on startup) ──────────────────────
+  setTimeout(async () => {
+    console.log('🔄 Initial fetch: fetching odds data on startup...');
+    const starters = [
+      'soccer_epl', 'basketball_nba', 'americanfootball_nfl',
+      'soccer_la_liga', 'soccer_bundesliga', 'soccer_serie_a', 'soccer_ucl',
+      'baseball_mlb', 'icehockey_nhl',
+    ];
+    for (const sport of starters) {
+      try { await fetchFromOddsAPI(sport); } catch (_) {}
+    }
+    console.log('✅ Initial fetch complete — computing EV...');
+    await recomputeAll();
+  }, 2000);
 
   // Top-tier sports — every 3 min on game days
   cron.schedule('*/3 * * * *', async () => {
