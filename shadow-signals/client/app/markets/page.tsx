@@ -5,7 +5,7 @@ import Navbar from '../../components/Navbar';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import API from '../../lib/api';
 import { getSocket, connectSocket } from '../../lib/socket';
-import { getToken, getUser } from '../../lib/auth';
+import { getToken } from '../../lib/auth';
 
 interface EVOpp {
   id: string;
@@ -19,6 +19,7 @@ interface EVOpp {
   ev_percent:  number | string;
   kelly_percent: number | string;
   commence_time: string;
+  market?: string;
 }
 
 /* ─── helpers ─────────────────────────────────────────────────────────── */
@@ -276,7 +277,6 @@ function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (i
 
   async function logAllBets() {
     setLogging(true);
-    const user = getUser();
     try {
       await Promise.all(items.map(({ ev }) =>
         API.post('/bets', {
@@ -384,18 +384,17 @@ export default function MarketsPage() {
   }, [sport, minEV]);
 
   useEffect(() => { setLoading(true); load(); }, [load]);
-  useEffect(() => {
-    const t = setInterval(load, 45000);
+  useEffect(() => { const t = setInterval(load, 45000); return () => clearInterval(t); }, [load]);
 
-    // Real-time EV updates via WebSocket
+  // WebSocket — mount once, independent of sport/filter changes
+  useEffect(() => {
     const token = getToken();
     if (token) connectSocket(token);
     const s = getSocket();
     const onEV = (evs: EVOpp[]) => { if (evs?.length) { setData(evs); setUpdated(new Date()); } };
     s.on('ev:update', onEV);
-
-    return () => { clearInterval(t); s.off('ev:update', onEV); };
-  }, [load]);
+    return () => { s.off('ev:update', onEV); };
+  }, []);
 
   function addToSlip(ev: EVOpp) {
     setSlip(prev => prev.find(i => i.ev.id === ev.id) ? prev.filter(i => i.ev.id !== ev.id) : [...prev, { ev }]);
