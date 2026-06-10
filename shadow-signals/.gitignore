@@ -13,3 +13,6 @@ generated/
 .vscode/
 .streamlit/
 tsc-result.txt
+
+.vercel
+.env*
