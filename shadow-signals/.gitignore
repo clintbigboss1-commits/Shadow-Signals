@@ -14,5 +14,9 @@ generated/
 .streamlit/
 tsc-result.txt
 
+# Railway — must use railway.json with DOCKERFILE builder, not auto-detect
+railpack.json
+.railpackignore
+
 .vercel
 .env*
