@@ -7,6 +7,7 @@ import { logout, getUser, getToken, type User } from '../lib/auth';
 import UpgradeBanner from './UpgradeBanner';
 import API from '../lib/api';
 import { getSocket, connectSocket } from '../lib/socket';
+import Logo from './Logo';
 
 const NAV = [
   { href: '/markets',  label: 'Markets'  },
@@ -67,12 +68,9 @@ export default function Navbar() {
         <div className="navbar-container">
 
           {/* Logo */}
-          <Link href="/markets" style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 101 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 17, color: '#030711', flexShrink: 0 }}>S</div>
-            <span style={{ fontWeight: 900, fontSize: 17, letterSpacing: -.3, color: '#e2e8f0' }}>
-              SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span>
-            </span>
-          </Link>
+          <div style={{ position: 'relative', zIndex: 101 }}>
+            <Logo href="/markets" size={36} />
+          </div>
 
           {/* Hamburger toggle for mobile */}
           <button className="navbar-hamburger" onClick={() => setMenuOpen(!menuOpen)} style={{ position: 'relative', zIndex: 101 }}>

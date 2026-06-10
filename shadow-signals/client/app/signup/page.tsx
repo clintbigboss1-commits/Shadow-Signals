@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import API from '../../lib/api';
 import { saveAuth, type User } from '../../lib/auth';
+import Logo from '../../components/Logo';
 
 const WINS = [
   { user: 'Jake T.', loc: 'Sydney', result: '+$1,240', detail: 'AFL arb — Round 18' },
@@ -61,12 +62,9 @@ export default function Signup() {
         <div style={{ position: 'absolute', bottom: -60, right: -60, width: 320, height: 320, background: 'radial-gradient(circle, rgba(34,211,238,.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         {/* Logo */}
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative', zIndex: 1 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 17, color: '#030711' }}>S</div>
-          <span style={{ fontWeight: 900, fontSize: 17, letterSpacing: -.3, color: '#e2e8f0' }}>
-            SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span>
-          </span>
-        </Link>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <Logo href="/" size={36} />
+        </div>
 
         {/* Main message */}
         <div style={{ position: 'relative', zIndex: 1 }}>
