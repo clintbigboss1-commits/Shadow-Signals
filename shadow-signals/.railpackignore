@@ -1,0 +1,4 @@
+client/
+frontend/
+.venv/
+.agents/
