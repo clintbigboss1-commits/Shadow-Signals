@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import API from '../lib/api';
+import { getSocket, connectSocket } from '../lib/socket';
+import { getToken } from '../lib/auth';
 
 interface Arb {
   id: string;
@@ -35,7 +37,19 @@ export default function ArbTable() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetch(); const t = setInterval(fetch, 30000); return () => clearInterval(t); }, [fetch]);
+  useEffect(() => {
+    fetch();
+    const t = setInterval(fetch, 30000);
+
+    // Real-time arb updates via WebSocket
+    const token = getToken();
+    if (token) connectSocket(token);
+    const s = getSocket();
+    const onArb = (arbs: Arb[]) => { if (arbs?.length) setData(arbs); };
+    s.on('arb:update', onArb);
+
+    return () => { clearInterval(t); s.off('arb:update', onArb); };
+  }, [fetch]);
 
   if (error === 'upgrade') {
     return (

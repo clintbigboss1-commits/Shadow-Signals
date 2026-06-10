@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { logout, getUser, type User } from '../lib/auth';
+import { logout, getUser, getToken, type User } from '../lib/auth';
 import UpgradeBanner from './UpgradeBanner';
+import API from '../lib/api';
+import { getSocket, connectSocket } from '../lib/socket';
 
 const NAV = [
   { href: '/markets',  label: 'Markets'      },
@@ -20,10 +22,40 @@ const PLAN_COL: Record<string, string> = {
 
 export default function Navbar() {
   const path = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser]           = useState<User | null>(null);
+  const [menuOpen, setMenuOpen]   = useState(false);
+  const [unread, setUnread]       = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifs, setNotifs]       = useState<{id:string;title:string;body:string|null;link:string|null;read:boolean;created_at:string}[]>([]);
 
-  useEffect(() => { setUser(getUser()); }, []);
+  useEffect(() => {
+    setUser(getUser());
+    const token = getToken();
+    if (!token) return;
+
+    // Fetch initial unread count
+    API.get('/notifications?limit=10').then(r => {
+      setUnread(r.data.unread_count || 0);
+      setNotifs(r.data.data || []);
+    }).catch(() => {});
+
+    // Subscribe to live notification pushes
+    connectSocket(token);
+    const s = getSocket();
+    s.emit('subscribe:notifications');
+    const onNew = (n: {id:string;title:string;body:string|null;link:string|null;read:boolean;created_at:string}) => {
+      setNotifs(prev => [n, ...prev.slice(0, 9)]);
+      setUnread(c => c + 1);
+    };
+    s.on('notification:new', onNew);
+    return () => { s.off('notification:new', onNew); };
+  }, []);
+
+  function markAllRead() {
+    API.patch('/notifications/read').catch(() => {});
+    setUnread(0);
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+  }
 
   return (
     <>
@@ -100,6 +132,53 @@ export default function Navbar() {
                   color: PLAN_COL[user.plan] || '#64748b',
                   textTransform: 'uppercase', letterSpacing: .8,
                 }}>{user.plan}</span>
+
+                {/* Notification bell */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => { setNotifOpen(o => !o); if (unread > 0) markAllRead(); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', position: 'relative', fontSize: 18, lineHeight: 1 }}
+                    title="Notifications"
+                  >
+                    🔔
+                    {unread > 0 && (
+                      <span style={{
+                        position: 'absolute', top: 0, right: 0,
+                        background: '#ef4444', color: '#fff',
+                        fontSize: 10, fontWeight: 800,
+                        width: 16, height: 16, borderRadius: '50%',
+                        display: 'grid', placeItems: 'center', lineHeight: 1,
+                      }}>{unread > 9 ? '9+' : unread}</span>
+                    )}
+                  </button>
+
+                  {notifOpen && (
+                    <div style={{
+                      position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 200,
+                      width: 320, background: '#0d1526',
+                      border: '1px solid rgba(255,255,255,.1)', borderRadius: 12,
+                      boxShadow: '0 16px 48px rgba(0,0,0,.6)', overflow: 'hidden',
+                    }}>
+                      <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,.06)', fontWeight: 700, fontSize: 13 }}>
+                        Notifications
+                      </div>
+                      {notifs.length === 0 ? (
+                        <div style={{ padding: 24, textAlign: 'center', color: '#64748b', fontSize: 13 }}>No notifications yet</div>
+                      ) : notifs.map(n => (
+                        <a key={n.id} href={n.link || '#'} onClick={() => setNotifOpen(false)} style={{
+                          display: 'block', padding: '12px 16px',
+                          borderBottom: '1px solid rgba(255,255,255,.04)',
+                          background: n.read ? 'transparent' : 'rgba(34,211,238,.04)',
+                          textDecoration: 'none', color: 'inherit',
+                        }}>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: '#e2e8f0', marginBottom: 2 }}>{n.title}</div>
+                          {n.body && <div style={{ fontSize: 12, color: '#64748b' }}>{n.body}</div>}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <button onClick={logout} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(239,68,68,.3)', background: 'transparent', color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
                   Logout
                 </button>

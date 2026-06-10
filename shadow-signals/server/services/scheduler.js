@@ -5,6 +5,8 @@ const { computeEVFromCache } = require('./evCalculator');
 const { findArbs } = require('./arbFinder');
 const { db } = require('../db');
 const { API_BUDGETS } = require('./cacheManager');
+const emails = require('./emails');
+const { createNotification } = require('./notifications');
 
 let _io = null;
 function setIO(io) { _io = io; }
@@ -49,8 +51,46 @@ async function recomputeAll() {
       const hot = evOpps.filter(e => e.ev_percent >= 8);
       if (hot.length > 0) _io.emit('ev:hot', hot.slice(0, 5));
     }
+
+    // Send edge alert emails + notifications to Pro/Elite users for new Grade S+ opportunities
+    const unalertedHot = evOpps.filter(e => e.ev_percent >= 8 && !e.alert_sent);
+    if (unalertedHot.length > 0) {
+      await sendHotEdgeAlerts(unalertedHot.slice(0, 3));
+    }
   } catch (err) {
     console.error('Recompute error:', err.message);
+  }
+}
+
+async function sendHotEdgeAlerts(hotEdges) {
+  try {
+    const users = await db.query(
+      `SELECT id, email, name FROM users WHERE plan IN ('pro', 'elite') AND subscription_status = 'active'`
+    );
+    if (!users.rows.length) return;
+
+    const topEdge = hotEdges[0];
+
+    for (const user of users.rows) {
+      emails.sendEdgeAlert(user, topEdge).catch(() => {});
+      createNotification(
+        user.id, 'hot_edge',
+        `🔥 ${Number(topEdge.ev_percent).toFixed(1)}% edge — ${topEdge.event_name}`,
+        `${topEdge.selection} @ $${Number(topEdge.bookie_odds).toFixed(2)} on ${topEdge.bookie?.replace(/_/g,' ')}`,
+        '/markets'
+      ).catch(() => {});
+    }
+
+    // Mark these opportunities as alerted so we don't re-send
+    const ids = hotEdges.map(e => e.id).filter(Boolean);
+    if (ids.length) {
+      await db.query(
+        `UPDATE ev_opportunities SET alert_sent = TRUE WHERE id = ANY($1::uuid[])`,
+        [ids]
+      );
+    }
+  } catch (err) {
+    console.error('Edge alert error:', err.message);
   }
 }
 

@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const emails = require('../services/emails');
+const { createNotification } = require('../services/notifications');
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
 
@@ -36,7 +37,8 @@ router.post('/register', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
     
-    // emails.sendWelcome(user).catch(() => {});
+    emails.sendWelcome(user).catch(() => {});
+    createNotification(user.id, 'welcome', 'Welcome to Shadow Elite! 🎯', 'Your 7-day free trial has started. Find your first edge in Markets.', '/markets').catch(() => {});
     res.status(201).json({ token, user: { ...user, role } });
   } catch (err) {
     res.status(500).json({ error: err.message });

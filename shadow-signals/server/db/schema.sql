@@ -108,3 +108,17 @@ CREATE INDEX IF NOT EXISTS idx_ev_sport ON ev_opportunities(sport_key, is_active
 CREATE INDEX IF NOT EXISTS idx_arb_active ON arb_opportunities(is_active, profit_percent DESC);
 CREATE INDEX IF NOT EXISTS idx_bets_user ON bets(user_id, placed_at DESC);
 CREATE INDEX IF NOT EXISTS idx_api_month ON api_call_log(api_name, month_year);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  body TEXT,
+  link VARCHAR(255),
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read, created_at DESC);
+
+ALTER TABLE ev_opportunities ADD COLUMN IF NOT EXISTS alert_sent BOOLEAN DEFAULT FALSE;

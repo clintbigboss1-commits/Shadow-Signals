@@ -11,13 +11,15 @@ const jwt        = require('jsonwebtoken');
 
 const { initDB }               = require('./db');
 const { initScheduler, setIO } = require('./services/scheduler');
+const { setIO: setNotifIO }    = require('./services/notifications');
 
-const authRoutes     = require('./routes/auth');
-const evRoutes       = require('./routes/ev');
-const arbRoutes      = require('./routes/arb');
-const betsRoutes     = require('./routes/bets');
-const paymentsRoutes = require('./routes/payments');
-const { webhookHandler } = require('./routes/payments');
+const authRoutes          = require('./routes/auth');
+const evRoutes            = require('./routes/ev');
+const arbRoutes           = require('./routes/arb');
+const betsRoutes          = require('./routes/bets');
+const paymentsRoutes      = require('./routes/payments');
+const notificationsRoutes = require('./routes/notifications');
+const { webhookHandler }  = require('./routes/payments');
 
 const app    = express();
 const server = http.createServer(app);
@@ -27,6 +29,7 @@ const io = new Server(server, {
   cors: { origin: FRONTEND, credentials: true },
 });
 setIO(io);
+setNotifIO(io);
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: FRONTEND, credentials: true }));
@@ -59,11 +62,12 @@ app.use('/api/auth/', rateLimit({
 }));
 
 // Routes
-app.use('/api/auth',     authRoutes);
-app.use('/api/ev',       evRoutes);
-app.use('/api/arb',      arbRoutes);
-app.use('/api/bets',     betsRoutes);
-app.use('/api/payments', paymentsRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/ev',            evRoutes);
+app.use('/api/arb',           arbRoutes);
+app.use('/api/bets',          betsRoutes);
+app.use('/api/payments',      paymentsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // ── /api/health — diagnose your config instantly ──────────────────────────
 app.get('/api/health', (req, res) => {
@@ -105,8 +109,11 @@ io.on('connection', (socket) => {
       socket.emit('auth:ok', { plan: user.plan });
     } catch { socket.emit('auth:error', 'Invalid token'); }
   });
-  socket.on('subscribe:ev',  () => socket.join('ev:feed'));
-  socket.on('subscribe:arb', () => socket.join('arb:feed'));
+  socket.on('subscribe:ev',            () => socket.join('ev:feed'));
+  socket.on('subscribe:arb',           () => socket.join('arb:feed'));
+  socket.on('subscribe:notifications', () => {
+    if (socket.data.user) socket.join(`user:${socket.data.user.userId}`);
+  });
 });
 
 // Start

@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Navbar from '../../components/Navbar';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import API from '../../lib/api';
+import { getSocket, connectSocket } from '../../lib/socket';
+import { getToken, getUser } from '../../lib/auth';
 
 interface EVOpp {
   id: string;
@@ -265,10 +267,40 @@ function EventCard({
 
 /* ─── Bet Slip sidebar ────────────────────────────────────────────────── */
 function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (id: string) => void; onClear: () => void }) {
-  const [stake, setStake] = useState(50);
+  const [stake, setStake]   = useState(50);
+  const [logging, setLogging] = useState(false);
+  const [logged, setLogged]   = useState(false);
   if (items.length === 0) return null;
 
   const totalKelly = items.reduce((a, i) => a + Number(i.ev.kelly_percent), 0) / items.length;
+
+  async function logAllBets() {
+    setLogging(true);
+    const user = getUser();
+    try {
+      await Promise.all(items.map(({ ev }) =>
+        API.post('/bets', {
+          event_name:     ev.event_name,
+          sport:          ev.sport_key,
+          market:         ev.market || 'h2h',
+          selection:      ev.selection,
+          bookie:         ev.bookie,
+          odds_taken:     Number(ev.bookie_odds),
+          fair_odds:      Number(ev.fair_odds),
+          ev_percent:     Number(ev.ev_percent),
+          kelly_fraction: Number(ev.kelly_percent) / 100,
+          stake_aud:      stake,
+          event_time:     ev.commence_time,
+        })
+      ));
+      setLogged(true);
+      setTimeout(() => { onClear(); setLogged(false); }, 1500);
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setLogging(false);
+    }
+  }
 
   return (
     <div style={{
@@ -319,8 +351,12 @@ function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (i
           <span>Avg Kelly: {totalKelly.toFixed(1)}%</span>
           <span>Total: ${(stake * items.length).toFixed(0)}</span>
         </div>
-        <button style={{ width: '100%', padding: '11px', borderRadius: 10, background: 'linear-gradient(135deg,#22d3ee,#0891b2)', border: 'none', color: '#030711', fontWeight: 800, fontSize: 14, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-          Log All Bets →
+        <button
+          onClick={logAllBets}
+          disabled={logging || logged}
+          style={{ width: '100%', padding: '11px', borderRadius: 10, background: logged ? '#10b981' : 'linear-gradient(135deg,#22d3ee,#0891b2)', border: 'none', color: '#030711', fontWeight: 800, fontSize: 14, cursor: logging ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif', opacity: logging ? 0.7 : 1 }}
+        >
+          {logged ? '✓ Logged to CLV Tracker' : logging ? 'Logging...' : `Log ${items.length} Bet${items.length > 1 ? 's' : ''} →`}
         </button>
       </div>
     </div>
@@ -348,7 +384,18 @@ export default function MarketsPage() {
   }, [sport, minEV]);
 
   useEffect(() => { setLoading(true); load(); }, [load]);
-  useEffect(() => { const t = setInterval(load, 45000); return () => clearInterval(t); }, [load]);
+  useEffect(() => {
+    const t = setInterval(load, 45000);
+
+    // Real-time EV updates via WebSocket
+    const token = getToken();
+    if (token) connectSocket(token);
+    const s = getSocket();
+    const onEV = (evs: EVOpp[]) => { if (evs?.length) { setData(evs); setUpdated(new Date()); } };
+    s.on('ev:update', onEV);
+
+    return () => { clearInterval(t); s.off('ev:update', onEV); };
+  }, [load]);
 
   function addToSlip(ev: EVOpp) {
     setSlip(prev => prev.find(i => i.ev.id === ev.id) ? prev.filter(i => i.ev.id !== ev.id) : [...prev, { ev }]);

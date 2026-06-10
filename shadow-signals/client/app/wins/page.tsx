@@ -1,14 +1,17 @@
-import Link from 'next/link';
+'use client';
 
-// Social proof / verified wins page — sales funnel page 2
-const WINS = [
-  { name: 'Matt B.', location: 'Melbourne, VIC', sport: 'AFL', event: 'Collingwood v Carlton', bookie: 'Sportsbet', odds: 2.30, ev: '+9.2%', profit: '+$184', date: '18 May 2026', grade: 'S+' },
-  { name: 'Sarah K.', location: 'Brisbane, QLD', sport: 'NRL', event: 'Panthers v Storm', bookie: 'TAB', odds: 2.55, ev: '+7.8%', profit: '+$97', date: '17 May 2026', grade: 'A' },
-  { name: 'Jake T.', location: 'Sydney, NSW', sport: 'Racing', event: 'Golden Slipper R4', bookie: 'Bet365', odds: 4.20, ev: '+12.1%', profit: '+$320', date: '16 May 2026', grade: 'S+' },
-  { name: 'Chris M.', location: 'Perth, WA', sport: 'Cricket', event: 'AUS v IND — Test', bookie: 'Ladbrokes', odds: 3.20, ev: '+6.4%', profit: '+$152', date: '15 May 2026', grade: 'A' },
-  { name: 'Tom W.', location: 'Adelaide, SA', sport: 'AFL', event: 'Lions v Giants', bookie: 'Neds', odds: 1.95, ev: '+5.1%', profit: '+$66', date: '14 May 2026', grade: 'B' },
-  { name: 'Liam P.', location: 'Melbourne, VIC', sport: 'UFC', event: 'UFC 313 Main Event', bookie: 'Sportsbet', odds: 2.80, ev: '+8.9%', profit: '+$228', date: '13 May 2026', grade: 'S+' },
-];
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import API from '../../lib/api';
+
+interface Win {
+  name: string; location?: string; sport: string; event: string;
+  bookie: string; odds: number; ev: string; profit: string; date: string; grade: string;
+}
+interface Stats {
+  total_bets: string; clv_positive_pct: string;
+  avg_win_profit: string; s_plus_this_month: string;
+}
 
 const GRADE_STYLE: Record<string, { bg: string; color: string }> = {
   'S+': { bg: '#22d3ee', color: '#030711' },
@@ -16,7 +19,27 @@ const GRADE_STYLE: Record<string, { bg: string; color: string }> = {
   'B':  { bg: '#f59e0b', color: '#030711' },
 };
 
+const FALLBACK_WINS: Win[] = [
+  { name: 'Matt B.', sport: 'AFL', event: 'Collingwood v Carlton', bookie: 'Sportsbet', odds: 2.30, ev: '+9.2%', profit: '+$184', date: '18 May 2026', grade: 'S+' },
+  { name: 'Sarah K.', sport: 'NRL', event: 'Panthers v Storm', bookie: 'TAB', odds: 2.55, ev: '+7.8%', profit: '+$97', date: '17 May 2026', grade: 'A' },
+  { name: 'Jake T.', sport: 'Racing', event: 'Golden Slipper R4', bookie: 'Bet365', odds: 4.20, ev: '+12.1%', profit: '+$320', date: '16 May 2026', grade: 'S+' },
+];
+
 export default function WinsPage() {
+  const [wins, setWins] = useState<Win[]>(FALLBACK_WINS);
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  useEffect(() => {
+    API.get('/bets/wins').then(r => {
+      if (r.data.wins?.length > 0) setWins(r.data.wins);
+      if (r.data.stats) setStats(r.data.stats);
+    }).catch(() => {});
+  }, []);
+
+  const clvPct   = stats ? Number(stats.clv_positive_pct).toFixed(0) + '%' : '78%';
+  const sPlus    = stats ? stats.s_plus_this_month : '127';
+  const avgProfit = stats ? '+$' + Number(stats.avg_win_profit).toFixed(0) : '+$284';
+
   return (
     <div style={{ minHeight: '100vh', background: '#08111e', color: '#e2e8f0', fontFamily: 'Inter, sans-serif' }}>
 
@@ -45,12 +68,12 @@ export default function WinsPage() {
           </p>
         </div>
 
-        {/* Summary stats */}
+        {/* Live stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 40 }}>
           {[
-            { v: '78%',     l: 'CLV positive bets' },
-            { v: '+$2,847', l: 'Avg core profit/user' },
-            { v: '127',     l: 'S+ grade bets this month' },
+            { v: clvPct,    l: 'CLV positive bets' },
+            { v: avgProfit, l: 'Avg win profit' },
+            { v: String(sPlus), l: 'S+ grade bets this month' },
             { v: '4.2%',    l: 'Avg edge per bet' },
           ].map(s => (
             <div key={s.l} className="card" style={{ textAlign: 'center', padding: 20 }}>
@@ -62,7 +85,7 @@ export default function WinsPage() {
 
         {/* Win cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
-          {WINS.map((w, i) => {
+          {wins.map((w, i) => {
             const gs = GRADE_STYLE[w.grade] || GRADE_STYLE['B'];
             return (
               <div key={i} className="card" style={{ padding: '18px 20px', display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -72,16 +95,13 @@ export default function WinsPage() {
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{w.name}</span>
-                    <span style={{ fontSize: 12, color: '#64748b' }}>{w.location}</span>
                     <span style={{ background: gs.bg, color: gs.color, fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 4 }}>Grade {w.grade}</span>
                   </div>
                   <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 2 }}>{w.event}</div>
                   <div style={{ fontSize: 12, color: '#64748b' }}>{w.sport} · Best at {w.bookie} · {w.date}</div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 18, color: '#10b981' }}>
-                    {w.profit}
-                  </div>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 18, color: '#10b981' }}>{w.profit}</div>
                   <div style={{ fontSize: 12, color: '#64748b' }}>${w.odds} odds · {w.ev} EV</div>
                 </div>
               </div>

@@ -4,6 +4,7 @@ const Stripe  = require('stripe');
 const { requireAuth } = require('../middleware/auth');
 const { db }   = require('../db');
 const emails   = require('../services/emails');
+const { createNotification } = require('../services/notifications');
 
 function stripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -57,11 +58,12 @@ async function webhookHandler(req, res) {
           [session.customer, session.subscription, plan, userId]
         );
 
-        // Send confirmation email
         const userRow = await db.query('SELECT email, name FROM users WHERE id = $1', [userId]);
         if (userRow.rows[0]) {
           emails.sendSubscriptionConfirmed(userRow.rows[0], plan).catch(() => {});
         }
+        const planNames = { starter: 'Starter', pro: 'Pro', elite: 'Elite' };
+        createNotification(userId, 'plan_activated', `${planNames[plan] || plan} plan activated ✅`, 'Full access unlocked. Head to Markets to find your edge.', '/markets').catch(() => {});
 
         console.log(`✅ Plan activated: ${plan} for user ${userId}`);
         break;
@@ -97,11 +99,12 @@ async function webhookHandler(req, res) {
         );
         // Send payment failed email
         const userRow = await db.query(
-          'SELECT email, name FROM users WHERE stripe_customer_id = $1',
+          'SELECT id, email, name FROM users WHERE stripe_customer_id = $1',
           [inv.customer]
         );
         if (userRow.rows[0]) {
           emails.sendPaymentFailed(userRow.rows[0]).catch(() => {});
+          createNotification(userRow.rows[0].id, 'payment_failed', 'Payment failed ⚠️', 'Update your payment method to keep your access.', '/dashboard').catch(() => {});
         }
         break;
       }

@@ -148,4 +148,46 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/bets/wins — public leaderboard (anonymised)
+router.get('/wins', async (req, res) => {
+  try {
+    const stats = await db.query(`
+      SELECT
+        COUNT(*)                                                                     AS total_bets,
+        COUNT(CASE WHEN clv_percent > 0 THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) AS clv_positive_pct,
+        COALESCE(AVG(profit_aud) FILTER (WHERE result = 'win'), 0)                  AS avg_win_profit,
+        COUNT(CASE WHEN ev_percent >= 8 AND DATE_TRUNC('month', placed_at) = DATE_TRUNC('month', NOW()) THEN 1 END) AS s_plus_this_month
+      FROM bets WHERE result IN ('win','loss')
+    `);
+
+    const recent = await db.query(`
+      SELECT
+        u.name,
+        b.sport, b.event_name, b.bookie, b.odds_taken, b.ev_percent, b.profit_aud, b.placed_at
+      FROM bets b
+      JOIN users u ON u.id = b.user_id
+      WHERE b.result = 'win' AND b.profit_aud > 0 AND b.clv_percent > 0
+      ORDER BY b.placed_at DESC
+      LIMIT 12
+    `);
+
+    // Anonymise: "John Smith" → "John S."
+    const wins = recent.rows.map(w => ({
+      name:       w.name ? `${w.name.split(' ')[0]} ${(w.name.split(' ')[1] || '').charAt(0)}.`.trim() : 'Member',
+      sport:      w.sport,
+      event:      w.event_name,
+      bookie:     w.bookie,
+      odds:       Number(w.odds_taken),
+      ev:         `+${Number(w.ev_percent).toFixed(1)}%`,
+      profit:     `+$${Number(w.profit_aud).toFixed(0)}`,
+      date:       new Date(w.placed_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }),
+      grade:      Number(w.ev_percent) >= 8 ? 'S+' : Number(w.ev_percent) >= 5 ? 'A' : 'B',
+    }));
+
+    res.json({ stats: stats.rows[0], wins });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
