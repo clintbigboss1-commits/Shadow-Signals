@@ -9,11 +9,10 @@ import API from '../lib/api';
 import { getSocket, connectSocket } from '../lib/socket';
 
 const NAV = [
-  { href: '/markets',  label: 'Markets'      },
-  { href: '/wins',     label: 'Wins'         },
-  { href: '/pricing',  label: 'Find My Plan' },
-  { href: '/reviews',  label: 'Reviews'      },
-  { href: '/pricing',  label: 'Pricing'      },
+  { href: '/markets',  label: 'Markets'  },
+  { href: '/wins',     label: 'Wins'     },
+  { href: '/reviews',  label: 'Reviews'  },
+  { href: '/pricing',  label: 'Pricing'  },
 ];
 
 const PLAN_COL: Record<string, string> = {

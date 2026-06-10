@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Navbar from '../../components/Navbar';
 
 const REVIEWS = [
   { name: 'Matt B.', loc: 'Melbourne', plan: 'Pro', stars: 5, text: 'Been using it for 2 months. My CLV is consistently positive. The grade system tells you exactly which bets are worth taking — I only bet Grade A and above now.', badge: 'CLV +4.2% avg' },
@@ -13,17 +14,7 @@ export default function ReviewsPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#08111e', color: '#e2e8f0', fontFamily: 'Inter, sans-serif' }}>
 
-      <nav style={{ borderBottom: '1px solid rgba(255,255,255,.06)', padding: '0 32px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 60 }}>
-          <Link href="/" style={{ fontWeight: 900, fontSize: 17 }}>
-            SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span>
-          </Link>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Link href="/login"  style={{ padding: '7px 16px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, color: '#94a3b8' }}>Sign In</Link>
-            <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, fontSize: 13, fontWeight: 700, color: '#030711', background: 'linear-gradient(135deg,#22d3ee,#0891b2)' }}>Get Edge →</Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '56px 24px' }}>
 

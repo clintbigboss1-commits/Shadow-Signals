@@ -541,6 +541,37 @@ input::placeholder { color: var(--faint); }
   margin-top: 6px;
 }
 
+/* ── Auth split layout ──────────────────────────────────── */
+.auth-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.auth-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(40px,6vh,72px) clamp(24px,5vw,64px);
+  background: #08111e;
+}
+@media (max-width: 900px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+  }
+  .auth-brand {
+    display: none;
+  }
+  .auth-form-panel {
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+}
+
 /* ── Widget dark theme overrides ────────────────────────── */
 api-sports-widget {
   --widget-bg: #0d1526;
