@@ -48,18 +48,19 @@ export default function Signup() {
   }
 
   return (
-    <div className="auth-split" style={{ background: '#08111e', fontFamily: 'Inter, sans-serif' }}>
+    <div className="auth-split" style={{ background: '#0a1929', fontFamily: 'Inter, sans-serif' }}>
 
       {/* ── Left brand panel ─────────────────────────── */}
       <div className="auth-brand" style={{
-        background: 'linear-gradient(160deg, #040c1a 0%, #06111f 100%)',
+        background: 'linear-gradient(160deg, #060e1a 0%, #0a1929 100%)',
         padding: 'clamp(40px,6vh,72px) clamp(36px,5vw,64px)',
         borderRight: '1px solid rgba(255,255,255,.06)',
         position: 'relative', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
       }}>
         {/* background glows */}
-        <div style={{ position: 'absolute', top: -120, left: -80, width: 420, height: 420, background: 'radial-gradient(circle, rgba(139,92,246,.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -60, right: -60, width: 320, height: 320, background: 'radial-gradient(circle, rgba(34,211,238,.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -120, left: -80, width: 420, height: 420, background: 'radial-gradient(circle, rgba(168,85,247,.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -60, right: -60, width: 320, height: 320, background: 'radial-gradient(circle, rgba(0,212,255,.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         {/* Logo */}
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -68,25 +69,25 @@ export default function Signup() {
 
         {/* Main message */}
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 18 }}>
             7-day free trial · No credit card
           </div>
-          <h2 style={{ fontSize: 'clamp(30px,3.5vw,46px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: -1.5, marginBottom: 20, color: '#e2e8f0' }}>
+          <h2 style={{ fontSize: 'clamp(30px,3.5vw,46px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: -1.5, marginBottom: 20, color: '#ffffff' }}>
             Start winning<br/>from day one.
           </h2>
 
           {/* Recent wins ticker */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
             {WINS.map((w, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(16,185,129,.05)', border: '1px solid rgba(16,185,129,.14)', borderRadius: 10, padding: '11px 14px' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(16,185,129,.12)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: '#10b981', flexShrink: 0 }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(34,197,94,.05)', border: '1px solid rgba(34,197,94,.14)', borderRadius: 10, padding: '11px 14px' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(34,197,94,.12)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: '#22c55e', flexShrink: 0 }}>
                   {w.user[0]}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{w.user} <span style={{ color: '#64748b', fontWeight: 400, fontSize: 12 }}>· {w.loc}</span></div>
-                  <div style={{ fontSize: 12, color: '#64748b' }}>{w.detail}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>{w.user} <span style={{ color: '#5e7390', fontWeight: 400, fontSize: 12 }}>· {w.loc}</span></div>
+                  <div style={{ fontSize: 12, color: '#5e7390' }}>{w.detail}</div>
                 </div>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#10b981', flexShrink: 0 }}>{w.result}</div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#22c55e', flexShrink: 0 }}>{w.result}</div>
               </div>
             ))}
           </div>
@@ -95,8 +96,8 @@ export default function Signup() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {FEATURES.map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
-                <span style={{ color: '#22d3ee', fontWeight: 800, flexShrink: 0 }}>✓</span>
-                <span style={{ color: '#94a3b8' }}>{f}</span>
+                <span style={{ color: '#00d4ff', fontWeight: 800, flexShrink: 0 }}>✓</span>
+                <span style={{ color: '#9eb1c8' }}>{f}</span>
               </div>
             ))}
           </div>
@@ -106,8 +107,8 @@ export default function Signup() {
         <div style={{ display: 'flex', gap: 24, position: 'relative', zIndex: 1 }}>
           {[['7,416+', 'Active users'], ['78%', 'CLV positive'], ['+$2.8k', 'Avg monthly']].map(([v, l]) => (
             <div key={l}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18, color: '#22d3ee', lineHeight: 1 }}>{v}</div>
-              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{l}</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18, color: '#00d4ff', lineHeight: 1 }}>{v}</div>
+              <div style={{ fontSize: 11, color: '#5e7390', marginTop: 4 }}>{l}</div>
             </div>
           ))}
         </div>
@@ -118,23 +119,23 @@ export default function Signup() {
         <div style={{ width: '100%', maxWidth: 400 }}>
 
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 8, color: '#e2e8f0' }}>Create your account</h1>
-            <p style={{ color: '#64748b', fontSize: 14 }}>7-day free trial — no credit card required</p>
+            <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 8, color: '#ffffff' }}>Create your account</h1>
+            <p style={{ color: '#5e7390', fontSize: 14 }}>7-day free trial — no credit card required</p>
           </div>
 
           {error && <div className="alert-error" style={{ marginBottom: 20 }}>{error}</div>}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Name (optional)</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#5e7390', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Name (optional)</label>
               <input placeholder="Your name" value={name} onChange={e => setName(e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Email</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#5e7390', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Email</label>
               <input type="email" placeholder="you@email.com" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Password</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#5e7390', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Password</label>
               <input type="password" placeholder="8+ characters" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
 
@@ -150,7 +151,7 @@ export default function Signup() {
 
           <div style={{ position: 'relative', margin: '24px 0', textAlign: 'center' }}>
             <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 1, background: 'rgba(255,255,255,.06)' }} />
-            <span style={{ position: 'relative', background: '#08111e', padding: '0 12px', fontSize: 12, color: '#475569' }}>Have an account?</span>
+            <span style={{ position: 'relative', background: '#0a1929', padding: '0 12px', fontSize: 12, color: '#2d4060' }}>Have an account?</span>
           </div>
 
           <Link href="/login">
@@ -159,8 +160,8 @@ export default function Signup() {
             </button>
           </Link>
 
-          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#334155' }}>
-            18+ only · Gambling Help: <a href="tel:1800858858" style={{ color: '#475569' }}>1800 858 858</a>
+          <p style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#2d4060' }}>
+            18+ only · Gambling Help: <a href="tel:1800858858" style={{ color: '#5e7390' }}>1800 858 858</a>
           </p>
         </div>
       </div>

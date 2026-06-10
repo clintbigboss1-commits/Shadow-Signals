@@ -12,8 +12,8 @@
  * 5. Win alert (when we find a big edge)
  */
 
-const FROM = process.env.EMAIL_FROM || 'Shadow Syndicate <noreply@shadowsyndicate.com.au>';
-const BASE = process.env.FRONTEND_URL || 'https://shadowsyndicate.com.au';
+const FROM = process.env.EMAIL_FROM || 'Shadow Signals <send@shadowsignals.app>';
+const BASE = process.env.FRONTEND_URL || 'https://shadowsignals.app';
 
 // Lazy-load Resend so server starts even without key
 function getResend() {
@@ -45,11 +45,11 @@ async function sendWelcome(user) {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#08111e;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
+<body style="margin:0;padding:0;background:#0a1929;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
   <div style="max-width:580px;margin:0 auto;padding:40px 24px;">
     
     <div style="text-align:center;margin-bottom:32px;">
-      <div style="display:inline-block;background:linear-gradient(135deg,#22d3ee,#0891b2);width:48px;height:48px;border-radius:12px;line-height:48px;font-size:22px;font-weight:900;color:#030711;text-align:center;">S</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,#00d4ff,#0099cc);width:48px;height:48px;border-radius:12px;line-height:48px;font-size:22px;font-weight:900;color:#0a1929;text-align:center;">S</div>
       <h1 style="color:#e2e8f0;font-size:20px;font-weight:900;margin:16px 0 4px;letter-spacing:-0.5px;">SHADOW SYNDICATE</h1>
       <p style="color:#64748b;font-size:13px;margin:0;">Beat the closing line every time</p>
     </div>
@@ -68,25 +68,25 @@ async function sendWelcome(user) {
       <div style="display:flex;flex-direction:column;gap:10px;">
         ${['Go to Markets → find your first +EV bet', 'Check the grade — Grade S+ means highest confidence', 'Use the Kelly % to size your stake', 'Log it in CLV Tracker to measure your edge over time'].map((step, i) => `
         <div style="display:flex;gap:12px;align-items:flex-start;">
-          <div style="width:22px;height:22px;border-radius:50%;background:#22d3ee;color:#030711;font-weight:900;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">${i+1}</div>
+          <div style="width:22px;height:22px;border-radius:50%;background:#00d4ff;color:#0a1929;font-weight:900;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">${i+1}</div>
           <span style="color:#e2e8f0;font-size:14px;">${step}</span>
         </div>`).join('')}
       </div>
     </div>
 
-    <a href="${BASE}/markets" style="display:block;text-align:center;background:linear-gradient(135deg,#22d3ee,#0891b2);color:#030711;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 24px;">
+    <a href="${BASE}/markets" style="display:block;text-align:center;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#0a1929;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 24px;">
       ⚡ Find My Edge Now →
     </a>
 
     <p style="color:#475569;font-size:12px;line-height:1.6;margin:0;text-align:center;">
-      Shadow Syndicate · 18+ Only · Gambling involves risk<br>
-      Help: <a href="tel:1800858858" style="color:#22d3ee;">1800 858 858</a> · gamblinghelponline.org.au
+      Shadow Signals · 18+ Only · Gambling involves risk<br>
+      Help: <a href="tel:1800858858" style="color:#00d4ff;">1800 858 858</a> · gamblinghelponline.org.au
     </p>
   </div>
 </body>
 </html>`;
 
-  return send(user.email, 'Welcome to Shadow Syndicate — your edge starts now', html);
+  return send(user.email, 'Welcome to Shadow Signals — your edge starts now', html);
 }
 
 // ── 2. Trial ending (sent 2 days before trial expires) ────────────────────
@@ -94,7 +94,7 @@ async function sendTrialEnding(user) {
   const html = `
 <!DOCTYPE html>
 <html>
-<body style="margin:0;padding:0;background:#08111e;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
+<body style="margin:0;padding:0;background:#0a1929;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
   <div style="max-width:580px;margin:0 auto;padding:40px 24px;">
     
     <div style="background:#1a0a00;border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:28px;text-align:center;">
@@ -105,7 +105,7 @@ async function sendTrialEnding(user) {
 
     <p style="color:#94a3b8;font-size:15px;line-height:1.7;margin:0 0 20px;">
       Hey${user.name ? ` ${user.name}` : ''},<br><br>
-      Your Shadow Syndicate trial expires in 48 hours. After that you'll lose access to 
+      Your Shadow Signals trial expires in 48 hours. After that you'll lose access to 
       the live +EV scanner, arb finder, and edge alerts.
     </p>
 
@@ -118,20 +118,20 @@ async function sendTrialEnding(user) {
       </div>`).join('')}
     </div>
 
-    <a href="${BASE}/pricing" style="display:block;text-align:center;background:linear-gradient(135deg,#22d3ee,#0891b2);color:#030711;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 16px;">
+    <a href="${BASE}/pricing" style="display:block;text-align:center;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#0a1929;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 16px;">
       Keep My Access — $19.99/mo →
     </a>
     <p style="text-align:center;margin:0 0 24px;"><a href="${BASE}/pricing" style="color:#64748b;font-size:13px;">See all plans</a></p>
 
     <p style="color:#475569;font-size:12px;line-height:1.6;margin:0;text-align:center;">
-      Shadow Syndicate · 18+ Only<br>
-      Help: <a href="tel:1800858858" style="color:#22d3ee;">1800 858 858</a>
+      Shadow Signals · 18+ Only<br>
+      Help: <a href="tel:1800858858" style="color:#00d4ff;">1800 858 858</a>
     </p>
   </div>
 </body>
 </html>`;
 
-  return send(user.email, '⏰ Your Shadow Syndicate trial ends in 2 days', html);
+  return send(user.email, '⏰ Your Shadow Signals trial ends in 2 days', html);
 }
 
 // ── 3. Subscription confirmed ──────────────────────────────────────────────
@@ -142,7 +142,7 @@ async function sendSubscriptionConfirmed(user, plan) {
   const html = `
 <!DOCTYPE html>
 <html>
-<body style="margin:0;padding:0;background:#08111e;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
+<body style="margin:0;padding:0;background:#0a1929;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
   <div style="max-width:580px;margin:0 auto;padding:40px 24px;">
     
     <div style="text-align:center;margin-bottom:32px;">
@@ -151,13 +151,13 @@ async function sendSubscriptionConfirmed(user, plan) {
       <p style="color:#64748b;font-size:14px;margin:0;">Full access unlocked. Let's beat the line.</p>
     </div>
 
-    <a href="${BASE}/markets" style="display:block;text-align:center;background:linear-gradient(135deg,#22d3ee,#0891b2);color:#030711;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 24px;">
+    <a href="${BASE}/markets" style="display:block;text-align:center;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#0a1929;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 24px;">
       ⚡ Go to Markets →
     </a>
 
     <p style="color:#475569;font-size:12px;text-align:center;margin:0;">
-      Manage your subscription: <a href="${BASE}/dashboard" style="color:#22d3ee;">Dashboard</a><br>
-      18+ Only · Help: <a href="tel:1800858858" style="color:#22d3ee;">1800 858 858</a>
+      Manage your subscription: <a href="${BASE}/dashboard" style="color:#00d4ff;">Dashboard</a><br>
+      18+ Only · Help: <a href="tel:1800858858" style="color:#00d4ff;">1800 858 858</a>
     </p>
   </div>
 </body>
@@ -171,7 +171,7 @@ async function sendPaymentFailed(user) {
   const html = `
 <!DOCTYPE html>
 <html>
-<body style="margin:0;padding:0;background:#08111e;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
+<body style="margin:0;padding:0;background:#0a1929;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
   <div style="max-width:580px;margin:0 auto;padding:40px 24px;">
     
     <div style="background:#1a0808;border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:20px;margin-bottom:28px;text-align:center;">
@@ -192,8 +192,8 @@ async function sendPaymentFailed(user) {
     </a>
 
     <p style="color:#475569;font-size:12px;text-align:center;margin:0;">
-      Shadow Syndicate · Questions? Reply to this email<br>
-      18+ Only · <a href="tel:1800858858" style="color:#22d3ee;">1800 858 858</a>
+      Shadow Signals · Questions? Reply to this email<br>
+      18+ Only · <a href="tel:1800858858" style="color:#00d4ff;">1800 858 858</a>
     </p>
   </div>
 </body>
@@ -207,7 +207,7 @@ async function sendEdgeAlert(user, edge) {
   const html = `
 <!DOCTYPE html>
 <html>
-<body style="margin:0;padding:0;background:#08111e;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
+<body style="margin:0;padding:0;background:#0a1929;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
   <div style="max-width:580px;margin:0 auto;padding:40px 24px;">
     
     <div style="background:#0a1f0a;border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:20px;margin-bottom:24px;">
@@ -221,7 +221,7 @@ async function sendEdgeAlert(user, edge) {
       <div style="background:#111827;border-radius:8px;padding:14px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
           <span style="color:#64748b;font-size:13px;">Selection</span>
-          <span style="color:#22d3ee;font-weight:700;font-size:13px;">${edge.selection}</span>
+          <span style="color:#00d4ff;font-weight:700;font-size:13px;">${edge.selection}</span>
         </div>
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
           <span style="color:#64748b;font-size:13px;">Best at</span>
@@ -238,13 +238,13 @@ async function sendEdgeAlert(user, edge) {
       </div>
     </div>
 
-    <a href="${BASE}/markets" style="display:block;text-align:center;background:linear-gradient(135deg,#22d3ee,#0891b2);color:#030711;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 16px;">
+    <a href="${BASE}/markets" style="display:block;text-align:center;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#0a1929;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 16px;">
       Add to Slip →
     </a>
 
     <p style="color:#475569;font-size:11px;text-align:center;margin:0;">
       Edges close fast. Act quickly.<br>
-      <a href="${BASE}/dashboard" style="color:#64748b;">Manage alerts</a> · 18+ Only · <a href="tel:1800858858" style="color:#22d3ee;">1800 858 858</a>
+      <a href="${BASE}/dashboard" style="color:#64748b;">Manage alerts</a> · 18+ Only · <a href="tel:1800858858" style="color:#00d4ff;">1800 858 858</a>
     </p>
   </div>
 </body>

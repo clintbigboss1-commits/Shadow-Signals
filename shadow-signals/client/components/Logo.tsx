@@ -7,10 +7,11 @@ interface Props {
 }
 
 export function LogoMark({ size = 36 }: { size?: number }) {
+  const s = size;
   return (
     <svg
-      width={size}
-      height={size}
+      width={s}
+      height={s}
       viewBox="0 0 40 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -19,15 +20,15 @@ export function LogoMark({ size = 36 }: { size?: number }) {
     >
       <defs>
         <linearGradient id="lm-hex" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#22d3ee" />
-          <stop offset="100%" stopColor="#0891b2" />
+          <stop offset="0%" stopColor="#00d4ff" />
+          <stop offset="100%" stopColor="#0099cc" />
         </linearGradient>
-        <linearGradient id="lm-bolt" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="lm-bolt" x1="0" y1="0" x2="0.3" y2="1">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.75" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.8" />
         </linearGradient>
-        <filter id="lm-glow" x="-25%" y="-25%" width="150%" height="150%">
-          <feGaussianBlur stdDeviation="1.8" result="blur" />
+        <filter id="lm-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -60,7 +61,7 @@ export default function Logo({ size = 36, wordmark = true, href = '/' }: Props) 
             fontWeight: 900,
             fontSize: Math.round(size * 0.47),
             letterSpacing: -0.4,
-            color: '#e2e8f0',
+            color: '#ffffff',
             fontFamily: 'Inter, sans-serif',
           }}>SHADOW</span>
           <span style={{
@@ -68,9 +69,9 @@ export default function Logo({ size = 36, wordmark = true, href = '/' }: Props) 
             fontWeight: 900,
             fontSize: Math.round(size * 0.33),
             letterSpacing: Math.round(size * 0.055),
-            color: '#22d3ee',
+            color: '#00d4ff',
             fontFamily: 'Inter, sans-serif',
-          }}>ELITE</span>
+          }}>SIGNALS</span>
         </span>
       )}
     </span>

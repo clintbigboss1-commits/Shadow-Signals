@@ -45,18 +45,18 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-split" style={{ background: '#08111e', fontFamily: 'Inter, sans-serif' }}>
+    <div className="auth-split" style={{ background: '#0a1929', fontFamily: 'Inter, sans-serif' }}>
 
       {/* ── Left brand panel ─────────────────────────── */}
       <div className="auth-brand" style={{
-        background: 'linear-gradient(160deg, #040c1a 0%, #06111f 100%)',
+        background: 'linear-gradient(160deg, #060e1a 0%, #0a1929 100%)',
         padding: 'clamp(40px,6vh,72px) clamp(36px,5vw,64px)',
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
         borderRight: '1px solid rgba(255,255,255,.06)',
         position: 'relative', overflow: 'hidden',
       }}>
         {/* background glow */}
-        <div style={{ position: 'absolute', top: -120, right: -120, width: 480, height: 480, background: 'radial-gradient(circle, rgba(34,211,238,.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -120, right: -120, width: 480, height: 480, background: 'radial-gradient(circle, rgba(0,212,255,.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -80, left: -80, width: 320, height: 320, background: 'radial-gradient(circle, rgba(99,102,241,.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         {/* Logo */}
@@ -66,22 +66,22 @@ export default function Login() {
 
         {/* Main message */}
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#22d3ee', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#00d4ff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 18 }}>
             Australia&apos;s #1 betting intelligence
           </div>
-          <h2 style={{ fontSize: 'clamp(30px,3.5vw,46px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: -1.5, marginBottom: 20, color: '#e2e8f0' }}>
+          <h2 style={{ fontSize: 'clamp(30px,3.5vw,46px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: -1.5, marginBottom: 20, color: '#ffffff' }}>
             Your edge<br/>is waiting.
           </h2>
 
           {/* Live alert card */}
           <div style={{ background: 'rgba(34,211,238,.05)', border: '1px solid rgba(34,211,238,.18)', borderRadius: 14, padding: '16px 18px', marginBottom: 32, maxWidth: 360 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#22d3ee', boxShadow: '0 0 8px #22d3ee' }} />
-              <span style={{ fontSize: 10, fontWeight: 800, color: '#22d3ee', textTransform: 'uppercase', letterSpacing: 1.2 }}>Grade S+ Alert</span>
+              <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#00d4ff', textTransform: 'uppercase', letterSpacing: 1.2 }}>Grade S+ Alert</span>
             </div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#e2e8f0', marginBottom: 6 }}>Manchester City v Arsenal</div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#ffffff', marginBottom: 6 }}>Manchester City v Arsenal</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: '#64748b' }}>Man City ML — Sportsbet</span>
+              <span style={{ fontSize: 12, color: '#5e7390' }}>Man City ML — Sportsbet</span>
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, color: '#10b981', fontSize: 17 }}>+12.4%</span>
             </div>
           </div>
@@ -91,7 +91,7 @@ export default function Login() {
             {BENEFITS.map((b, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
                 <span style={{ color: '#10b981', fontWeight: 800, flexShrink: 0 }}>✓</span>
-                <span style={{ color: '#94a3b8' }}>{b}</span>
+                <span style={{ color: '#9eb1c8' }}>{b}</span>
               </div>
             ))}
           </div>
@@ -101,8 +101,8 @@ export default function Login() {
         <div style={{ display: 'flex', gap: 28, position: 'relative', zIndex: 1 }}>
           {STATS.map(s => (
             <div key={s.l}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 20, color: '#22d3ee', lineHeight: 1 }}>{s.v}</div>
-              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{s.l}</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 20, color: '#00d4ff', lineHeight: 1 }}>{s.v}</div>
+              <div style={{ fontSize: 11, color: '#5e7390', marginTop: 4 }}>{s.l}</div>
             </div>
           ))}
         </div>
@@ -113,21 +113,21 @@ export default function Login() {
         <div style={{ width: '100%', maxWidth: 400 }}>
 
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 8, color: '#e2e8f0' }}>Welcome back</h1>
-            <p style={{ color: '#64748b', fontSize: 14 }}>Log in to your Shadow Elite account</p>
+            <h1 style={{ fontSize: 28, fontWeight: 900, marginBottom: 8, color: '#ffffff' }}>Welcome back</h1>
+            <p style={{ color: '#5e7390', fontSize: 14 }}>Log in to your Shadow Signals account</p>
           </div>
 
           {error && <div className="alert-error" style={{ marginBottom: 20 }}>{error}</div>}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Email</label>
+              <label style={{ fontSize: 11, fontWeight: 700, color: '#5e7390', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Email</label>
               <input type="email" placeholder="you@email.com" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1 }}>Password</label>
-                <span style={{ fontSize: 12, color: '#22d3ee', cursor: 'pointer' }}>Forgot password?</span>
+                <label style={{ fontSize: 11, fontWeight: 700, color: '#5e7390', textTransform: 'uppercase', letterSpacing: 1 }}>Password</label>
+                <span style={{ fontSize: 12, color: '#00d4ff', cursor: 'pointer' }}>Forgot password?</span>
               </div>
               <input type="password" placeholder="Your password" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
@@ -144,7 +144,7 @@ export default function Login() {
 
           <div style={{ position: 'relative', margin: '24px 0', textAlign: 'center' }}>
             <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 1, background: 'rgba(255,255,255,.06)' }} />
-            <span style={{ position: 'relative', background: '#08111e', padding: '0 12px', fontSize: 12, color: '#475569' }}>No account?</span>
+            <span style={{ position: 'relative', background: '#0a1929', padding: '0 12px', fontSize: 12, color: '#475569' }}>No account?</span>
           </div>
 
           <Link href="/signup">
