@@ -1,8 +1,0 @@
-{
-  "build": {
-    "buildCommand": "cd shadow-signals && npm install"
-  },
-  "deploy": {
-    "startCommand": "cd shadow-signals && node server/index.js"
-  }
-}

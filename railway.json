@@ -1,13 +1,14 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "buildCommand": "cd shadow-signals && npm install"
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "cd shadow-signals && node server/index.js",
+    "startCommand": "node server/index.js",
     "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 30,
-    "restartPolicyType": "always"
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ALWAYS"
   }
 }
