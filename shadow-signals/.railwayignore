@@ -1,0 +1,12 @@
+node_modules
+client
+.next
+.git
+.venv
+generated
+.streamlit
+uploads
+*.vsix
+.claude
+.agents
+tsc-result.txt
