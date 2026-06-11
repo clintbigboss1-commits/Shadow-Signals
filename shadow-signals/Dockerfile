@@ -9,14 +9,14 @@ WORKDIR /app
 # - Force IPv4 DNS in case the builder's IPv6 path to the registry blackholes.
 # - timeout 420 turns a silent stall into a fast, visible failure.
 ENV NODE_OPTIONS=--dns-result-order=ipv4first
-COPY package.json package-lock.json ./
+COPY shadow-signals/package.json shadow-signals/package-lock.json ./
 RUN timeout 420 npm ci --omit=dev --no-audit --no-fund --loglevel=verbose \
     --cache /tmp/npm-cache --prefer-online \
     --fetch-retries=5 --fetch-retry-mintimeout=2000 --fetch-retry-maxtimeout=60000 \
     && rm -rf /tmp/npm-cache
 
 # Copy server source (includes db/schema.sql, routes, services, middleware)
-COPY server/ ./server/
+COPY shadow-signals/server/ ./server/
 
 EXPOSE 3001
 
