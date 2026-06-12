@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import ExitPopup from '../components/ExitPopup';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { LogoMark } from '../components/Logo';
 
 const BOOKIES = ['Sportsbet','TAB','Bet365 AU','Ladbrokes','Neds','PointsBet','BlueBet','Betfair Exchange'];
@@ -36,6 +37,8 @@ const FEATURES = [
   },
 ];
 
+// Each sport gets a piece of GHOST surveillance gear — radar, binoculars,
+// listening kit — because we're watching the market, not playing the game.
 const SPORTS = [
   {
     key: 'afl',
@@ -44,16 +47,15 @@ const SPORTS = [
     markets: '280+ markets daily',
     accent: '#00e676',
     bg: 'linear-gradient(135deg, #052e16 0%, #064e3b 65%, #065f46 100%)',
-    icon: (
-      <svg width="72" height="72" viewBox="0 0 64 64" fill="none" opacity="0.55">
-        <ellipse cx="32" cy="32" rx="22" ry="14" stroke="#00e676" strokeWidth="1.5" fill="rgba(34,197,94,0.08)"/>
-        <path d="M32 18 Q40 32 32 46" stroke="#00e676" strokeWidth="1.2" fill="none" strokeDasharray="3 2"/>
-        <path d="M32 18 Q24 32 32 46" stroke="#00e676" strokeWidth="1.2" fill="none" strokeDasharray="3 2"/>
-        <line x1="10" y1="32" x2="54" y2="32" stroke="#00e676" strokeWidth="0.8" strokeOpacity="0.4"/>
-        <line x1="20" y1="8" x2="20" y2="18" stroke="#00e676" strokeWidth="2" strokeLinecap="round"/>
-        <line x1="26" y1="6" x2="26" y2="18" stroke="#00e676" strokeWidth="2.5" strokeLinecap="round"/>
-        <line x1="38" y1="6" x2="38" y2="18" stroke="#00e676" strokeWidth="2.5" strokeLinecap="round"/>
-        <line x1="44" y1="8" x2="44" y2="18" stroke="#00e676" strokeWidth="2" strokeLinecap="round"/>
+    icon: ( // radar screen, mid-sweep, two blips on the move
+      <svg width="76" height="76" viewBox="0 0 64 64" fill="none" opacity="0.6">
+        <circle cx="30" cy="32" r="20" stroke="#00e676" strokeWidth="1.5" fill="rgba(0,230,118,0.06)"/>
+        <circle cx="30" cy="32" r="12" stroke="#00e676" strokeWidth="0.8" strokeOpacity="0.5"/>
+        <line x1="10" y1="32" x2="50" y2="32" stroke="#00e676" strokeWidth="0.6" strokeOpacity="0.5"/>
+        <line x1="30" y1="12" x2="30" y2="52" stroke="#00e676" strokeWidth="0.6" strokeOpacity="0.5"/>
+        <path d="M30 32 L46 20 A20 20 0 0 0 30 12 Z" fill="rgba(0,230,118,0.22)"/>
+        <circle cx="38" cy="40" r="2.2" fill="#00e676"/>
+        <circle cx="22" cy="26" r="1.6" fill="#00e676" fillOpacity="0.7"/>
       </svg>
     ),
   },
@@ -64,12 +66,13 @@ const SPORTS = [
     markets: '140+ markets',
     accent: '#60a5fa',
     bg: 'linear-gradient(135deg, #0c1a45 0%, #1e3a8a 65%, #1e40af 100%)',
-    icon: (
-      <svg width="72" height="72" viewBox="0 0 64 64" fill="none" opacity="0.55">
-        <ellipse cx="32" cy="32" rx="26" ry="16" stroke="#60a5fa" strokeWidth="1.5" fill="rgba(96,165,250,0.08)" transform="rotate(-18 32 32)"/>
-        <path d="M18 24 Q32 28 46 20" stroke="#60a5fa" strokeWidth="1.2" fill="none"/>
-        <path d="M18 44 Q32 36 46 44" stroke="#60a5fa" strokeWidth="1.2" fill="none"/>
-        <line x1="32" y1="14" x2="32" y2="50" stroke="#60a5fa" strokeWidth="0.8" strokeOpacity="0.4" transform="rotate(-18 32 32)"/>
+    icon: ( // listening headset picking up market chatter
+      <svg width="76" height="76" viewBox="0 0 64 64" fill="none" opacity="0.6">
+        <path d="M14 38 A18 18 0 0 1 50 38" stroke="#60a5fa" strokeWidth="2.2" strokeLinecap="round"/>
+        <rect x="10" y="36" width="9" height="14" rx="3.5" fill="rgba(96,165,250,0.12)" stroke="#60a5fa" strokeWidth="1.5"/>
+        <rect x="45" y="36" width="9" height="14" rx="3.5" fill="rgba(96,165,250,0.12)" stroke="#60a5fa" strokeWidth="1.5"/>
+        <path d="M58 34 q4 7 0 14" stroke="#60a5fa" strokeWidth="1.2" strokeLinecap="round"/>
+        <path d="M62 31 q6 10 0 20" stroke="#60a5fa" strokeWidth="0.9" strokeOpacity="0.5" strokeLinecap="round"/>
       </svg>
     ),
   },
@@ -81,7 +84,17 @@ const SPORTS = [
     accent: '#2979ff',
     bg: 'linear-gradient(135deg, #042f2e 0%, #0f4c5c 65%, #0e7490 100%)',
     photo: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80',
-    icon: null,
+    icon: ( // binoculars on the line movement
+      <svg width="76" height="76" viewBox="0 0 64 64" fill="none" opacity="0.65">
+        <path d="M19 32 L21 17 h7 l1 14" stroke="#7db4ff" strokeWidth="1.5" fill="rgba(41,121,255,0.1)"/>
+        <path d="M45 32 L43 17 h-7 l-1 14" stroke="#7db4ff" strokeWidth="1.5" fill="rgba(41,121,255,0.1)"/>
+        <circle cx="22" cy="40" r="10" stroke="#7db4ff" strokeWidth="1.6" fill="rgba(41,121,255,0.1)"/>
+        <circle cx="42" cy="40" r="10" stroke="#7db4ff" strokeWidth="1.6" fill="rgba(41,121,255,0.1)"/>
+        <rect x="29" y="36" width="6" height="6" rx="1.5" stroke="#7db4ff" strokeWidth="1.3" fill="rgba(41,121,255,0.15)"/>
+        <circle cx="22" cy="40" r="4" stroke="#7db4ff" strokeWidth="1" strokeOpacity="0.7"/>
+        <circle cx="42" cy="40" r="4" stroke="#7db4ff" strokeWidth="1" strokeOpacity="0.7"/>
+      </svg>
+    ),
   },
   {
     key: 'cricket',
@@ -90,13 +103,13 @@ const SPORTS = [
     markets: '100+ markets',
     accent: '#fbbf24',
     bg: 'linear-gradient(135deg, #451a03 0%, #78350f 65%, #92400e 100%)',
-    icon: (
-      <svg width="72" height="72" viewBox="0 0 64 64" fill="none" opacity="0.55">
-        <rect x="28" y="8" width="10" height="32" rx="5" fill="rgba(251,191,36,0.1)" stroke="#fbbf24" strokeWidth="1.5"/>
-        <rect x="30" y="38" width="6" height="14" rx="3" fill="rgba(251,191,36,0.2)" stroke="#fbbf24" strokeWidth="1.5"/>
-        <circle cx="18" cy="46" r="8" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" strokeWidth="1.5"/>
-        <path d="M12 44 Q18 40 24 44" stroke="#fbbf24" strokeWidth="1" fill="none"/>
-        <path d="M12 48 Q18 52 24 48" stroke="#fbbf24" strokeWidth="1" fill="none"/>
+    icon: ( // magnifying glass over a price blip
+      <svg width="76" height="76" viewBox="0 0 64 64" fill="none" opacity="0.6">
+        <circle cx="27" cy="26" r="15" stroke="#fbbf24" strokeWidth="1.6" fill="rgba(251,191,36,0.07)"/>
+        <line x1="38" y1="37" x2="53" y2="52" stroke="#fbbf24" strokeWidth="3.5" strokeLinecap="round"/>
+        <path d="M19 20 q5 -6 13 -3" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.6" fill="none"/>
+        <circle cx="26" cy="27" r="2.2" fill="#fbbf24"/>
+        <circle cx="31" cy="31" r="1.4" fill="#fbbf24" fillOpacity="0.6"/>
       </svg>
     ),
   },
@@ -108,7 +121,19 @@ const SPORTS = [
     accent: '#fb923c',
     bg: 'linear-gradient(135deg, #431407 0%, #7c2d12 65%, #9a3412 100%)',
     photo: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
-    icon: null,
+    icon: ( // satellite beaming odds home
+      <svg width="76" height="76" viewBox="0 0 64 64" fill="none" opacity="0.65">
+        <rect x="25" y="25" width="14" height="14" rx="2.5" stroke="#fdba74" strokeWidth="1.6" fill="rgba(251,146,60,0.1)" transform="rotate(45 32 32)"/>
+        <rect x="4" y="28" width="14" height="8" rx="1.5" stroke="#fdba74" strokeWidth="1.3" fill="rgba(251,146,60,0.12)"/>
+        <rect x="46" y="28" width="14" height="8" rx="1.5" stroke="#fdba74" strokeWidth="1.3" fill="rgba(251,146,60,0.12)"/>
+        <line x1="18" y1="32" x2="25" y2="32" stroke="#fdba74" strokeWidth="1.4"/>
+        <line x1="39" y1="32" x2="46" y2="32" stroke="#fdba74" strokeWidth="1.4"/>
+        <line x1="32" y1="22" x2="32" y2="14" stroke="#fdba74" strokeWidth="1.2"/>
+        <circle cx="32" cy="12" r="2" fill="#fdba74"/>
+        <path d="M26 48 q6 4 12 0" stroke="#fdba74" strokeWidth="1" strokeOpacity="0.6" fill="none"/>
+        <path d="M23 53 q9 6 18 0" stroke="#fdba74" strokeWidth="0.8" strokeOpacity="0.4" fill="none"/>
+      </svg>
+    ),
   },
   {
     key: 'racing',
@@ -117,25 +142,24 @@ const SPORTS = [
     markets: '800+ races/wk',
     accent: '#c084fc',
     bg: 'linear-gradient(135deg, #2e1065 0%, #4a1d96 65%, #5b21b6 100%)',
-    icon: (
-      <svg width="72" height="72" viewBox="0 0 64 64" fill="none" opacity="0.55">
-        <path d="M10 44 Q18 30 28 32 Q34 33 38 28 Q44 22 50 24 Q54 26 52 32 Q48 36 44 34 Q38 38 36 44 Q32 50 24 48 Q16 48 10 44 Z" fill="rgba(192,132,252,0.1)" stroke="#c084fc" strokeWidth="1.5"/>
-        <circle cx="44" cy="22" r="4" fill="rgba(192,132,252,0.15)" stroke="#c084fc" strokeWidth="1.5"/>
-        <line x1="44" y1="26" x2="42" y2="34" stroke="#c084fc" strokeWidth="1.5" strokeLinecap="round"/>
-        <path d="M24 48 L20 58" stroke="#c084fc" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M30 48 L28 58" stroke="#c084fc" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M38 44 L40 56" stroke="#c084fc" strokeWidth="2" strokeLinecap="round"/>
-        <path d="M44 42 L48 54" stroke="#c084fc" strokeWidth="2" strokeLinecap="round"/>
+    icon: ( // the GHOST itself, transmitting
+      <svg width="76" height="76" viewBox="0 0 64 64" fill="none" opacity="0.6">
+        <path d="M17 52 V30 a14 14 0 0 1 28 0 v22 l-4.7 -4.2 -4.6 4.2 -4.7 -4.2 -4.6 4.2 -4.7 -4.2 -4.7 4.2 Z"
+          stroke="#c084fc" strokeWidth="1.6" fill="rgba(192,132,252,0.09)" strokeLinejoin="round"/>
+        <circle cx="25" cy="30" r="2.4" fill="#c084fc"/>
+        <circle cx="37" cy="30" r="2.4" fill="#c084fc"/>
+        <path d="M49 20 q5 4 4 11" stroke="#c084fc" strokeWidth="1.1" strokeOpacity="0.7" strokeLinecap="round" fill="none"/>
+        <path d="M53 15 q8 7 6 18" stroke="#c084fc" strokeWidth="0.9" strokeOpacity="0.45" strokeLinecap="round" fill="none"/>
       </svg>
     ),
   },
 ];
 
 const STATS = [
-  { value: '127',     label: 'Signals today'          },
-  { value: '78%',     label: 'CLV positive rate'       },
-  { value: '+$2,847', label: 'Avg monthly profit AUD'  },
-  { value: '12',      label: 'Bookmakers scanned'      },
+  { value: '127',     label: 'Signals today',         color: '#00e676' },
+  { value: '78%',     label: 'CLV positive rate',     color: '#ffab00' },
+  { value: '+$2,847', label: 'Avg monthly profit AUD', color: '#ffffff' },
+  { value: '12',      label: 'Bookmakers scanned',    color: '#a78bfa' },
 ];
 
 export default function Home() {
@@ -181,7 +205,7 @@ export default function Home() {
               <span style={{ background: 'linear-gradient(135deg,#2979ff 0%,#818cf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>SIGNALS</span>
             </h1>
             <p style={{ fontSize: 18, fontWeight: 700, color: '#ffffff', letterSpacing: .3, marginBottom: 16 }}>
-              STOP GUESSING. START <span style={{ color: '#2979ff' }}>WINNING.</span>
+              STOP GUESSING. START <span style={{ color: '#ffab00' }}>WINNING.</span>
             </p>
             <p style={{ fontSize: 16, color: '#9eb1c8', lineHeight: 1.65, maxWidth: 520, marginBottom: 36 }}>
               We scan 12+ Aussie bookies and Betfair Exchange to find the mathematical edge.
@@ -267,7 +291,7 @@ export default function Home() {
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', padding: '28px 24px' }}>
           {STATS.map((s, i) => (
             <div key={i} style={{ textAlign: 'center', padding: '0 16px', borderRight: i < 3 ? '1px solid rgba(255,255,255,.06)' : 'none' }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 'clamp(20px,3vw,30px)', fontWeight: 900, color: '#2979ff', lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 'clamp(20px,3vw,30px)', fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.value}</div>
               <div style={{ fontSize: 12, color: '#5e7390', marginTop: 6, fontWeight: 600 }}>{s.label}</div>
             </div>
           ))}
@@ -364,14 +388,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,.06)', padding: '28px 32px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <LogoMark size={26} />
-          <span style={{ fontSize: 13, color: '#2d4060' }}>© 2026 Shadow Signals. 18+ Only.</span>
-        </div>
-        <p style={{ fontSize: 12, color: '#2d4060' }}>Help: <a href="tel:1800858858" style={{ color: '#2979ff', fontWeight: 700 }}>1800 858 858</a> · gamblinghelponline.org.au</p>
-      </footer>
+      <Footer />
 
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } a { text-decoration: none; }`}</style>
     </div>

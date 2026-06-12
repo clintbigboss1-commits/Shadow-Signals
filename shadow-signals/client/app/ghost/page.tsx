@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 import { getUser } from '../../lib/auth';
 
 /* ─── GHOST signal data ───────────────────────────────────────────────── */
@@ -122,7 +123,7 @@ function Ring({ pct, color, icon }: { pct: number; color: string; icon: string }
   return (
     <div style={{ width: 54, height: 54, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg viewBox="0 0 54 54" style={{ position: 'absolute', inset: 0, width: 54, height: 54 }}>
-        <circle cx={27} cy={27} r={r} fill="none" stroke="#dde8f5" strokeWidth={5} />
+        <circle cx={27} cy={27} r={r} fill="none" stroke="rgba(255,255,255,.1)" strokeWidth={5} />
         <circle cx={27} cy={27} r={r} fill="none" stroke={color} strokeWidth={5} strokeLinecap="round"
           strokeDasharray={`${dash} ${ci - dash}`} transform="rotate(-90 27 27)" />
       </svg>
@@ -138,7 +139,7 @@ function Pips({ n, color }: { n: number; color: string }) {
   return (
     <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
       {Array.from({ length: 4 }, (_, p) => (
-        <div key={p} style={{ width: 5, borderRadius: 2, height: 9 + p * 4, background: p < n ? color : '#dde8f5' }} />
+        <div key={p} style={{ width: 5, borderRadius: 2, height: 9 + p * 4, background: p < n ? color : 'rgba(255,255,255,.12)' }} />
       ))}
     </div>
   );
@@ -165,7 +166,7 @@ function SignalCard({ s, isAdmin }: { s: Signal; isAdmin: boolean }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="gname">
             {s.name}
-            <span className="gtag" style={{ background: `${s.c}20`, color: s.c === '#ffd600' || s.c === '#c6ff00' ? '#8a7a00' : s.c }}>{s.tag}</span>
+            <span className="gtag" style={{ background: `${s.c}20`, color: s.c }}>{s.tag}</span>
           </div>
           <div className="gplain">{s.plain}</div>
         </div>
@@ -189,7 +190,7 @@ function SignalCard({ s, isAdmin }: { s: Signal; isAdmin: boolean }) {
             <div className="gslbl">When to act</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {s.when.map((w, i) => (
-                <div key={i} className="gwrow" style={{ background: w.bg }}>
+                <div key={i} className="gwrow" style={{ background: `${w.c}14`, border: `1px solid ${w.c}28` }}>
                   <div className="dot" style={{ background: w.c }} />
                   <div className="txt" dangerouslySetInnerHTML={{ __html: w.html }} />
                 </div>
@@ -275,6 +276,8 @@ export default function GhostPage() {
       <div className="ghost-cards" style={{ flex: 1 }}>
         {shown.map(s => <SignalCard key={s.name} s={s} isAdmin={isAdmin} />)}
       </div>
+
+      <Footer />
     </div>
   );
 }

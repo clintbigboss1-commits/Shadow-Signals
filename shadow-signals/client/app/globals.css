@@ -628,45 +628,44 @@ input::placeholder { color: var(--faint); }
 .ghost-stat .l { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,.25); margin-top: 4px; }
 
 .ghost-cards {
-  background: var(--surface);
+  background: var(--bg);
   padding: 16px;
   display: flex; flex-direction: column; gap: 12px;
 }
 .ghost-card {
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border);
+  background: var(--bg2);
+  border: 1px solid var(--border);
   border-radius: 12px; overflow: hidden; cursor: pointer;
-  box-shadow: 0 1px 4px rgba(10,26,40,.03);
-  transition: box-shadow .15s;
+  transition: border-color .15s, box-shadow .15s;
   width: 100%;
   max-width: 860px;
   margin: 0 auto;
 }
-.ghost-card:hover { box-shadow: 0 4px 16px rgba(10,26,40,.08); }
+.ghost-card:hover { border-color: var(--border-strong); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
 .ghost-card .gtop { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
-.ghost-card .gname { font-size: 15px; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 4px; }
+.ghost-card .gname { font-size: 15px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 4px; }
 .ghost-card .gtag { font-size: 8px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; }
-.ghost-card .gplain { font-size: 13px; color: var(--ink-muted); line-height: 1.45; }
-.ghost-card .gchev { font-size: 13px; color: var(--ink-faint); transition: transform .2s; }
+.ghost-card .gplain { font-size: 13px; color: var(--text-soft); line-height: 1.45; }
+.ghost-card .gchev { font-size: 13px; color: var(--muted); transition: transform .2s; }
 .ghost-card .gchev.open { transform: rotate(180deg); }
-.ghost-card .gsec { padding: 14px 16px; border-bottom: 1px solid #f4f8ff; }
+.ghost-card .gsec { padding: 14px 16px; border-bottom: 1px solid var(--border2); }
 .ghost-card .gsec:last-child { border-bottom: none; }
 .ghost-card .gslbl {
   font-size: 9px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase;
-  color: var(--ink-faint); margin-bottom: 9px; display: flex; align-items: center; gap: 8px;
+  color: var(--muted); margin-bottom: 9px; display: flex; align-items: center; gap: 8px;
 }
-.ghost-card .gslbl::after { content: ''; flex: 1; height: 1px; background: #eef4ff; }
-.ghost-card .gexp { font-size: 13px; color: var(--ink-muted); line-height: 1.8; }
+.ghost-card .gslbl::after { content: ''; flex: 1; height: 1px; background: var(--border2); }
+.ghost-card .gexp { font-size: 13px; color: var(--text-soft); line-height: 1.8; }
 .ghost-card .gana {
-  background: #f0f5ff; border-left: 3px solid var(--cyan);
+  background: rgba(41,121,255,.08); border-left: 3px solid var(--cyan);
   border-radius: 0 8px 8px 0; padding: 12px 14px;
-  font-size: 13px; color: var(--ink-soft); line-height: 1.7; font-style: italic;
+  font-size: 13px; color: var(--text-soft); line-height: 1.7; font-style: italic;
 }
-.ghost-card .gana b { color: var(--ink); font-style: normal; }
+.ghost-card .gana b { color: var(--text); font-style: normal; }
 .ghost-card .gwrow { display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; border-radius: 7px; }
 .ghost-card .gwrow .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
-.ghost-card .gwrow .txt { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
-.ghost-card .gwrow .txt b { color: var(--ink); }
+.ghost-card .gwrow .txt { font-size: 13px; color: var(--text-soft); line-height: 1.5; }
+.ghost-card .gwrow .txt b { color: var(--text); }
 
 .ghost-script { background: var(--bg); border-radius: 9px; overflow: hidden; }
 .ghost-script .hd { padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,.04); }

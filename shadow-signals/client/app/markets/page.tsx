@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Navbar from '../../components/Navbar';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import TeamLogo from '../../components/TeamLogo';
 import API from '../../lib/api';
 import { getSocket, connectSocket } from '../../lib/socket';
 import { getToken } from '../../lib/auth';
@@ -25,10 +26,10 @@ interface EVOpp {
 /* ─── helpers ─────────────────────────────────────────────────────────── */
 
 function grade(ev: number) {
-  if (ev >= 8) return { label: 'Grade S+', bg: '#2979ff', color: '#030711' };
-  if (ev >= 5) return { label: 'Grade A',  bg: '#00c853', color: '#030711' };
-  if (ev >= 3) return { label: 'Grade B',  bg: '#ffab00', color: '#030711' };
-  return              { label: 'Grade C',  bg: '#64748b', color: '#fff'    };
+  if (ev >= 8) return { label: 'S+ · STRONGEST PLAY', bg: '#2979ff', color: '#030711' };
+  if (ev >= 5) return { label: 'A · STRONG PLAY',     bg: '#00c853', color: '#030711' };
+  if (ev >= 3) return { label: 'B · GOOD PLAY',       bg: '#ffab00', color: '#030711' };
+  return              { label: 'C · SMALL EDGE',      bg: '#64748b', color: '#fff'    };
 }
 
 function confidence(ev: number) {
@@ -186,64 +187,61 @@ function EventCard({
         {sportEmoji(ev.sport_key)} {sportLabel(ev.sport_key)}
       </div>
 
-      {/* Teams */}
+      {/* Teams — tick marks the side we're backing */}
       <div style={{ padding: '12px 14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: hColor + '22', border: `2px solid ${hColor}`, display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 14, color: hColor, flexShrink: 0 }}>
-            {teamInitial(teams.home)}
+        {[
+          { name: teams.home, color: hColor },
+          { name: teams.away, color: aColor },
+        ].map((t, i) => (
+          <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: i === 0 ? 10 : 0 }}>
+            <TeamLogo name={t.name} color={t.color} size={32} />
+            <span style={{ fontWeight: 700, fontSize: 15, flex: 1 }}>{t.name}</span>
+            {ev.selection === t.name && (
+              <span style={{ background: 'rgba(0,230,118,.12)', border: '1px solid rgba(0,230,118,.35)', color: '#00e676', fontSize: 10, fontWeight: 800, letterSpacing: .8, padding: '3px 9px', borderRadius: 20 }}>
+                ✓ OUR PICK
+              </span>
+            )}
           </div>
-          <span style={{ fontWeight: 700, fontSize: 15, flex: 1 }}>{teams.home}</span>
-          <span style={{ color: ev.selection === teams.home ? '#2979ff' : '#475569', fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18 }}>—</span>
-        </div>
-        <div style={{ paddingLeft: 8, marginBottom: 10, color: '#475569', fontSize: 11, fontWeight: 600 }}>vs</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: aColor + '22', border: `2px solid ${aColor}`, display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 14, color: aColor, flexShrink: 0 }}>
-            {teamInitial(teams.away)}
-          </div>
-          <span style={{ fontWeight: 700, fontSize: 15, flex: 1 }}>{teams.away}</span>
-          <span style={{ color: ev.selection === teams.away ? '#2979ff' : '#475569', fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18 }}>—</span>
-        </div>
+        ))}
       </div>
 
-      {/* Odds rows */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,.05)', margin: '0 14px' }} />
-      <div style={{ padding: '10px 14px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>H2H</span>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 10, color: '#475569', marginBottom: 2, textTransform: 'uppercase' }}>{teams.home.split(' ')[0]}</div>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 15, color: ev.selection === teams.home ? '#2979ff' : '#94a3b8' }}>
-                {odds.toFixed(2)}
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 10, color: '#475569', marginBottom: 2, textTransform: 'uppercase' }}>{teams.away.split(' ')[0]}</div>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 15, color: ev.selection === teams.away ? '#2979ff' : '#94a3b8' }}>
-                {fair.toFixed(2)} <span style={{ fontSize: 10, color: '#2979ff', fontWeight: 700 }}>BEST</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* The play, in plain English */}
+      <div style={{ margin: '0 14px 12px', background: 'rgba(0,230,118,.07)', border: '1px solid rgba(0,230,118,.22)', borderRadius: 10, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 13, color: '#9eb1c8', minWidth: 0 }}>
+          🎯 Back <b style={{ color: '#fff' }}>{ev.selection}</b>
+        </span>
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#00e676', whiteSpace: 'nowrap' }}>@ {odds.toFixed(2)}</span>
+      </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748b', marginBottom: 6 }}>
-          <span>KELLY</span>
-          <span style={{ color: '#2979ff', fontWeight: 700 }}>{Number(ev.kelly_percent).toFixed(1)}%</span>
+      {/* Numbers, labelled like a human */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,.05)', margin: '0 14px' }} />
+      <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+          <span style={{ color: '#64748b' }}>Odds you get <span style={{ color: '#94a3b8', textTransform: 'capitalize' }}>({ev.bookie?.replace(/_/g, ' ')})</span></span>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#fff' }}>{odds.toFixed(2)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+          <span style={{ color: '#64748b' }}>What the odds <i>should</i> be</span>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#94a3b8' }}>{fair.toFixed(2)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }} title="Based on the Kelly Criterion — a staking formula pros use to size bets to the edge">
+          <span style={{ color: '#64748b' }}>Suggested stake</span>
+          <span style={{ color: '#2979ff', fontWeight: 700 }}>{Number(ev.kelly_percent).toFixed(1)}% of your bankroll</span>
         </div>
       </div>
 
       {/* Edge bar */}
       <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>Edge vs Fair Price</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }} title="How much better the price you get is than the true price — your mathematical advantage">
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>Your edge</span>
           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14, color: '#00c853' }}>+{evNum.toFixed(1)}%</span>
         </div>
         <div style={{ height: 6, background: 'rgba(255,255,255,.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 6 }}>
           <div style={{ height: '100%', width: `${barW}%`, background: evNum >= 8 ? 'linear-gradient(90deg,#2979ff,#1e63d9)' : evNum >= 5 ? '#00c853' : '#ffab00', borderRadius: 99, transition: 'width .5s' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-          <span style={{ color: '#475569' }}>Best at <span style={{ color: '#94a3b8', textTransform: 'capitalize' }}>{ev.bookie?.replace(/_/g,' ')}</span></span>
-          <span style={{ color: conf.color, fontWeight: 700 }}>● {conf.label}</span>
+          <span style={{ color: '#475569' }}>Price found at <span style={{ color: '#94a3b8', textTransform: 'capitalize' }}>{ev.bookie?.replace(/_/g,' ')}</span></span>
+          <span style={{ color: conf.color, fontWeight: 700 }}>Confidence: {conf.label}</span>
         </div>
       </div>
 

@@ -187,7 +187,9 @@ async function getCachedEV(sportKey = 'all', minEV = 0) {
   if (l1) return { data: l1, source: 'L1-memory' };
 
   const { db } = require('../db');
-  let query = `SELECT * FROM ev_opportunities WHERE is_active = TRUE AND ev_percent >= $1 AND expires_at > NOW()`;
+  // ev_percent <= 20: legacy rows computed before outlier guards existed must
+  // never reach members — a real edge is single digits
+  let query = `SELECT * FROM ev_opportunities WHERE is_active = TRUE AND ev_percent >= $1 AND ev_percent <= 20 AND expires_at > NOW()`;
   const params = [minEV];
   if (sportKey !== 'all') {
     query += ' AND sport_key = $2';
@@ -211,7 +213,7 @@ async function getCachedArbs() {
 
   const { db } = require('../db');
   const result = await db.query(
-    `SELECT * FROM arb_opportunities WHERE is_active = TRUE ORDER BY profit_percent DESC LIMIT 50`
+    `SELECT * FROM arb_opportunities WHERE is_active = TRUE AND profit_percent <= 8 ORDER BY profit_percent DESC LIMIT 50`
   );
   if (result.rows.length > 0) {
     setL1(key, result.rows, 20);
