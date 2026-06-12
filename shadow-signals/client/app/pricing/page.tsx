@@ -86,7 +86,7 @@ export default function Pricing() {
               onClick={() => setAnnual(a => !a)}
               style={{
                 width: 44, height: 24, borderRadius: 12,
-                background: annual ? '#22d3ee' : 'rgba(255,255,255,.12)',
+                background: annual ? '#2979ff' : 'rgba(255,255,255,.12)',
                 border: 'none', cursor: 'pointer', position: 'relative', transition: 'background .2s',
                 flexShrink: 0,
               }}
@@ -101,7 +101,7 @@ export default function Pricing() {
             </button>
             <span style={{ fontSize: 14, fontWeight: 600, color: annual ? '#e2e8f0' : '#64748b' }}>Annual</span>
             {annual && (
-              <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(16,185,129,.15)', border: '1px solid rgba(16,185,129,.3)', color: '#10b981', padding: '3px 10px', borderRadius: 99 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, background: 'rgba(16,185,129,.15)', border: '1px solid rgba(16,185,129,.3)', color: '#00c853', padding: '3px 10px', borderRadius: 99 }}>
                 SAVE 20%
               </span>
             )}
@@ -116,16 +116,16 @@ export default function Pricing() {
             return (
               <div key={p.key} className="card" style={{
                 position: 'relative',
-                borderColor: p.highlight ? '#22d3ee' : '#1e2d45',
-                boxShadow: p.highlight ? '0 0 0 1px rgba(34,211,238,.2)' : 'none',
+                borderColor: p.highlight ? '#2979ff' : '#1e2d45',
+                boxShadow: p.highlight ? '0 0 0 1px rgba(41,121,255,.2)' : 'none',
               }}>
                 {p.highlight && (
-                  <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: '#22d3ee', color: '#030711', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, padding: '3px 14px', borderRadius: 99, whiteSpace: 'nowrap' }}>
+                  <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: '#2979ff', color: '#030711', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, padding: '3px 14px', borderRadius: 99, whiteSpace: 'nowrap' }}>
                     MOST POPULAR
                   </div>
                 )}
 
-                <div style={{ fontSize: 13, fontWeight: 700, color: p.highlight ? '#22d3ee' : '#94a3b8', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: p.highlight ? '#2979ff' : '#94a3b8', marginBottom: 8 }}>
                   {p.name}
                 </div>
 
@@ -138,18 +138,18 @@ export default function Pricing() {
                 </div>
 
                 {annual && (
-                  <div style={{ fontSize: 11, color: '#10b981', fontWeight: 700, marginBottom: 4 }}>
+                  <div style={{ fontSize: 11, color: '#00c853', fontWeight: 700, marginBottom: 4 }}>
                     Save {saving}% · billed annually
                   </div>
                 )}
 
-                <div style={{ fontSize: 12, color: '#10b981', fontWeight: 600, marginBottom: 14 }}>{p.trial}</div>
+                <div style={{ fontSize: 12, color: '#00c853', fontWeight: 600, marginBottom: 14 }}>{p.trial}</div>
                 <p style={{ fontSize: 13, color: '#64748b', marginBottom: 18, lineHeight: 1.55 }}>{p.desc}</p>
 
                 <ul style={{ listStyle: 'none', marginBottom: 22, display: 'flex', flexDirection: 'column', gap: 7 }}>
                   {p.features.map(f => (
                     <li key={f} style={{ display: 'flex', gap: 8, fontSize: 13 }}>
-                      <span style={{ color: '#10b981', fontWeight: 700, flexShrink: 0 }}>✓</span> {f}
+                      <span style={{ color: '#00c853', fontWeight: 700, flexShrink: 0 }}>✓</span> {f}
                     </li>
                   ))}
                 </ul>
@@ -172,17 +172,17 @@ export default function Pricing() {
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <p style={{ color: '#64748b', fontSize: 14, marginBottom: 12 }}>
               Already have an account?{' '}
-              <Link href="/login" style={{ color: '#22d3ee', fontWeight: 600 }}>Log in</Link>
+              <Link href="/login" style={{ color: '#2979ff', fontWeight: 600 }}>Log in</Link>
             </p>
           </div>
         )}
 
         {/* RG notice */}
         <div style={{ border: '1px solid rgba(245,158,11,.15)', borderRadius: 10, padding: '14px 18px', background: 'rgba(245,158,11,.03)', fontSize: 12, color: '#64748b', lineHeight: 1.7 }}>
-          <strong style={{ color: '#f59e0b' }}>⚠ Responsible Gambling</strong> — Gambling involves risk.
+          <strong style={{ color: '#ffab00' }}>⚠ Responsible Gambling</strong> — Gambling involves risk.
           Positive EV does not guarantee profit on any single bet. 18+ only.
-          Help: <a href="tel:1800858858" style={{ color: '#22d3ee' }}>1800 858 858</a> ·{' '}
-          <a href="https://www.gamblinghelponline.org.au" target="_blank" rel="noreferrer" style={{ color: '#22d3ee' }}>gamblinghelponline.org.au</a>
+          Help: <a href="tel:1800858858" style={{ color: '#2979ff' }}>1800 858 858</a> ·{' '}
+          <a href="https://www.gamblinghelponline.org.au" target="_blank" rel="noreferrer" style={{ color: '#2979ff' }}>gamblinghelponline.org.au</a>
         </div>
       </div>
     </div>

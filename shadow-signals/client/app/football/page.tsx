@@ -29,16 +29,16 @@ export default function FootballPage() {
       }}>
         <div style={{ maxWidth: 1400, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
           <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 16, color: '#030711', flexShrink: 0 }}>S</div>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg,#2979ff,#1e63d9)', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 16, color: '#030711', flexShrink: 0 }}>S</div>
             <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: -.3, color: '#e2e8f0' }}>
-              SHADOW <span style={{ color: '#22d3ee' }}>ELITE</span>
+              SHADOW <span style={{ color: '#2979ff' }}>ELITE</span>
             </span>
           </Link>
 
           <div style={{ display: 'flex', gap: 20 }}>
             <Link href="/dashboard" style={{ fontSize: 13, fontWeight: 500, color: '#64748b' }}>← Dashboard</Link>
             {user && (
-              <Link href="/pricing" style={{ fontSize: 13, fontWeight: 500, color: '#22d3ee' }}>
+              <Link href="/pricing" style={{ fontSize: 13, fontWeight: 500, color: '#2979ff' }}>
                 {user.plan === 'free' ? 'Upgrade' : 'Plan'}
               </Link>
             )}
@@ -48,7 +48,7 @@ export default function FootballPage() {
 
       {/* ─── Hero ─────────────────────────────── */}
       <div style={{
-        background: 'linear-gradient(135deg,rgba(34,211,238,.08),rgba(8,17,30,1) 60%)',
+        background: 'linear-gradient(135deg,rgba(41,121,255,.08),rgba(8,17,30,1) 60%)',
         borderBottom: '1px solid var(--border)', padding: '28px 24px',
       }}>
         <div style={{ maxWidth: 1400, margin: '0 auto' }}>
@@ -76,8 +76,8 @@ export default function FootballPage() {
               style={{
                 padding: '12px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 background: 'transparent', border: 'none',
-                color: activeTab === tab.key ? '#22d3ee' : '#64748b',
-                borderBottom: activeTab === tab.key ? '2px solid #22d3ee' : '2px solid transparent',
+                color: activeTab === tab.key ? '#2979ff' : '#64748b',
+                borderBottom: activeTab === tab.key ? '2px solid #2979ff' : '2px solid transparent',
                 transition: 'all .15s', fontFamily: 'Inter, sans-serif',
               }}
             >
@@ -100,9 +100,9 @@ export default function FootballPage() {
                 style={{
                   padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 600,
                   cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                  background: selectedLeague === 0 ? 'rgba(34,211,238,.15)' : 'rgba(255,255,255,.05)',
-                  border: selectedLeague === 0 ? '1px solid rgba(34,211,238,.3)' : '1px solid var(--border)',
-                  color: selectedLeague === 0 ? '#22d3ee' : '#94a3b8',
+                  background: selectedLeague === 0 ? 'rgba(41,121,255,.15)' : 'rgba(255,255,255,.05)',
+                  border: selectedLeague === 0 ? '1px solid rgba(41,121,255,.3)' : '1px solid var(--border)',
+                  color: selectedLeague === 0 ? '#2979ff' : '#94a3b8',
                 }}
               >All Leagues</button>
               {leagues.map(l => (
@@ -112,9 +112,9 @@ export default function FootballPage() {
                   style={{
                     padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                    background: selectedLeague === l.id ? 'rgba(34,211,238,.15)' : 'rgba(255,255,255,.05)',
-                    border: selectedLeague === l.id ? '1px solid rgba(34,211,238,.3)' : '1px solid var(--border)',
-                    color: selectedLeague === l.id ? '#22d3ee' : '#94a3b8',
+                    background: selectedLeague === l.id ? 'rgba(41,121,255,.15)' : 'rgba(255,255,255,.05)',
+                    border: selectedLeague === l.id ? '1px solid rgba(41,121,255,.3)' : '1px solid var(--border)',
+                    color: selectedLeague === l.id ? '#2979ff' : '#94a3b8',
                   }}
                 >{l.name}</button>
               ))}
@@ -156,7 +156,7 @@ export default function FootballPage() {
                       background: 'rgba(255,255,255,.04)', border: '1px solid var(--border)',
                       transition: 'border-color .15s',
                     }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#22d3ee44'}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#2979ff44'}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'}
                   >
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>{l.name}</div>
@@ -180,9 +180,9 @@ export default function FootballPage() {
                   style={{
                     padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                    background: selectedLeague === l.id ? 'rgba(34,211,238,.15)' : 'rgba(255,255,255,.05)',
-                    border: selectedLeague === l.id ? '1px solid rgba(34,211,238,.3)' : '1px solid var(--border)',
-                    color: selectedLeague === l.id ? '#22d3ee' : '#94a3b8',
+                    background: selectedLeague === l.id ? 'rgba(41,121,255,.15)' : 'rgba(255,255,255,.05)',
+                    border: selectedLeague === l.id ? '1px solid rgba(41,121,255,.3)' : '1px solid var(--border)',
+                    color: selectedLeague === l.id ? '#2979ff' : '#94a3b8',
                   }}
                 >{l.name}</button>
               ))}
@@ -249,9 +249,9 @@ export default function FootballPage() {
                     style={{
                       padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 600,
                       cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-                      background: playerId === p.id ? 'rgba(34,211,238,.15)' : 'rgba(255,255,255,.05)',
-                      border: playerId === p.id ? '1px solid rgba(34,211,238,.3)' : '1px solid var(--border)',
-                      color: playerId === p.id ? '#22d3ee' : '#94a3b8',
+                      background: playerId === p.id ? 'rgba(41,121,255,.15)' : 'rgba(255,255,255,.05)',
+                      border: playerId === p.id ? '1px solid rgba(41,121,255,.3)' : '1px solid var(--border)',
+                      color: playerId === p.id ? '#2979ff' : '#94a3b8',
                     }}
                   >{p.name}</button>
                 ))}

@@ -39,7 +39,7 @@ export default function UpgradeBanner() {
   return (
     <div style={{
       background: 'linear-gradient(90deg,#0f2a1a,#0a1f35)',
-      borderBottom: '1px solid rgba(34,211,238,.15)',
+      borderBottom: '1px solid rgba(41,121,255,.15)',
       padding: '9px 20px',
       display: 'flex',
       alignItems: 'center',
@@ -50,7 +50,7 @@ export default function UpgradeBanner() {
       <span style={{ color: '#94a3b8' }}>{msg}</span>
       <Link
         href="/pricing"
-        style={{ fontWeight: 700, color: '#22d3ee', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 12px', border: '1px solid rgba(34,211,238,.3)', borderRadius: 6, fontSize: 12 }}
+        style={{ fontWeight: 700, color: '#2979ff', textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 12px', border: '1px solid rgba(41,121,255,.3)', borderRadius: 6, fontSize: 12 }}
       >
         Upgrade →
       </Link>

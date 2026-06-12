@@ -44,9 +44,9 @@ const EV_THRESHOLDS = [
 ];
 
 const BOOKIE_COL: Record<string, string> = {
-  sportsbet: '#f97316', tab: '#06b6d4', bet365: '#22c55e',
+  sportsbet: '#f97316', tab: '#1e63d9', bet365: '#00e676',
   ladbrokes: '#ef4444', neds: '#8b5cf6', pointsbet: '#ec4899',
-  bluebet: '#3b82f6', betfair_ex_au: '#f59e0b', unibet: '#10b981', betright: '#6366f1',
+  bluebet: '#3b82f6', betfair_ex_au: '#ffab00', unibet: '#00c853', betright: '#6366f1',
 };
 
 function fmt(d: string) {
@@ -92,7 +92,7 @@ export default function EVTable({ planLimit = 999 }: { planLimit?: number }) {
             {loading ? 'Scanning...' : `${total} edges`}
             {!loading && planLimit < total && (
               <span style={{ fontSize: 13, fontWeight: 400, color: '#64748b', marginLeft: 8 }}>
-                (showing {rows.length} — <Link href="/pricing" style={{ color: '#22d3ee' }}>upgrade for all</Link>)
+                (showing {rows.length} — <Link href="/pricing" style={{ color: '#2979ff' }}>upgrade for all</Link>)
               </span>
             )}
           </div>
@@ -168,7 +168,7 @@ export default function EVTable({ planLimit = 999 }: { planLimit?: number }) {
                           textTransform: 'capitalize',
                         }}>{row.bookie?.replace(/_/g, ' ')}</span>
                       </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#10b981' }}>
+                      <td style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#00c853' }}>
                         ${Number(row.bookie_odds).toFixed(2)}
                       </td>
                       <td style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: '#64748b' }}>
@@ -179,7 +179,7 @@ export default function EVTable({ planLimit = 999 }: { planLimit?: number }) {
                           <div className="ev-bar-track">
                             <div className="ev-bar-fill" style={{ width: `${Math.min(ev * 5, 100)}%` }} />
                           </div>
-                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#10b981', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#00c853', whiteSpace: 'nowrap' }}>
                             +{ev.toFixed(1)}%
                           </span>
                         </div>

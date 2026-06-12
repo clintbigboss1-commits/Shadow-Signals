@@ -70,7 +70,7 @@ export default function ExitPopup() {
         transform: 'translate(-50%,-50%)',
         zIndex: 1000, width: '100%', maxWidth: 480,
         background: '#0d1526',
-        border: '1px solid rgba(34,211,238,.3)',
+        border: '1px solid rgba(41,121,255,.3)',
         borderRadius: 20,
         padding: 0, overflow: 'hidden',
         boxShadow: '0 40px 80px rgba(0,0,0,.8)',
@@ -90,7 +90,7 @@ export default function ExitPopup() {
           </h2>
           <p style={{ color: '#94a3b8', fontSize: 14, margin: 0 }}>
             We found{' '}
-            <strong style={{ color: '#22d3ee' }}>
+            <strong style={{ color: '#2979ff' }}>
               {Math.floor(Math.random() * 8) + 3} +EV markets
             </strong>
             {' '}open right now. Start free — no card needed.
@@ -104,14 +104,14 @@ export default function ExitPopup() {
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20, padding: '10px 14px', background: 'rgba(16,185,129,.06)', border: '1px solid rgba(16,185,129,.15)', borderRadius: 10 }}>
             <span style={{ fontSize: 20 }}>👥</span>
             <span style={{ fontSize: 13, color: '#94a3b8' }}>
-              <strong style={{ color: '#10b981' }}>7,416 Aussie punters</strong> used Shadow Syndicate this week
+              <strong style={{ color: '#00c853' }}>7,416 Aussie punters</strong> used Shadow Signals this week
             </span>
           </div>
 
           {done ? (
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>✅</div>
-              <p style={{ color: '#10b981', fontWeight: 700, fontSize: 16 }}>Redirecting to your free trial...</p>
+              <p style={{ color: '#00c853', fontWeight: 700, fontSize: 16 }}>Redirecting to your free trial...</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -125,7 +125,7 @@ export default function ExitPopup() {
               />
               <button
                 type="submit"
-                style={{ padding: '13px', borderRadius: 10, background: 'linear-gradient(135deg,#22d3ee,#0891b2)', border: 'none', color: '#030711', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                style={{ padding: '13px', borderRadius: 10, background: 'linear-gradient(135deg,#2979ff,#1e63d9)', border: 'none', color: '#030711', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
               >
                 ⚡ Start My Free Trial →
               </button>

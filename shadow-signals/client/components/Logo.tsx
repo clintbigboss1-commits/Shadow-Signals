@@ -20,7 +20,7 @@ export function LogoMark({ size = 36 }: { size?: number }) {
     >
       <defs>
         <linearGradient id="lm-hex" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#00d4ff" />
+          <stop offset="0%" stopColor="#2979ff" />
           <stop offset="100%" stopColor="#0099cc" />
         </linearGradient>
         <linearGradient id="lm-bolt" x1="0" y1="0" x2="0.3" y2="1">
@@ -69,7 +69,7 @@ export default function Logo({ size = 36, wordmark = true, href = '/' }: Props) 
             fontWeight: 900,
             fontSize: Math.round(size * 0.33),
             letterSpacing: Math.round(size * 0.055),
-            color: '#00d4ff',
+            color: '#2979ff',
             fontFamily: 'Inter, sans-serif',
           }}>SIGNALS</span>
         </span>

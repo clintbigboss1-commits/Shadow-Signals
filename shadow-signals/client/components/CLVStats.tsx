@@ -12,7 +12,7 @@ interface ByBookie { bookie: string; bets: number; profit: number; avg_clv: numb
 interface BySport  { sport: string;  bets: number; profit: number; avg_ev: number;  }
 interface CLVData  { summary: Summary; byBookie: ByBookie[]; bySport: BySport[]; }
 
-function pnlColour(v: number) { return v >= 0 ? '#10b981' : '#ef4444'; }
+function pnlColour(v: number) { return v >= 0 ? '#00c853' : '#ef4444'; }
 function pnlFmt(v: number)    { return `${v >= 0 ? '+' : ''}$${Math.abs(v).toFixed(2)}`; }
 
 export default function CLVStats() {
@@ -47,9 +47,9 @@ export default function CLVStats() {
   const stats = [
     { label: 'P&L',       value: pnlFmt(Number(s?.total_profit || 0)), color: pnlColour(Number(s?.total_profit)), mono: true },
     { label: 'Bets',      value: String(total),                         color: '#e2e8f0', mono: false },
-    { label: 'Win rate',  value: `${winRate}%`,                         color: '#f59e0b', mono: true },
-    { label: 'Avg EV',    value: `+${Number(s?.avg_ev || 0).toFixed(2)}%`, color: '#10b981', mono: true },
-    { label: 'Avg CLV',   value: `+${Number(s?.avg_clv || 0).toFixed(2)}%`, color: '#10b981', mono: true },
+    { label: 'Win rate',  value: `${winRate}%`,                         color: '#ffab00', mono: true },
+    { label: 'Avg EV',    value: `+${Number(s?.avg_ev || 0).toFixed(2)}%`, color: '#00c853', mono: true },
+    { label: 'Avg CLV',   value: `+${Number(s?.avg_clv || 0).toFixed(2)}%`, color: '#00c853', mono: true },
     { label: 'ROI',       value: `${Number(s?.roi || 0).toFixed(2)}%`,  color: pnlColour(Number(s?.roi)), mono: true },
   ];
 

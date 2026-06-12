@@ -25,16 +25,16 @@ interface EVOpp {
 /* ─── helpers ─────────────────────────────────────────────────────────── */
 
 function grade(ev: number) {
-  if (ev >= 8) return { label: 'Grade S+', bg: '#22d3ee', color: '#030711' };
-  if (ev >= 5) return { label: 'Grade A',  bg: '#10b981', color: '#030711' };
-  if (ev >= 3) return { label: 'Grade B',  bg: '#f59e0b', color: '#030711' };
+  if (ev >= 8) return { label: 'Grade S+', bg: '#2979ff', color: '#030711' };
+  if (ev >= 5) return { label: 'Grade A',  bg: '#00c853', color: '#030711' };
+  if (ev >= 3) return { label: 'Grade B',  bg: '#ffab00', color: '#030711' };
   return              { label: 'Grade C',  bg: '#64748b', color: '#fff'    };
 }
 
 function confidence(ev: number) {
-  if (ev >= 8) return { label: 'VERY HIGH', color: '#22d3ee' };
-  if (ev >= 5) return { label: 'HIGH',      color: '#10b981' };
-  if (ev >= 3) return { label: 'MEDIUM',    color: '#f59e0b' };
+  if (ev >= 8) return { label: 'VERY HIGH', color: '#2979ff' };
+  if (ev >= 5) return { label: 'HIGH',      color: '#00c853' };
+  if (ev >= 3) return { label: 'MEDIUM',    color: '#ffab00' };
   return              { label: 'LOW',       color: '#64748b' };
 }
 
@@ -85,7 +85,7 @@ function teamInitial(name: string) {
 }
 
 function teamColor(name: string) {
-  const colors = ['#22d3ee','#10b981','#f59e0b','#8b5cf6','#ec4899','#6366f1','#ef4444','#14b8a6'];
+  const colors = ['#2979ff','#00c853','#ffab00','#8b5cf6','#ec4899','#6366f1','#ef4444','#14b8a6'];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
@@ -142,7 +142,7 @@ function EventCard({
   return (
     <div style={{
       background: '#0d1526',
-      border: `1px solid ${evNum >= 8 ? 'rgba(34,211,238,.25)' : 'rgba(255,255,255,.07)'}`,
+      border: `1px solid ${evNum >= 8 ? 'rgba(41,121,255,.25)' : 'rgba(255,255,255,.07)'}`,
       borderRadius: 16,
       overflow: 'hidden',
       transition: 'border-color .2s, transform .15s',
@@ -189,7 +189,7 @@ function EventCard({
             {teamInitial(teams.home)}
           </div>
           <span style={{ fontWeight: 700, fontSize: 15, flex: 1 }}>{teams.home}</span>
-          <span style={{ color: ev.selection === teams.home ? '#22d3ee' : '#475569', fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18 }}>—</span>
+          <span style={{ color: ev.selection === teams.home ? '#2979ff' : '#475569', fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18 }}>—</span>
         </div>
         <div style={{ paddingLeft: 8, marginBottom: 10, color: '#475569', fontSize: 11, fontWeight: 600 }}>vs</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -197,7 +197,7 @@ function EventCard({
             {teamInitial(teams.away)}
           </div>
           <span style={{ fontWeight: 700, fontSize: 15, flex: 1 }}>{teams.away}</span>
-          <span style={{ color: ev.selection === teams.away ? '#22d3ee' : '#475569', fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18 }}>—</span>
+          <span style={{ color: ev.selection === teams.away ? '#2979ff' : '#475569', fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18 }}>—</span>
         </div>
       </div>
 
@@ -209,14 +209,14 @@ function EventCard({
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 10, color: '#475569', marginBottom: 2, textTransform: 'uppercase' }}>{teams.home.split(' ')[0]}</div>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 15, color: ev.selection === teams.home ? '#22d3ee' : '#94a3b8' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 15, color: ev.selection === teams.home ? '#2979ff' : '#94a3b8' }}>
                 {odds.toFixed(2)}
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 10, color: '#475569', marginBottom: 2, textTransform: 'uppercase' }}>{teams.away.split(' ')[0]}</div>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 15, color: ev.selection === teams.away ? '#22d3ee' : '#94a3b8' }}>
-                {fair.toFixed(2)} <span style={{ fontSize: 10, color: '#22d3ee', fontWeight: 700 }}>BEST</span>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 15, color: ev.selection === teams.away ? '#2979ff' : '#94a3b8' }}>
+                {fair.toFixed(2)} <span style={{ fontSize: 10, color: '#2979ff', fontWeight: 700 }}>BEST</span>
               </div>
             </div>
           </div>
@@ -224,7 +224,7 @@ function EventCard({
 
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#64748b', marginBottom: 6 }}>
           <span>KELLY</span>
-          <span style={{ color: '#22d3ee', fontWeight: 700 }}>{Number(ev.kelly_percent).toFixed(1)}%</span>
+          <span style={{ color: '#2979ff', fontWeight: 700 }}>{Number(ev.kelly_percent).toFixed(1)}%</span>
         </div>
       </div>
 
@@ -232,10 +232,10 @@ function EventCard({
       <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>Edge vs Fair Price</span>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14, color: '#10b981' }}>+{evNum.toFixed(1)}%</span>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14, color: '#00c853' }}>+{evNum.toFixed(1)}%</span>
         </div>
         <div style={{ height: 6, background: 'rgba(255,255,255,.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 6 }}>
-          <div style={{ height: '100%', width: `${barW}%`, background: evNum >= 8 ? 'linear-gradient(90deg,#22d3ee,#06b6d4)' : evNum >= 5 ? '#10b981' : '#f59e0b', borderRadius: 99, transition: 'width .5s' }} />
+          <div style={{ height: '100%', width: `${barW}%`, background: evNum >= 8 ? 'linear-gradient(90deg,#2979ff,#1e63d9)' : evNum >= 5 ? '#00c853' : '#ffab00', borderRadius: 99, transition: 'width .5s' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
           <span style={{ color: '#475569' }}>Best at <span style={{ color: '#94a3b8', textTransform: 'capitalize' }}>{ev.bookie?.replace(/_/g,' ')}</span></span>
@@ -248,8 +248,8 @@ function EventCard({
         <button
           onClick={() => onAddToSlip(ev)}
           style={{
-            flex: 1, padding: '13px 16px', background: inSlip ? 'rgba(34,211,238,.08)' : 'transparent',
-            border: 'none', color: inSlip ? '#22d3ee' : '#94a3b8',
+            flex: 1, padding: '13px 16px', background: inSlip ? 'rgba(41,121,255,.08)' : 'transparent',
+            border: 'none', color: inSlip ? '#2979ff' : '#94a3b8',
             fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'all .15s',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             fontFamily: 'Inter, sans-serif',
@@ -306,12 +306,12 @@ function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (i
     <div style={{
       position: 'fixed', bottom: 24, right: 24, zIndex: 200,
       width: 320, background: '#0d1526',
-      border: '1px solid rgba(34,211,238,.25)',
+      border: '1px solid rgba(41,121,255,.25)',
       borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,.6)',
       overflow: 'hidden',
     }}>
-      <div style={{ padding: '14px 16px', background: 'rgba(34,211,238,.06)', borderBottom: '1px solid rgba(34,211,238,.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 800, fontSize: 14, color: '#22d3ee' }}>⚡ Bet Slip ({items.length})</span>
+      <div style={{ padding: '14px 16px', background: 'rgba(41,121,255,.06)', borderBottom: '1px solid rgba(41,121,255,.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontWeight: 800, fontSize: 14, color: '#2979ff' }}>⚡ Bet Slip ({items.length})</span>
         <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13 }}>Clear all</button>
       </div>
 
@@ -325,7 +325,7 @@ function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (i
               </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 10 }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#10b981', fontSize: 14 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#00c853', fontSize: 14 }}>
                 ${Number(ev.bookie_odds).toFixed(2)}
               </div>
               <button onClick={() => onRemove(ev.id)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 11 }}>remove</button>
@@ -354,7 +354,7 @@ function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (i
         <button
           onClick={logAllBets}
           disabled={logging || logged}
-          style={{ width: '100%', padding: '11px', borderRadius: 10, background: logged ? '#10b981' : 'linear-gradient(135deg,#22d3ee,#0891b2)', border: 'none', color: '#030711', fontWeight: 800, fontSize: 14, cursor: logging ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif', opacity: logging ? 0.7 : 1 }}
+          style={{ width: '100%', padding: '11px', borderRadius: 10, background: logged ? '#00c853' : 'linear-gradient(135deg,#2979ff,#1e63d9)', border: 'none', color: '#030711', fontWeight: 800, fontSize: 14, cursor: logging ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif', opacity: logging ? 0.7 : 1 }}
         >
           {logged ? '✓ Logged to CLV Tracker' : logging ? 'Logging...' : `Log ${items.length} Bet${items.length > 1 ? 's' : ''} →`}
         </button>
@@ -440,7 +440,7 @@ export default function MarketsPage() {
         </div>
 
         {/* Tip bar */}
-        <div style={{ background: 'rgba(34,211,238,.04)', borderBottom: '1px solid rgba(34,211,238,.08)', padding: '8px 20px', textAlign: 'center', fontSize: 12, color: '#475569' }}>
+        <div style={{ background: 'rgba(41,121,255,.04)', borderBottom: '1px solid rgba(41,121,255,.08)', padding: '8px 20px', textAlign: 'center', fontSize: 12, color: '#475569' }}>
           Tap any decimal price to add it to your slip. We only show markets with confirmed edge.
         </div>
 

@@ -107,8 +107,8 @@ export default function ArbTable() {
                   <div style={{ fontWeight: 700 }}>{arb.event_name}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 22, fontWeight: 900, color: '#10b981' }}>+{Number(arb.profit_percent).toFixed(2)}%</div>
-                  <div style={{ fontSize: 12, color: '#10b981' }}>+${profit.toFixed(2)} locked in</div>
+                  <div style={{ fontSize: 22, fontWeight: 900, color: '#00c853' }}>+{Number(arb.profit_percent).toFixed(2)}%</div>
+                  <div style={{ fontSize: 12, color: '#00c853' }}>+${profit.toFixed(2)} locked in</div>
                 </div>
               </div>
 
@@ -123,7 +123,7 @@ export default function ArbTable() {
                     </div>
                     <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 13 }}>{side.sel}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#10b981', fontSize: 18 }}>
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#00c853', fontSize: 18 }}>
                         ${Number(side.odds).toFixed(2)}
                       </span>
                       <span style={{ fontSize: 12, color: '#64748b' }}>Stake ${side.s.toFixed(2)}</span>
@@ -134,7 +134,7 @@ export default function ArbTable() {
 
               <div style={{ fontSize: 13, color: '#64748b', padding: '8px 12px', background: '#0d1526', borderRadius: 8 }}>
                 Total in: <strong style={{ color: '#e2e8f0' }}>${stake.toFixed(2)}</strong> →
-                Guaranteed out: <strong style={{ color: '#10b981' }}>${(stake + profit).toFixed(2)}</strong>
+                Guaranteed out: <strong style={{ color: '#00c853' }}>${(stake + profit).toFixed(2)}</strong>
               </div>
             </div>
           );

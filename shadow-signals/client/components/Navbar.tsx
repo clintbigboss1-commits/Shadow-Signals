@@ -10,6 +10,7 @@ import { getSocket, connectSocket } from '../lib/socket';
 import Logo from './Logo';
 
 const NAV = [
+  { href: '/ghost',    label: 'GHOST'    },
   { href: '/markets',  label: 'Markets'  },
   { href: '/wins',     label: 'Wins'     },
   { href: '/reviews',  label: 'Reviews'  },
@@ -17,7 +18,7 @@ const NAV = [
 ];
 
 const PLAN_COL: Record<string, string> = {
-  free: '#64748b', starter: '#22d3ee', pro: '#22d3ee', elite: '#8b5cf6',
+  free: '#64748b', starter: '#2979ff', pro: '#2979ff', elite: '#8b5cf6',
 };
 
 export default function Navbar() {
@@ -81,11 +82,19 @@ export default function Navbar() {
           <div className={`navbar-links${menuOpen ? ' open' : ''}`}>
             {NAV.map((l, i) => {
               const active = path === l.href;
+              const isGhost = l.href === '/ghost';
               return (
                 <Link key={i} href={l.href} onClick={() => setMenuOpen(false)} style={{
-                  padding: '10px 14px', borderRadius: 8, fontSize: 14, fontWeight: 500,
-                  color: active ? '#e2e8f0' : '#64748b',
-                  background: active ? 'rgba(255,255,255,.06)' : 'transparent',
+                  padding: isGhost ? '6px 12px' : '10px 14px',
+                  borderRadius: isGhost ? 6 : 8,
+                  fontSize: isGhost ? 11 : 14,
+                  fontWeight: isGhost ? 800 : 500,
+                  letterSpacing: isGhost ? 2 : 0,
+                  textTransform: isGhost ? 'uppercase' : 'none',
+                  color: isGhost ? '#2979ff' : active ? '#e2e8f0' : '#64748b',
+                  background: isGhost ? 'rgba(41,121,255,.09)' : active ? 'rgba(255,255,255,.06)' : 'transparent',
+                  border: isGhost ? '1px solid rgba(41,121,255,.25)' : 'none',
+                  alignSelf: 'center',
                   transition: 'color .15s',
                 }}>{l.label}</Link>
               );
@@ -110,7 +119,7 @@ export default function Navbar() {
                 ) : (
                   <>
                     <Link href="/login" onClick={() => setMenuOpen(false)} style={{ padding: '9px 16px', fontSize: 14, fontWeight: 500, color: '#94a3b8', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.02)', display: 'flex', justifyContent: 'center' }}>Sign In</Link>
-                    <Link href="/signup" onClick={() => setMenuOpen(false)} style={{ padding: '10px 18px', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#030711', background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <Link href="/signup" onClick={() => setMenuOpen(false)} style={{ padding: '10px 18px', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#030711', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                       ⚡ Get Edge →
                     </Link>
                   </>
@@ -165,7 +174,7 @@ export default function Navbar() {
                         <a key={n.id} href={n.link || '#'} onClick={() => setNotifOpen(false)} style={{
                           display: 'block', padding: '12px 16px',
                           borderBottom: '1px solid rgba(255,255,255,.04)',
-                          background: n.read ? 'transparent' : 'rgba(34,211,238,.04)',
+                          background: n.read ? 'transparent' : 'rgba(41,121,255,.04)',
                           textDecoration: 'none', color: 'inherit',
                         }}>
                           <div style={{ fontWeight: 600, fontSize: 13, color: '#e2e8f0', marginBottom: 2 }}>{n.title}</div>
@@ -183,7 +192,7 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/login" style={{ padding: '7px 16px', fontSize: 14, fontWeight: 500, color: '#94a3b8', borderRadius: 8 }}>Sign In</Link>
-                <Link href="/signup" style={{ padding: '8px 18px', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#030711', background: 'linear-gradient(135deg,#22d3ee,#0891b2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Link href="/signup" style={{ padding: '8px 18px', borderRadius: 9, fontSize: 14, fontWeight: 700, color: '#030711', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   ⚡ Get Edge →
                 </Link>
               </>

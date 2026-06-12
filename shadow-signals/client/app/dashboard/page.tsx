@@ -33,9 +33,9 @@ function sportIcon(key: string) {
   return m[key] || '🎯';
 }
 function grade(ev: number) {
-  if (ev >= 8) return { cls:'grade-sp', label:'Grade S+', color:'#22d3ee' };
-  if (ev >= 5) return { cls:'grade-a',  label:'Grade A',  color:'#10b981' };
-  return              { cls:'grade-b',  label:'Grade B',  color:'#f59e0b' };
+  if (ev >= 8) return { cls:'grade-sp', label:'Grade S+', color:'#2979ff' };
+  if (ev >= 5) return { cls:'grade-a',  label:'Grade A',  color:'#00c853' };
+  return              { cls:'grade-b',  label:'Grade B',  color:'#ffab00' };
 }
 function timeAgo(dt: string) {
   const diff = Date.now() - new Date(dt).getTime();
@@ -73,7 +73,7 @@ function Sidebar({ user, activeSport, setActiveSport }: {
   user: User|null; activeSport: string; setActiveSport: (s:string)=>void;
 }) {
   const planCol: Record<string,string> = {
-    free:'#64748b', starter:'#22d3ee', pro:'#22d3ee', elite:'#8b5cf6'
+    free:'#64748b', starter:'#2979ff', pro:'#2979ff', elite:'#8b5cf6'
   };
 
   return (
@@ -81,8 +81,8 @@ function Sidebar({ user, activeSport, setActiveSport }: {
       {/* Logo */}
       <div style={{ padding:'18px 16px 12px', borderBottom:'1px solid var(--border)' }}>
         <Link href="/" style={{ display:'flex', alignItems:'center', gap:9 }}>
-          <div style={{ width:32,height:32,borderRadius:9,background:'linear-gradient(135deg,#22d3ee,#0891b2)',display:'grid',placeItems:'center',fontWeight:900,fontSize:16,color:'#030711',flexShrink:0 }}>S</div>
-          <span style={{ fontWeight:900,fontSize:15,letterSpacing:-.3 }}>SHADOW <span style={{ color:'#22d3ee' }}>ELITE</span></span>
+          <div style={{ width:32,height:32,borderRadius:9,background:'linear-gradient(135deg,#2979ff,#1e63d9)',display:'grid',placeItems:'center',fontWeight:900,fontSize:16,color:'#030711',flexShrink:0 }}>S</div>
+          <span style={{ fontWeight:900,fontSize:15,letterSpacing:-.3 }}>SHADOW <span style={{ color:'#2979ff' }}>ELITE</span></span>
         </Link>
       </div>
 
@@ -108,6 +108,11 @@ function Sidebar({ user, activeSport, setActiveSport }: {
         <Link href="/dashboard">
           <button className="nav-item active">
             <span>🏠</span> Dashboard
+          </button>
+        </Link>
+        <Link href="/ghost">
+          <button className="nav-item">
+            <span>👻</span> GHOST Signals
           </button>
         </Link>
         <Link href="/markets">
@@ -168,7 +173,7 @@ function Sidebar({ user, activeSport, setActiveSport }: {
 /* ─────────────────────── topbar ──────────────────────────── */
 function TopBar({ user }: { user:User|null }) {
   const planCol: Record<string,string> = {
-    free:'#64748b', starter:'#22d3ee', pro:'#22d3ee', elite:'#8b5cf6'
+    free:'#64748b', starter:'#2979ff', pro:'#2979ff', elite:'#8b5cf6'
   };
 
   const toggleSidebar = () => {
@@ -245,9 +250,9 @@ function StatCards({ bets }: { bets: Bet[] }) {
 /* ─────────────────────── tool cards ─────────────────────── */
 function ToolCards() {
   const tools = [
-    { icon:'📡', title:'Live Radar',      sub:'6 active targets',   href:'/markets',    glow:'#22d3ee', bg:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=400&q=80' },
-    { icon:'🏇', title:'Racing Signals',  sub:'3 picks today',      href:'/markets',    glow:'#f59e0b', bg:'https://images.unsplash.com/photo-1596726585149-14a849d44359?auto=format&fit=crop&w=400&q=80' },
-    { icon:'🧮', title:'OmniCalc',        sub:'Free EV calculator', href:'/clv',        glow:'#10b981', bg:'https://images.unsplash.com/photo-1600250395368-dc8152ab5f79?auto=format&fit=crop&w=400&q=80' },
+    { icon:'📡', title:'Live Radar',      sub:'6 active targets',   href:'/markets',    glow:'#2979ff', bg:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=400&q=80' },
+    { icon:'🏇', title:'Racing Signals',  sub:'3 picks today',      href:'/markets',    glow:'#ffab00', bg:'https://images.unsplash.com/photo-1596726585149-14a849d44359?auto=format&fit=crop&w=400&q=80' },
+    { icon:'🧮', title:'OmniCalc',        sub:'Free EV calculator', href:'/clv',        glow:'#00c853', bg:'https://images.unsplash.com/photo-1600250395368-dc8152ab5f79?auto=format&fit=crop&w=400&q=80' },
     { icon:'🏅', title:'Leaderboard',     sub:'CLV rankings',       href:'/wins',       glow:'#8b5cf6', bg:'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80' },
   ];
   return (
@@ -290,13 +295,13 @@ function LiveRadarPanel({ evOpps }: { evOpps: EVOpp[] }) {
       {/* Header */}
       <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <div style={{ width:32,height:32,borderRadius:9,background:'rgba(34,211,238,.1)',display:'grid',placeItems:'center',fontSize:17 }}>📡</div>
+          <div style={{ width:32,height:32,borderRadius:9,background:'rgba(41,121,255,.1)',display:'grid',placeItems:'center',fontSize:17 }}>📡</div>
           <div>
             <div style={{ fontWeight:700,fontSize:14 }}>Live Radar</div>
             <div style={{ fontSize:11,color:'var(--muted)' }}>Real-time +EV targets</div>
           </div>
         </div>
-        <div style={{ display:'flex',alignItems:'center',gap:5,background:'rgba(34,211,238,.08)',border:'1px solid rgba(34,211,238,.2)',padding:'4px 10px',borderRadius:99,fontSize:11,fontWeight:700,color:'var(--cyan)' }}>
+        <div style={{ display:'flex',alignItems:'center',gap:5,background:'rgba(41,121,255,.08)',border:'1px solid rgba(41,121,255,.2)',padding:'4px 10px',borderRadius:99,fontSize:11,fontWeight:700,color:'var(--cyan)' }}>
           <span className="dot-cyan" style={{ width:5,height:5 }} />
           {top5.length} ACTIVE
         </div>
@@ -542,7 +547,7 @@ function DashboardInner() {
 
           {/* Free user upgrade nudge */}
           {user?.plan === 'free' && (
-            <div style={{ marginTop:16,padding:'14px 18px',background:'linear-gradient(90deg,rgba(34,211,238,.05),rgba(99,102,241,.05))',border:'1px solid rgba(34,211,238,.15)',borderRadius:12,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12 }}>
+            <div style={{ marginTop:16,padding:'14px 18px',background:'linear-gradient(90deg,rgba(41,121,255,.05),rgba(99,102,241,.05))',border:'1px solid rgba(41,121,255,.15)',borderRadius:12,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12 }}>
               <div>
                 <div style={{ fontWeight:700,fontSize:14,marginBottom:3 }}>Upgrade to Pro</div>
                 <div style={{ fontSize:13,color:'var(--muted)' }}>Unlock all live edges, arb finder, CLV tracker & alerts</div>

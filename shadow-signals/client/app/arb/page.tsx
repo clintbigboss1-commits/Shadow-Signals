@@ -12,8 +12,8 @@ export default function ArbPage() {
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
           <div style={{ marginBottom: 28 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span className="pulse-dot" style={{ background: '#f59e0b', boxShadow: '0 0 10px #f59e0b' }} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+              <span className="pulse-dot" style={{ background: '#ffab00', boxShadow: '0 0 10px #ffab00' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#ffab00', textTransform: 'uppercase', letterSpacing: 1.5 }}>
                 Arbitrage Finder
               </span>
             </div>

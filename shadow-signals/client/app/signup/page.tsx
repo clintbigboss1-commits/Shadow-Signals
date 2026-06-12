@@ -60,7 +60,7 @@ export default function Signup() {
       }}>
         {/* background glows */}
         <div style={{ position: 'absolute', top: -120, left: -80, width: 420, height: 420, background: 'radial-gradient(circle, rgba(168,85,247,.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -60, right: -60, width: 320, height: 320, background: 'radial-gradient(circle, rgba(0,212,255,.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -60, right: -60, width: 320, height: 320, background: 'radial-gradient(circle, rgba(41,121,255,.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         {/* Logo */}
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -80,14 +80,14 @@ export default function Signup() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 32 }}>
             {WINS.map((w, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(34,197,94,.05)', border: '1px solid rgba(34,197,94,.14)', borderRadius: 10, padding: '11px 14px' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(34,197,94,.12)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: '#22c55e', flexShrink: 0 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(34,197,94,.12)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 800, color: '#00e676', flexShrink: 0 }}>
                   {w.user[0]}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>{w.user} <span style={{ color: '#5e7390', fontWeight: 400, fontSize: 12 }}>· {w.loc}</span></div>
                   <div style={{ fontSize: 12, color: '#5e7390' }}>{w.detail}</div>
                 </div>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#22c55e', flexShrink: 0 }}>{w.result}</div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#00e676', flexShrink: 0 }}>{w.result}</div>
               </div>
             ))}
           </div>
@@ -96,7 +96,7 @@ export default function Signup() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {FEATURES.map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
-                <span style={{ color: '#00d4ff', fontWeight: 800, flexShrink: 0 }}>✓</span>
+                <span style={{ color: '#2979ff', fontWeight: 800, flexShrink: 0 }}>✓</span>
                 <span style={{ color: '#9eb1c8' }}>{f}</span>
               </div>
             ))}
@@ -107,7 +107,7 @@ export default function Signup() {
         <div style={{ display: 'flex', gap: 24, position: 'relative', zIndex: 1 }}>
           {[['7,416+', 'Active users'], ['78%', 'CLV positive'], ['+$2.8k', 'Avg monthly']].map(([v, l]) => (
             <div key={l}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18, color: '#00d4ff', lineHeight: 1 }}>{v}</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18, color: '#2979ff', lineHeight: 1 }}>{v}</div>
               <div style={{ fontSize: 11, color: '#5e7390', marginTop: 4 }}>{l}</div>
             </div>
           ))}
