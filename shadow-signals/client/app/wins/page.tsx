@@ -59,7 +59,7 @@ export default function WinsPage() {
       </nav>
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '56px 24px', position: 'relative' }}>
-        <OperativePeek page="wins" side="right" width={140} bottom={120} />
+        <OperativePeek page="wins" side="right" width={280} bottom={120} />
 
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 }}>Verified Results</div>

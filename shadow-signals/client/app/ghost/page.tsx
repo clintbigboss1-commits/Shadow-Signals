@@ -248,7 +248,7 @@ export default function GhostPage() {
 
       {/* Hero */}
       <div style={{ padding: '36px 24px 0', maxWidth: 900, margin: '0 auto', width: '100%', position: 'relative' }}>
-        <OperativePeek page="ghost" side="right" width={140} bottom={-10} />
+        <OperativePeek page="ghost" leftOffset={-60} width={280} bottom={0} />
         <div className="ghost-eyebrow" style={{ marginBottom: 14 }}>
           <span>Exclusive Intelligence</span>
         </div>

@@ -701,6 +701,48 @@ input::placeholder { color: var(--faint); }
 .ghost-tab:hover { color: rgba(255,255,255,.6); }
 .ghost-tab.on { color: #fff; border-bottom: 2px solid var(--cyan); }
 
+/* ── Operative peek figures ─────────────────────────────── */
+@keyframes opEnter { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
+.operative-peek {
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+  filter:
+    drop-shadow(0 0 24px rgba(41,121,255,.28))
+    drop-shadow(0 6px 18px rgba(0,0,0,.5))
+    contrast(1.08);
+  opacity: 0;
+  animation: opEnter .8s ease .4s forwards;
+  mask-image: linear-gradient(to bottom, black 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 78%, transparent 100%);
+}
+@media (max-width: 1023px) { .operative-peek { display: none !important; } }
+
+/* ── Sport photo card grid ──────────────────────────────── */
+.sport-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 1023px) { .sport-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px)  { .sport-grid { grid-template-columns: 1fr; } }
+
+.sport-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  padding-bottom: 56.25%;
+  border: 1px solid rgba(255,255,255,.07);
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  cursor: pointer;
+  transition: transform .18s, box-shadow .18s;
+  display: block;
+}
+.sport-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.6);
+}
+
 /* ── Widget dark theme overrides ────────────────────────── */
 api-sports-widget {
   --widget-bg: #0d1526;

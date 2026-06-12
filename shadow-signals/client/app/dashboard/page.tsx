@@ -7,6 +7,7 @@ import API from '../../lib/api';
 import { getUser, getToken, saveAuth, type User } from '../../lib/auth';
 import { connectSocket } from '../../lib/socket';
 import { confidenceFromEV, confidenceColor } from '../../lib/confidence';
+import OperativePeek from '../../components/OperativePeek';
 
 /* ─────────────────────── types ──────────────────────────── */
 interface EVOpp {
@@ -499,6 +500,7 @@ function DashboardInner() {
 
   return (
     <div className="app-shell">
+      <OperativePeek page="dashboard" side="right" width={240} bottom={24} fixed />
       <Sidebar user={user} activeSport={activeSport} setActiveSport={setActiveSport} />
 
       <div className="main-area">

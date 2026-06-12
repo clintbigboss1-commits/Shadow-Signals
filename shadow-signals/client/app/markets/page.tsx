@@ -540,7 +540,7 @@ export default function MarketsPage() {
 
         {/* Content */}
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 140px', position: 'relative' }}>
-          <OperativePeek page="markets" side="right" width={150} bottom={20} />
+          <OperativePeek page="markets" side="right" width={200} bottom={24} fixed />
           {loading ? (
             <div style={{ padding: 80, textAlign: 'center', color: '#64748b' }}>
               <div className="spinner" style={{ margin: '0 auto 16px' }} />
