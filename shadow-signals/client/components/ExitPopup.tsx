@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getToken } from '../lib/auth';
 
 /**
  * Exit-intent popup — fires when mouse moves toward top of screen (leaving tab)
  * Also fires after 45s on pricing page if user hasn't converted
- * Shown max once per session
+ * Shown max once per session, and never to logged-in members
  */
 export default function ExitPopup() {
   const [show, setShow] = useState(false);
@@ -14,6 +15,8 @@ export default function ExitPopup() {
   const [done, setDone]   = useState(false);
 
   useEffect(() => {
+    // Members are already converted — never pitch signup at them
+    if (getToken()) return;
     // Don't show if already dismissed this session
     if (sessionStorage.getItem('exit_popup_seen')) return;
 

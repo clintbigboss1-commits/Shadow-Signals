@@ -80,7 +80,7 @@ export default function Navbar() {
 
           {/* Nav links (hidden on mobile, shown on desktop unless open) */}
           <div className={`navbar-links${menuOpen ? ' open' : ''}`}>
-            {NAV.map((l, i) => {
+            {(user ? [{ href: '/dashboard', label: 'Dashboard' }, ...NAV] : NAV).map((l, i) => {
               const active = path === l.href;
               const isGhost = l.href === '/ghost';
               return (

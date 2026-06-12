@@ -1,8 +1,31 @@
 'use strict';
 const { db } = require('../db');
 
+// Real arbs are 0.5-4%. Bigger "profit" means one price is stale/wrong —
+// publishing it would send members chasing bets that no longer exist.
+const ARB_MAX_PROFIT = 8;
+const OUTLIER_RATIO = 2.5;
+
+function median(values) {
+  const s = [...values].sort((a, b) => a - b);
+  return s.length ? s[Math.floor(s.length / 2)] : null;
+}
+
 async function findArbs() {
   console.log('🔍 Scanning for arbitrage...');
+
+  // Per-selection market medians — to reject stale outlier prices
+  const allOdds = await db.query(`
+    SELECT event_id, selection, odds FROM odds_cache
+    WHERE expires_at > NOW() AND market = 'h2h'
+  `);
+  const priceMap = {};
+  for (const r of allOdds.rows) {
+    const k = `${r.event_id}|${r.selection}`;
+    (priceMap[k] = priceMap[k] || []).push(parseFloat(r.odds));
+  }
+  const medians = {};
+  for (const [k, prices] of Object.entries(priceMap)) medians[k] = median(prices);
 
   const result = await db.query(`
     SELECT
@@ -26,6 +49,7 @@ async function findArbs() {
     )
     WHERE a.expires_at > NOW()
       AND b.expires_at > NOW()
+      AND a.commence_time > NOW()
     ORDER BY a.event_id
   `);
 
@@ -40,7 +64,16 @@ async function findArbs() {
 
     const o1 = parseFloat(row.odds_1);
     const o2 = parseFloat(row.odds_2);
+
+    // Stale-price guard: a leg far above the market median is a phantom arb
+    const m1 = medians[`${row.event_id}|${row.selection_1}`];
+    const m2 = medians[`${row.event_id}|${row.selection_2}`];
+    if (m1 && o1 > m1 * OUTLIER_RATIO) continue;
+    if (m2 && o2 > m2 * OUTLIER_RATIO) continue;
+
     const implied = (1 / o1) + (1 / o2);
+    const profitPct = ((1 / implied) - 1) * 100;
+    if (profitPct > ARB_MAX_PROFIT) continue; // data error, never display
 
     if (implied < 1.0) {
       const profit    = ((1 / implied) - 1) * 100;

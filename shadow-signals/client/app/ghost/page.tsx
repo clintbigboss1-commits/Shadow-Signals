@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
+import { getUser } from '../../lib/auth';
 
 /* ─── GHOST signal data ───────────────────────────────────────────────── */
 
@@ -143,7 +144,7 @@ function Pips({ n, color }: { n: number; color: string }) {
   );
 }
 
-function SignalCard({ s }: { s: Signal }) {
+function SignalCard({ s, isAdmin }: { s: Signal; isAdmin: boolean }) {
   const [open, setOpen] = useState(false);
   const [showScript, setShowScript] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -195,8 +196,9 @@ function SignalCard({ s }: { s: Signal }) {
               ))}
             </div>
           </div>
+          {isAdmin && (
           <div className="gsec">
-            <div className="gslbl">30-second video</div>
+            <div className="gslbl">30-second video script (admin)</div>
             <div className="ghost-script">
               <div className="hd">
                 <div className="rec" />
@@ -220,6 +222,7 @@ function SignalCard({ s }: { s: Signal }) {
               </div>
             </div>
           </div>
+          )}
         </div>
       )}
     </div>
@@ -232,7 +235,10 @@ type Tab = 'all' | 'strongest';
 
 export default function GhostPage() {
   const [tab, setTab] = useState<Tab>('all');
+  const [isAdmin, setIsAdmin] = useState(false);
   const shown = tab === 'strongest' ? SIGNALS.filter(s => s.pct >= 80) : SIGNALS;
+
+  useEffect(() => { setIsAdmin(getUser()?.role === 'admin'); }, []);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
@@ -247,14 +253,14 @@ export default function GhostPage() {
           7 signals the market <span style={{ color: 'var(--gold)' }}>never</span> shows you.
         </h1>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,.45)', lineHeight: 1.7, marginBottom: 22, maxWidth: 560 }}>
-          Each one in plain English. Tap a signal to understand it, see exactly when to use it,
-          and read its 30-second explainer script.
+          Each one in plain English. Tap a signal to understand what it means, why it works,
+          and exactly when to act on it.
         </p>
         <div className="ghost-stat-grid">
           <div className="ghost-stat"><div className="n" style={{ color: 'var(--green)' }}>7</div><div className="l">Signals</div></div>
           <div className="ghost-stat"><div className="n" style={{ color: 'var(--gold)' }}>0</div><div className="l">Other apps</div></div>
-          <div className="ghost-stat"><div className="n" style={{ color: 'var(--cyan)' }}>30s</div><div className="l">Video</div></div>
-          <div className="ghost-stat"><div className="n" style={{ color: 'var(--purple)' }}>Live</div><div className="l">Updates</div></div>
+          <div className="ghost-stat"><div className="n" style={{ color: 'var(--cyan)' }}>12</div><div className="l">AU bookies</div></div>
+          <div className="ghost-stat"><div className="n" style={{ color: 'var(--purple)' }}>24/7</div><div className="l">Scanning</div></div>
         </div>
         <div className="ghost-stripe" style={{ marginTop: 22 }} />
       </div>
@@ -267,7 +273,7 @@ export default function GhostPage() {
 
       {/* Cards */}
       <div className="ghost-cards" style={{ flex: 1 }}>
-        {shown.map(s => <SignalCard key={s.name} s={s} />)}
+        {shown.map(s => <SignalCard key={s.name} s={s} isAdmin={isAdmin} />)}
       </div>
     </div>
   );

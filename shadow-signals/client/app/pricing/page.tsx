@@ -160,7 +160,7 @@ export default function Pricing() {
                   className={`btn ${p.highlight ? 'btn-primary' : 'btn-outline'}`}
                   style={{ width: '100%', justifyContent: 'center' }}
                 >
-                  {loading === p.key ? 'Loading...' : 'Start free trial →'}
+                  {loading === p.key ? 'Loading...' : loggedIn ? 'Upgrade now →' : 'Start free trial →'}
                 </button>
               </div>
             );
