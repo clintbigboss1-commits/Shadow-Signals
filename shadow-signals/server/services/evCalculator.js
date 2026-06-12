@@ -185,13 +185,27 @@ async function computeEVFromCache(sportKey = null) {
 
         opportunities.push(opp);
 
+        // UPSERT to enforce single card per (event_id, market, selection)
+        // (ev_opportunities now has UNIQUE(event_id, market, selection))
         await client.query(
           `INSERT INTO ev_opportunities
            (sport_key, event_id, event_name, market, selection, bookie,
             bookie_odds, fair_odds, ev_percent, kelly_percent,
             commence_time, expires_at, is_active)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,TRUE)
-           ON CONFLICT DO NOTHING`,
+           ON CONFLICT (event_id, market, selection)
+           DO UPDATE SET
+             sport_key = EXCLUDED.sport_key,
+             event_name = EXCLUDED.event_name,
+             bookie = EXCLUDED.bookie,
+             bookie_odds = EXCLUDED.bookie_odds,
+             fair_odds = EXCLUDED.fair_odds,
+             ev_percent = EXCLUDED.ev_percent,
+             kelly_percent = EXCLUDED.kelly_percent,
+             commence_time = EXCLUDED.commence_time,
+             expires_at = EXCLUDED.expires_at,
+             found_at = NOW(),
+             is_active = TRUE`,
           [
             opp.sport_key, opp.event_id, opp.event_name,
             opp.market, opp.selection, opp.bookie,
@@ -214,4 +228,4 @@ async function computeEVFromCache(sportKey = null) {
   return opportunities.sort((a, b) => b.ev_percent - a.ev_percent);
 }
 
-module.exports = { computeEVFromCache, calcEVPercent, kellyFraction, removeVig };
+module.exports = { computeEVFromCache, calcEVPercent, kellyFraction, removeVig, getSharpPrice, median };

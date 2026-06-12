@@ -7,6 +7,7 @@ import API from '../lib/api';
 interface EVOpp {
   id: string;
   sport_key: string;
+  event_id?: string;
   event_name: string;
   selection: string;
   bookie: string;
@@ -155,7 +156,13 @@ export default function EVTable({ planLimit = 999 }: { planLimit?: number }) {
                   return (
                     <tr key={row.id || i} className="fadein">
                       <td>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{row.event_name}</div>
+                        {row.event_id ? (
+                          <Link href={`/match/${encodeURIComponent(row.event_id)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <div style={{ fontWeight: 600, fontSize: 13, color: '#e2e8f0' }}>{row.event_name} <span style={{ color: '#2979ff', fontSize: 11 }}>→</span></div>
+                          </Link>
+                        ) : (
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{row.event_name}</div>
+                        )}
                         <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
                           {row.sport_key?.replace(/_/g, ' ')}
                         </div>

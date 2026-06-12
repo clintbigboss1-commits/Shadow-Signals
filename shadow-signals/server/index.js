@@ -17,6 +17,7 @@ const authRoutes          = require('./routes/auth');
 const evRoutes            = require('./routes/ev');
 const arbRoutes           = require('./routes/arb');
 const betsRoutes          = require('./routes/bets');
+const matchRoutes         = require('./routes/match');
 const paymentsRoutes      = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
 const { webhookHandler }  = require('./routes/payments');
@@ -77,6 +78,7 @@ app.use('/api/auth',          authRoutes);
 app.use('/api/ev',            evRoutes);
 app.use('/api/arb',           arbRoutes);
 app.use('/api/bets',          betsRoutes);
+app.use('/api/match',         matchRoutes);
 app.use('/api/payments',      paymentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import TeamLogo from '../../components/TeamLogo';
@@ -128,11 +129,12 @@ interface SlipItem { ev: EVOpp; }
 
 /* ─── Event Card ──────────────────────────────────────────────────────── */
 function EventCard({
-  ev, onAddToSlip, inSlip,
+  ev, onAddToSlip, inSlip, onOpen,
 }: {
   ev: EVOpp;
   onAddToSlip: (ev: EVOpp) => void;
   inSlip: boolean;
+  onOpen: (ev: EVOpp) => void;
 }) {
   const evNum  = Number(ev.ev_percent);
   const g      = grade(evNum);
@@ -151,8 +153,9 @@ function EventCard({
       borderRadius: 16,
       overflow: 'hidden',
       transition: 'border-color .2s, transform .15s',
-      cursor: 'default',
+      cursor: 'pointer',
     }}
+      onClick={() => onOpen(ev)}
       onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'}
       onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'}
     >
@@ -248,7 +251,7 @@ function EventCard({
       {/* Actions */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,.05)', display: 'flex', alignItems: 'center' }}>
         <button
-          onClick={() => onAddToSlip(ev)}
+          onClick={e => { e.stopPropagation(); onAddToSlip(ev); }}
           style={{
             flex: 1, padding: '13px 16px', background: inSlip ? 'rgba(41,121,255,.08)' : 'transparent',
             border: 'none', color: inSlip ? '#2979ff' : '#94a3b8',
@@ -260,9 +263,9 @@ function EventCard({
           {inSlip ? '✓ In Slip' : '+ Add to Slip'}
         </button>
         <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,.05)' }} />
-        <button style={{ padding: '13px 16px', background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 16 }} title="Bookmark">🔖</button>
+        <button onClick={e => e.stopPropagation()} style={{ padding: '13px 16px', background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 16 }} title="Bookmark">🔖</button>
         <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,.05)' }} />
-        <button style={{ padding: '13px 16px', background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 16 }} title="Share">↗</button>
+        <button onClick={e => e.stopPropagation()} style={{ padding: '13px 16px', background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 16 }} title="Share">↗</button>
       </div>
     </div>
   );
@@ -367,6 +370,7 @@ function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (i
 
 /* ─── Main Page ───────────────────────────────────────────────────────── */
 export default function MarketsPage() {
+  const router = useRouter();
   const [data, setData]       = useState<EVOpp[]>([]);
   const [sport, setSport]     = useState('all');
   const [minEV, setMinEV]     = useState(0);
@@ -471,6 +475,7 @@ export default function MarketsPage() {
                     ev={ev}
                     onAddToSlip={addToSlip}
                     inSlip={slip.some(i => i.ev.id === ev.id)}
+                    onOpen={e => e.event_id && router.push(`/match/${encodeURIComponent(e.event_id)}`)}
                   />
                 ))}
               </div>
