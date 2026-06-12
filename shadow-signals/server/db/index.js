@@ -47,6 +47,9 @@ async function initDB() {
       }
     }
   } finally {
+    // The client returns to the pool — clear session settings so later
+    // queries on this connection don't inherit the short init timeouts
+    try { await client.query('RESET lock_timeout'); await client.query('RESET statement_timeout'); } catch (_) {}
     client.release();
   }
 
