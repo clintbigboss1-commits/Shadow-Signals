@@ -96,6 +96,7 @@ app.get('/api/health', (req, res) => {
     },
     database:  process.env.DATABASE_URL   ? 'set OK' : 'NOT SET',
     odds_api:  process.env.ODDS_API_KEY   ? 'set OK' : 'NOT SET',
+    the_odds_api: process.env.THE_ODDS_API_KEY ? 'set OK' : 'NOT SET (primary odds source off)',
     email:     process.env.RESEND_API_KEY ? 'set OK' : 'not set (emails wont send)',
     frontend:  FRONTEND,
     jwt:       process.env.JWT_SECRET     ? 'set OK' : 'NOT SET',

@@ -19,6 +19,38 @@ const BOLTODDS_REST_URL = process.env.BOLTODDS_REST_URL || 'https://spro.agency/
 const SGO_API_KEY    = process.env.SPORT_GAME_ODDS || '';
 const SGO_BASE       = 'https://api.sportsgameodds.com/v2';
 
+// The Odds API (the-odds-api.com) — primary paid source (100k credits/month)
+const TOA_API_KEY  = process.env.THE_ODDS_API_KEY || '';
+const TOA_BASE     = 'https://api.the-odds-api.com/v4';
+const TOA_REGIONS  = process.env.THE_ODDS_API_REGIONS || 'au,eu';
+const TOA_MARKETS  = 'h2h,spreads,totals';
+
+// internal sportKey → The Odds API sport key
+const TOA_SPORTS = {
+  'soccer_epl':           'soccer_epl',
+  'soccer_ucl':           'soccer_uefa_champs_league',
+  'soccer_la_liga':       'soccer_spain_la_liga',
+  'soccer_bundesliga':    'soccer_germany_bundesliga',
+  'soccer_serie_a':       'soccer_italy_serie_a',
+  'soccer_europa':        'soccer_uefa_europa_league',
+  'soccer_ligue_1':       'soccer_france_ligue_one',
+  'soccer_mls':           'soccer_usa_mls',
+  'soccer_brazil':        'soccer_brazil_campeonato',
+  'soccer_a_league':      'soccer_australia_aleague',
+  'basketball_nba':       'basketball_nba',
+  'basketball_nbl':       'basketball_nbl',
+  'americanfootball_nfl': 'americanfootball_nfl',
+  'baseball_mlb':         'baseball_mlb',
+  'icehockey_nhl':        'icehockey_nhl',
+  'mma_ufc':              'mma_mixed_martial_arts',
+  'mma_mixed_martial_arts': 'mma_mixed_martial_arts',
+  'aussierules_afl':      'aussierules_afl',
+  'rugbyleague_nrl':      'rugbyleague_nrl',
+  'cricket_big_bash':     'cricket_big_bash',
+  'cricket_t20':          'cricket_international_t20',
+  'cricket_odi':          'cricket_odi',
+};
+
 const ESPN_BASE     = 'https://site.api.espn.com/apis/site/v2/sports';
 const SPORTSDB_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
 const BDL_BASE      = 'https://api.balldontlie.io/v1';
@@ -320,6 +352,70 @@ function generateDemoOdds(sportKey) {
   return events;
 }
 
+// ── The Odds API REST (the-odds-api.com) ────────────────────────────────────
+// Response shape already matches our internal event format almost exactly.
+async function fetchFromTheOddsApi(sportKey) {
+  if (!TOA_API_KEY) return { events: [], source: 'no-key', callsUsed: 0 };
+
+  const toaKey = TOA_SPORTS[sportKey];
+  if (!toaKey) return { events: [], source: 'unsupported-league', callsUsed: 0 };
+
+  const sportTitle = BOLTODDS_SPORTS[Object.keys(BOLTODDS_SPORTS).find(k => BOLTODDS_SPORTS[k].key === sportKey)]?.name || sportKey;
+
+  try {
+    const resp = await axios.get(`${TOA_BASE}/sports/${toaKey}/odds`, {
+      params: {
+        apiKey: TOA_API_KEY,
+        regions: TOA_REGIONS,
+        markets: TOA_MARKETS,
+        oddsFormat: 'decimal',
+        dateFormat: 'iso',
+      },
+      timeout: 12000,
+    });
+
+    const remaining = resp.headers['x-requests-remaining'];
+    if (remaining !== undefined && Number(remaining) < 500) {
+      console.warn(`⚠️  The Odds API: only ${remaining} credits left this month!`);
+    }
+
+    const rawEvents = Array.isArray(resp.data) ? resp.data : [];
+    const now = Date.now();
+    const events = [];
+
+    for (const ev of rawEvents) {
+      if (!ev.home_team || !ev.away_team || !Array.isArray(ev.bookmakers)) continue;
+      // Skip games that already started
+      if (ev.commence_time && new Date(ev.commence_time).getTime() < now) continue;
+      // Need 2+ books for EV/arb math
+      if (ev.bookmakers.length < 2) continue;
+
+      events.push({
+        id: ev.id,
+        sport_key: sportKey,
+        sport_title: sportTitle,
+        home_team: ev.home_team,
+        away_team: ev.away_team,
+        commence_time: ev.commence_time,
+        bookmakers: ev.bookmakers.map(b => ({
+          key: b.key,
+          title: b.title,
+          markets: (b.markets || []).map(m => ({
+            key: m.key,
+            outcomes: (m.outcomes || []).map(o => ({ name: o.name, price: o.price, point: o.point })),
+          })),
+        })),
+      });
+    }
+
+    return { events, source: 'theoddsapi', callsUsed: 1, remaining };
+  } catch (err) {
+    const status = err.response?.status;
+    console.warn(`⚠️  The Odds API error for ${sportKey}:`, status ? `HTTP ${status}` : err.message);
+    return { events: [], source: 'toa-error', callsUsed: 1 };
+  }
+}
+
 // ── SportGameOdds REST API ──────────────────────────────────────────────────
 async function fetchFromSportsGameOdds(sportKey) {
   if (!SGO_API_KEY) return { events: [], source: 'no-key', callsUsed: 0 };
@@ -450,7 +546,25 @@ async function fetchFromOddsAPI(sportKey) {
   const ttl = parseInt(process.env.CACHE_ODDS_TTL || '45');
   const sportTitle = BOLTODDS_SPORTS[Object.keys(BOLTODDS_SPORTS).find(k => BOLTODDS_SPORTS[k].key === sportKey)]?.name || sportKey;
 
-  // ── 1) SportGameOdds REST (primary source) ──────────────────────────────
+  // ── 0) The Odds API (primary paid source — 100k credits/month) ──────────
+  if (TOA_API_KEY && TOA_SPORTS[sportKey] && canCallAPI('theoddsapi')) {
+    console.log(`🌐 Fetching The Odds API: ${sportTitle} (${sportKey})`);
+    try {
+      const result = await fetchFromTheOddsApi(sportKey);
+      if (result.events && result.events.length > 0) {
+        await recordAPICall('theoddsapi', sportKey, result.remaining ?? null);
+        setL1(l1Key, result.events, ttl);
+        await setL2Odds(sportKey, result.events, ttl * 6, 'theoddsapi');
+        console.log(`✅ The Odds API: ${result.events.length} events for ${sportTitle} (${result.remaining ?? '?'} credits left)`);
+        return { events: result.events, source: 'theoddsapi', callsUsed: 1 };
+      }
+      console.log(`ℹ️  The Odds API: 0 events for ${sportTitle} (source: ${result.source})`);
+    } catch (err) {
+      console.warn(`⚠️  The Odds API error for ${sportTitle}:`, err.message);
+    }
+  }
+
+  // ── 1) SportGameOdds REST (fallback) ─────────────────────────────────────
   if (SGO_API_KEY && SGO_LEAGUES[sportKey]) {
     console.log(`🌐 Fetching SportGameOdds: ${sportTitle} (${sportKey})`);
     try {
