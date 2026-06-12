@@ -55,6 +55,34 @@ async function initDB() {
 
   if (failed === 0) console.log('✅ Database schema ready');
   else console.warn(`⚠️  Database schema ready with ${failed} skipped statement(s) — likely lock contention during deploy`);
+
+  // Run incremental migrations (idempotent — safe on every boot)
+  const migratePath = path.join(__dirname, 'migrate.sql');
+  if (fs.existsSync(migratePath)) {
+    const migration = fs.readFileSync(migratePath, 'utf8');
+    const mStmts = migration
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
+    const mClient = await pool.connect();
+    let mFailed = 0;
+    try {
+      await mClient.query("SET lock_timeout = '5s'");
+      await mClient.query("SET statement_timeout = '20s'");
+      for (const stmt of mStmts) {
+        try { await mClient.query(stmt); }
+        catch (err) {
+          mFailed++;
+          console.warn(`⚠️  Migration skipped (${err.message.slice(0, 80)})`);
+        }
+      }
+    } finally {
+      try { await mClient.query('RESET lock_timeout'); await mClient.query('RESET statement_timeout'); } catch (_) {}
+      mClient.release();
+    }
+    if (mFailed === 0) console.log('✅ Migrations applied');
+    else console.warn(`⚠️  Migrations: ${mFailed} statement(s) skipped`);
+  }
 }
 
 module.exports = { db, initDB, pool };

@@ -46,7 +46,10 @@ CREATE TABLE IF NOT EXISTS ev_opportunities (
   commence_time TIMESTAMPTZ,
   found_at TIMESTAMPTZ DEFAULT NOW(),
   expires_at TIMESTAMPTZ,
-  is_active BOOLEAN DEFAULT TRUE
+  is_active BOOLEAN DEFAULT TRUE,
+  -- Dedupe: markets feed must show a single card per (event, selection).
+  -- market is always 'h2h' in current pipeline, but we include it for safety.
+  UNIQUE (event_id, market, selection)
 );
 
 CREATE TABLE IF NOT EXISTS arb_opportunities (
