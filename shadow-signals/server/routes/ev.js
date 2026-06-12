@@ -20,8 +20,19 @@ router.get('/', requireAuth, async (req, res) => {
       if (sport !== 'all') {
         await fetchFromOddsAPI(sport);
       }
+
       data = await computeEVFromCache(sport === 'all' ? null : sport);
       source = 'freshly-computed';
+
+      // If compute still yields nothing, force a second odds fetch so that
+      // provider failures don't leave the UI empty (demo fallback lives in oddsService).
+      if (!data || data.length === 0) {
+        if (sport !== 'all') {
+          await fetchFromOddsAPI(sport);
+        }
+        data = await computeEVFromCache(sport === 'all' ? null : sport);
+        source = 'freshly-computed-after-empty';
+      }
     }
 
     const limited = data.slice(0, Math.min(planLimit, parseInt(limit)));

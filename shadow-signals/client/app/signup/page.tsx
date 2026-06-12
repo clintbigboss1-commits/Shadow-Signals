@@ -15,10 +15,10 @@ const WINS = [
 
 const FEATURES = [
   'Unlimited +EV scanner across 12 AU bookies',
-  'Grade S+ / A / B confidence on every bet',
+  '0–100% confidence score on every bet',
   'Arb finder locks in guaranteed profit',
   'Betfair CLV tracker proves your edge',
-  'Kelly staking — right size every bet',
+  'Suggested stake — right size every bet',
 ];
 
 export default function Signup() {

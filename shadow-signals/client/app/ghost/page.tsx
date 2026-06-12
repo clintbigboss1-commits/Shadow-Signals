@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import OperativePeek from '../../components/OperativePeek';
 import { getUser } from '../../lib/auth';
 
 /* ─── GHOST signal data ───────────────────────────────────────────────── */
@@ -123,7 +124,7 @@ function Ring({ pct, color, icon }: { pct: number; color: string; icon: string }
   return (
     <div style={{ width: 54, height: 54, position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg viewBox="0 0 54 54" style={{ position: 'absolute', inset: 0, width: 54, height: 54 }}>
-        <circle cx={27} cy={27} r={r} fill="none" stroke="rgba(255,255,255,.1)" strokeWidth={5} />
+        <circle cx={27} cy={27} r={r} fill="none" stroke="#e3ecf8" strokeWidth={5} />
         <circle cx={27} cy={27} r={r} fill="none" stroke={color} strokeWidth={5} strokeLinecap="round"
           strokeDasharray={`${dash} ${ci - dash}`} transform="rotate(-90 27 27)" />
       </svg>
@@ -139,7 +140,7 @@ function Pips({ n, color }: { n: number; color: string }) {
   return (
     <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
       {Array.from({ length: 4 }, (_, p) => (
-        <div key={p} style={{ width: 5, borderRadius: 2, height: 9 + p * 4, background: p < n ? color : 'rgba(255,255,255,.12)' }} />
+        <div key={p} style={{ width: 5, borderRadius: 2, height: 9 + p * 4, background: p < n ? color : '#dde8f5' }} />
       ))}
     </div>
   );
@@ -246,14 +247,15 @@ export default function GhostPage() {
       <Navbar />
 
       {/* Hero */}
-      <div style={{ padding: '36px 24px 0', maxWidth: 900, margin: '0 auto', width: '100%' }}>
+      <div style={{ padding: '36px 24px 0', maxWidth: 900, margin: '0 auto', width: '100%', position: 'relative' }}>
+        <OperativePeek page="ghost" side="right" width={140} bottom={-10} />
         <div className="ghost-eyebrow" style={{ marginBottom: 14 }}>
           <span>Exclusive Intelligence</span>
         </div>
         <h1 className="ghost-hero-title" style={{ marginBottom: 14 }}>
           7 signals the market <span style={{ color: 'var(--gold)' }}>never</span> shows you.
         </h1>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,.45)', lineHeight: 1.7, marginBottom: 22, maxWidth: 560 }}>
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,.68)', lineHeight: 1.7, marginBottom: 22, maxWidth: 560 }}>
           Each one in plain English. Tap a signal to understand what it means, why it works,
           and exactly when to act on it.
         </p>

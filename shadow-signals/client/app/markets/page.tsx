@@ -4,10 +4,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import TeamLogo from '../../components/TeamLogo';
+import SportIcon from '../../components/SportIcon';
+import OperativePeek from '../../components/OperativePeek';
 import API from '../../lib/api';
 import { getSocket, connectSocket } from '../../lib/socket';
 import { getToken } from '../../lib/auth';
+import { confidenceFromEV, confidenceColor } from '../../lib/confidence';
 
 /* ─── Types ───────────────────────────────────────────────────────────── */
 
@@ -36,11 +38,10 @@ interface Game {
 
 /* ─── helpers ─────────────────────────────────────────────────────────── */
 
-function grade(ev: number) {
-  if (ev >= 8) return { label: 'S+ PLAY', bg: '#2979ff', color: '#fff' };
-  if (ev >= 5) return { label: 'A PLAY',  bg: '#00c853', color: '#030711' };
-  if (ev >= 3) return { label: 'B PLAY',  bg: '#ffab00', color: '#030711' };
-  return              { label: 'EDGE',    bg: '#475569', color: '#fff' };
+function confidenceBadge(ev: number) {
+  const score = confidenceFromEV(ev);
+  const color = confidenceColor(score);
+  return { label: `${score}% CONFIDENCE`, bg: color, color: '#030711', score };
 }
 
 function sportMeta(key: string): { emoji: string; label: string; bg: string } {
@@ -161,7 +162,7 @@ function GameCard({
   const awayBest = game.best_odds.find(o => o.selection === game.away_team);
   const drawBest = game.best_odds.find(o => o.selection === 'Draw');
 
-  const g = ev ? grade(ev.ev_percent) : null;
+  const g = ev ? confidenceBadge(ev.ev_percent) : null;
 
   return (
     <div
@@ -220,7 +221,7 @@ function GameCard({
           const isPick = ev?.selection === team;
           return (
             <div key={team} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <TeamLogo name={team} color={color} size={30} />
+              <SportIcon sportKey={game.sport_key} name={team} color={color} size={30} />
               <span style={{ flex: 1, fontWeight: isPick ? 800 : 600, fontSize: 14, color: isPick ? '#fff' : '#94a3b8' }}>{team}</span>
               {isPick && (
                 <span style={{ fontSize: 9, fontWeight: 800, color: '#00e676', background: 'rgba(0,230,118,.1)', border: '1px solid rgba(0,230,118,.25)', padding: '2px 7px', borderRadius: 10, letterSpacing: .5 }}>
@@ -311,11 +312,11 @@ function GameCard({
           <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14, color: '#00c853' }}>+{ev.ev_percent.toFixed(1)}%</div>
-              <div style={{ fontSize: 10, color: '#475569' }}>edge</div>
+              <div style={{ fontSize: 10, color: '#475569' }}>your edge</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#2979ff' }}>{ev.kelly_percent.toFixed(1)}%</div>
-              <div style={{ fontSize: 10, color: '#475569' }}>kelly</div>
+              <div style={{ fontSize: 10, color: '#475569' }}>suggested stake</div>
             </div>
           </div>
         </div>
@@ -411,7 +412,7 @@ function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (k
         </div>
         {avgKelly > 0 && (
           <div style={{ fontSize: 12, color: '#64748b', marginBottom: 10, display: 'flex', justifyContent: 'space-between' }}>
-            <span>Avg Kelly: {avgKelly.toFixed(1)}%</span>
+            <span>Avg suggested stake: {avgKelly.toFixed(1)}% of bankroll</span>
             <span>Total: ${(stake * items.length).toFixed(0)}</span>
           </div>
         )}
@@ -538,7 +539,8 @@ export default function MarketsPage() {
         </div>
 
         {/* Content */}
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 140px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 140px', position: 'relative' }}>
+          <OperativePeek page="markets" side="right" width={150} bottom={20} />
           {loading ? (
             <div style={{ padding: 80, textAlign: 'center', color: '#64748b' }}>
               <div className="spinner" style={{ margin: '0 auto 16px' }} />

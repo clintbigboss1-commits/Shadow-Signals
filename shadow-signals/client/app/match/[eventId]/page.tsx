@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import ProtectedRoute from '../../../components/ProtectedRoute';
-import TeamLogo from '../../../components/TeamLogo';
+import SportIcon from '../../../components/SportIcon';
 import API from '../../../lib/api';
 
 /* ─── types (mirror GET /api/match/:eventId) ──────────────────────────── */
@@ -317,12 +317,12 @@ export default function MatchDetailPage() {
             <a href="/markets" style={{ color: '#475569', fontSize: 13, textDecoration: 'none' }}>← All markets</a>
             <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', marginTop: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <TeamLogo name={event.home_team} color={hColor} size={48} />
+                <SportIcon sportKey={event.sport_key} name={event.home_team} color={hColor} size={48} />
                 <span style={{ fontWeight: 800, fontSize: 24 }}>{event.home_team}</span>
               </div>
               <span style={{ color: '#475569', fontWeight: 700, fontSize: 16 }}>vs</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <TeamLogo name={event.away_team} color={aColor} size={48} />
+                <SportIcon sportKey={event.sport_key} name={event.away_team} color={aColor} size={48} />
                 <span style={{ fontWeight: 800, fontSize: 24 }}>{event.away_team}</span>
               </div>
             </div>

@@ -21,7 +21,9 @@ const matchRoutes         = require('./routes/match');
 const gamesRoutes         = require('./routes/games');
 const paymentsRoutes      = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
+const ghostRoutes         = require('./routes/ghost');
 const { webhookHandler }  = require('./routes/payments');
+const { initGhost }       = require('./services/ghostPoster');
 
 const app    = express();
 const server = http.createServer(app);
@@ -83,6 +85,7 @@ app.use('/api/match',         matchRoutes);
 app.use('/api/games',         gamesRoutes);
 app.use('/api/payments',      paymentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/ghost',         ghostRoutes);
 
 // ── /api/health — diagnose your config instantly ──────────────────────────
 app.get('/api/health', (req, res) => {
@@ -102,6 +105,11 @@ app.get('/api/health', (req, res) => {
     odds_api:  process.env.ODDS_API_KEY   ? 'set OK' : 'NOT SET',
     the_odds_api: process.env.THE_ODDS_API_KEY ? 'set OK' : 'NOT SET (primary odds source off)',
     email:     process.env.RESEND_API_KEY ? 'set OK' : 'not set (emails wont send)',
+    ghost: {
+      facebook:  (process.env.META_PAGE_ID && process.env.META_PAGE_ACCESS_TOKEN) ? 'set OK' : 'NOT SET (GHOST in dry-run)',
+      instagram: (process.env.META_IG_USER_ID && process.env.GHOST_IMAGE_URL) ? 'set OK' : 'not set (FB only)',
+      mode:      process.env.GHOST_TEST_MODE === 'true' ? 'TEST - hourly' : 'steady - 12/day peak-weighted',
+    },
     frontend:  FRONTEND,
     jwt:       process.env.JWT_SECRET     ? 'set OK' : 'NOT SET',
   };
@@ -139,6 +147,7 @@ async function start() {
   try {
     await initDB();
     initScheduler();
+    initGhost();
     server.listen(PORT, () => {
       const sk = process.env.STRIPE_SECRET_KEY || '';
       const wh = process.env.STRIPE_WEBHOOK_SECRET;

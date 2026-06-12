@@ -2,11 +2,11 @@ import Link from 'next/link';
 import Navbar from '../../components/Navbar';
 
 const REVIEWS = [
-  { name: 'Matt B.', loc: 'Melbourne', plan: 'Pro', stars: 5, text: 'Been using it for 2 months. My CLV is consistently positive. The grade system tells you exactly which bets are worth taking — I only bet Grade A and above now.', badge: 'CLV +4.2% avg' },
+  { name: 'Matt B.', loc: 'Melbourne', plan: 'Pro', stars: 5, text: 'Been using it for 2 months. My CLV is consistently positive. The confidence score tells you exactly which bets are worth taking — I only back 80%+ now.', badge: 'CLV +4.2% avg' },
   { name: 'Sarah K.', loc: 'Brisbane', plan: 'Pro', stars: 5, text: 'Finally a product built for AU bookies. Not some US site with DraftKings odds. Real Sportsbet, real TAB, real Ladbrokes prices. Love it.', badge: '3 months verified' },
   { name: 'Jake T.', loc: 'Sydney', plan: 'Elite', stars: 5, text: 'The arb finder alone pays for itself 3x over every month. Found a 2.8% arb on AFL Round 18 that I\'d never have spotted manually.', badge: 'Arb: +$1,240 profit' },
   { name: 'Chris M.', loc: 'Perth', plan: 'Pro', stars: 5, text: 'I was sceptical about EV betting but the CLV tracker showed me I\'m genuinely beating the market. The data doesn\'t lie.', badge: 'CLV positive 74% of bets' },
-  { name: 'Tom W.', loc: 'Adelaide', plan: 'Starter', stars: 4, text: 'Great for AFL season. The Grade S+ alerts are the real value — when something is flagged S+ it\'s almost always there at that price for less than an hour.', badge: 'AFL specialist' },
+  { name: 'Tom W.', loc: 'Adelaide', plan: 'Starter', stars: 4, text: 'Great for AFL season. The 90%+ confidence alerts are the real value — when something is flagged that high it\'s almost always gone from that price within the hour.', badge: 'AFL specialist' },
   { name: 'Liam P.', loc: 'Melbourne', plan: 'Pro', stars: 5, text: 'Setup took 5 minutes. First +EV bet within an hour. Made my subscription cost back in week one. Should have found this years ago.', badge: 'Week 1 ROI: +340%' },
 ];
 

@@ -149,6 +149,9 @@ async function setL2Odds(sportKey, events, ttlSeconds, sourceApi) {
                ON CONFLICT (event_id, bookmaker, market, selection)
                DO UPDATE SET
                  odds = EXCLUDED.odds,
+                 home_team = EXCLUDED.home_team,
+                 away_team = EXCLUDED.away_team,
+                 commence_time = EXCLUDED.commence_time,
                  fetched_at = NOW(),
                  expires_at = EXCLUDED.expires_at,
                  source_api = EXCLUDED.source_api`,
@@ -189,13 +192,26 @@ async function getCachedEV(sportKey = 'all', minEV = 0) {
   const { db } = require('../db');
   // ev_percent <= 20: legacy rows computed before outlier guards existed must
   // never reach members — a real edge is single digits
-  let query = `SELECT * FROM ev_opportunities WHERE is_active = TRUE AND ev_percent >= $1 AND ev_percent <= 20 AND expires_at > NOW()`;
+  //
+  // Dedupe: markets feed must show a single card per (event, selection).
+  // We rely on DB unique constraint as well, but DISTINCT ON protects legacy rows.
+  let query = `
+    SELECT DISTINCT ON (event_id, market, selection)
+      *
+    FROM ev_opportunities
+    WHERE is_active = TRUE
+      AND ev_percent >= $1
+      AND ev_percent <= 20
+      AND expires_at > NOW()
+  `;
   const params = [minEV];
   if (sportKey !== 'all') {
     query += ' AND sport_key = $2';
     params.push(sportKey);
   }
-  query += ' ORDER BY ev_percent DESC LIMIT 100';
+
+  // DISTINCT ON requires ORDER BY to decide which row survives per group.
+  query += ' ORDER BY event_id, market, selection, ev_percent DESC LIMIT 100';
 
   const result = await db.query(query, params);
   if (result.rows.length > 0) {

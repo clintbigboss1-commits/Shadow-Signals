@@ -6,6 +6,7 @@ import Link from 'next/link';
 import API from '../../lib/api';
 import { getUser, getToken, saveAuth, type User } from '../../lib/auth';
 import { connectSocket } from '../../lib/socket';
+import { confidenceFromEV, confidenceColor } from '../../lib/confidence';
 
 /* ─────────────────────── types ──────────────────────────── */
 interface EVOpp {
@@ -32,10 +33,9 @@ function sportIcon(key: string) {
   };
   return m[key] || '🎯';
 }
-function grade(ev: number) {
-  if (ev >= 8) return { cls:'grade-sp', label:'Grade S+', color:'#2979ff' };
-  if (ev >= 5) return { cls:'grade-a',  label:'Grade A',  color:'#00c853' };
-  return              { cls:'grade-b',  label:'Grade B',  color:'#ffab00' };
+function confidenceBadge(ev: number) {
+  const score = confidenceFromEV(ev);
+  return { label: `${score}% confidence`, color: confidenceColor(score) };
 }
 function timeAgo(dt: string) {
   const diff = Date.now() - new Date(dt).getTime();
@@ -100,7 +100,7 @@ function Sidebar({ user, activeSport, setActiveSport }: {
               {user?.name || user?.email?.split('@')[0] || 'Sharp Punter'}
             </div>
             <div style={{ fontSize:11,color:'var(--cyan)',fontWeight:600,textTransform:'capitalize' }}>
-              {user?.plan || 'Free'} &nbsp;<span style={{ color:'var(--muted)' }}>· 85 $BREAKER</span>
+              {user?.plan || 'Free'}
             </div>
           </div>
         </div>
@@ -163,8 +163,12 @@ function Sidebar({ user, activeSport, setActiveSport }: {
         <Link href="/pricing">
           <button className="nav-item"><span>💳</span> Subscription</button>
         </Link>
-        <button className="nav-item"><span>⚙️</span> Settings</button>
-        <button className="nav-item"><span>❓</span> Help &amp; Support</button>
+        <Link href="/settings">
+          <button className="nav-item"><span>⚙️</span> Settings</button>
+        </Link>
+        <Link href="/help">
+          <button className="nav-item"><span>❓</span> Help &amp; Support</button>
+        </Link>
         <button className="nav-item" onClick={() => { localStorage.clear(); window.location.href='/login'; }}>
           <span>↗</span> Sign Out
         </button>
@@ -319,7 +323,7 @@ function LiveRadarPanel({ evOpps }: { evOpps: EVOpp[] }) {
       ) : (
         top5.map((ev, i) => {
           const evNum  = Number(ev.ev_percent);
-          const g      = grade(evNum);
+          const g      = confidenceBadge(evNum);
           const teams  = ev.event_name.split(' v ');
           return (
             <div key={ev.id||i} className="radar-event">
@@ -340,7 +344,7 @@ function LiveRadarPanel({ evOpps }: { evOpps: EVOpp[] }) {
                     )}
                   </div>
                 </div>
-                <span className={g.cls}>{g.label}</span>
+                <span style={{ background:g.color, color:'#030711', fontSize:11, fontWeight:800, padding:'3px 10px', borderRadius:6, whiteSpace:'nowrap' }}>{g.label}</span>
               </div>
 
               {/* Best pick */}

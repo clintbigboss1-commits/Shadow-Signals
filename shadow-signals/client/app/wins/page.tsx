@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import OperativePeek from '../../components/OperativePeek';
 import API from '../../lib/api';
 
 interface Win {
@@ -13,10 +14,11 @@ interface Stats {
   avg_win_profit: string; s_plus_this_month: string;
 }
 
-const GRADE_STYLE: Record<string, { bg: string; color: string }> = {
-  'S+': { bg: '#2979ff', color: '#030711' },
-  'A':  { bg: '#00c853', color: '#030711' },
-  'B':  { bg: '#ffab00', color: '#030711' },
+// Legacy grade letters from the API map onto the confidence-score system.
+const GRADE_CONFIDENCE: Record<string, { score: number; bg: string; color: string }> = {
+  'S+': { score: 91, bg: '#00e676', color: '#030711' },
+  'A':  { score: 84, bg: '#00e676', color: '#030711' },
+  'B':  { score: 68, bg: '#facc15', color: '#030711' },
 };
 
 const FALLBACK_WINS: Win[] = [
@@ -56,7 +58,8 @@ export default function WinsPage() {
         </div>
       </nav>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '56px 24px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '56px 24px', position: 'relative' }}>
+        <OperativePeek page="wins" side="right" width={140} bottom={120} />
 
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 }}>Verified Results</div>
@@ -73,7 +76,7 @@ export default function WinsPage() {
           {[
             { v: clvPct,    l: 'CLV positive bets' },
             { v: avgProfit, l: 'Avg win profit' },
-            { v: String(sPlus), l: 'S+ grade bets this month' },
+            { v: String(sPlus), l: 'High-confidence bets this month' },
             { v: '4.2%',    l: 'Avg edge per bet' },
           ].map(s => (
             <div key={s.l} className="card" style={{ textAlign: 'center', padding: 20 }}>
@@ -86,7 +89,7 @@ export default function WinsPage() {
         {/* Win cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 48 }}>
           {wins.map((w, i) => {
-            const gs = GRADE_STYLE[w.grade] || GRADE_STYLE['B'];
+            const gs = GRADE_CONFIDENCE[w.grade] || GRADE_CONFIDENCE['B'];
             return (
               <div key={i} className="card" style={{ padding: '18px 20px', display: 'flex', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(41,121,255,.1)', border: '2px solid rgba(41,121,255,.2)', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 16, color: '#2979ff', flexShrink: 0 }}>
@@ -95,7 +98,7 @@ export default function WinsPage() {
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{w.name}</span>
-                    <span style={{ background: gs.bg, color: gs.color, fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 4 }}>Grade {w.grade}</span>
+                    <span style={{ background: gs.bg, color: gs.color, fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 4 }}>{gs.score}% confidence</span>
                   </div>
                   <div style={{ fontSize: 14, color: '#94a3b8', marginBottom: 2 }}>{w.event}</div>
                   <div style={{ fontSize: 12, color: '#64748b' }}>{w.sport} · Best at {w.bookie} · {w.date}</div>

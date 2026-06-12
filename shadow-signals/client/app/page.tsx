@@ -2,6 +2,9 @@ import Link from 'next/link';
 import ExitPopup from '../components/ExitPopup';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import OperativePeek from '../components/OperativePeek';
+import TeamLogo from '../components/TeamLogo';
+import ConfidenceBar from '../components/ConfidenceBar';
 import { LogoMark } from '../components/Logo';
 
 const BOOKIES = ['Sportsbet','TAB','Bet365 AU','Ladbrokes','Neds','PointsBet','BlueBet','Betfair Exchange'];
@@ -18,8 +21,8 @@ const FEATURES = [
     icon: (
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="#a855f7" strokeWidth="1.5" strokeOpacity="0.35"/><circle cx="14" cy="14" r="2.5" fill="#a855f7"/><circle cx="14" cy="14" r="6" stroke="#a855f7" strokeWidth="1.5" strokeOpacity="0.5"/><circle cx="14" cy="14" r="10" stroke="#a855f7" strokeWidth="1" strokeOpacity="0.2"/><line x1="14" y1="4" x2="14" y2="7.5" stroke="#a855f7" strokeWidth="1.5"/><line x1="14" y1="20.5" x2="14" y2="24" stroke="#a855f7" strokeWidth="1.5"/><line x1="4" y1="14" x2="7.5" y2="14" stroke="#a855f7" strokeWidth="1.5"/><line x1="20.5" y1="14" x2="24" y2="14" stroke="#a855f7" strokeWidth="1.5"/></svg>
     ),
-    title: 'Grade System',
-    desc: 'S+, A, B confidence ratings on every market. Only bet when the grade matches your bankroll.',
+    title: 'Confidence Score',
+    desc: 'Every pick scored 0–100%. Green means back it, red means leave it. Calibrated against real results.',
   },
   {
     icon: (
@@ -200,16 +203,14 @@ export default function Home() {
               </div>
             </div>
 
-            <h1 style={{ fontSize: 'clamp(52px,7vw,84px)', fontWeight: 900, lineHeight: 0.92, letterSpacing: -3, marginBottom: 22, textTransform: 'uppercase' }}>
-              SHADOW<br />
-              <span style={{ background: 'linear-gradient(135deg,#2979ff 0%,#818cf8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>SIGNALS</span>
+            <h1 style={{ fontSize: 'clamp(48px,6.5vw,80px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: -3, marginBottom: 22, textTransform: 'uppercase' }}>
+              STOP GUESSING,<br />
+              <span style={{ background: 'linear-gradient(135deg,#2979ff 0%,#00e676 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>START WINNING</span>
             </h1>
-            <p style={{ fontSize: 18, fontWeight: 700, color: '#ffffff', letterSpacing: .3, marginBottom: 16 }}>
-              STOP GUESSING. START <span style={{ color: '#ffab00' }}>WINNING.</span>
-            </p>
             <p style={{ fontSize: 16, color: '#9eb1c8', lineHeight: 1.65, maxWidth: 520, marginBottom: 36 }}>
-              We scan 12+ Aussie bookies and Betfair Exchange to find the mathematical edge.
-              Get <strong style={{ color: '#fff' }}>high-confidence signals</strong> and +EV bets delivered to your dashboard in real time.
+              We scan 12+ Aussie bookies and Betfair Exchange around the clock and tell you
+              exactly which side to back — with a <strong style={{ color: '#fff' }}>confidence score</strong> on
+              every signal, delivered in real time.
             </p>
 
             <div style={{ display: 'flex', gap: 14, marginBottom: 40, flexWrap: 'wrap' }}>
@@ -233,7 +234,7 @@ export default function Home() {
                 ))}
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>7,416+ Aussie sharps signed up</div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>7,410 Aussie sharps signed up</div>
                 <div style={{ fontSize: 12, color: '#9eb1c8', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ color: '#ffab00' }}>★★★★★</span> 4.9 / 5 rating
                 </div>
@@ -241,47 +242,83 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right — Live signal card */}
-          <div style={{ flex: '1 1 400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ width: '100%', maxWidth: 440, background: 'linear-gradient(135deg, rgba(18,41,68,.95), rgba(10,25,41,.98))', border: '1px solid rgba(41,121,255,.2)', borderRadius: 20, padding: 28, boxShadow: '0 40px 80px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06)', backdropFilter: 'blur(20px)', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(90deg,#ffab00,#fbbf24)', color: '#0a1929', padding: '4px 16px', borderRadius: 20, fontWeight: 900, fontSize: 11, letterSpacing: 1, boxShadow: '0 4px 12px rgba(245,158,11,.4)', whiteSpace: 'nowrap' }}>
-                ⭐ TODAY&apos;S TOP SIGNAL
-              </div>
+          {/* Right — Phone mockup: live NRL signal */}
+          <div style={{ flex: '1 1 380px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <div style={{
+              width: 320, borderRadius: 42, padding: 12,
+              background: 'linear-gradient(160deg, #1a2940, #060e1a)',
+              border: '1px solid rgba(255,255,255,.12)',
+              boxShadow: '0 50px 100px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.1)',
+              position: 'relative',
+            }}>
+              {/* notch */}
+              <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', width: 110, height: 24, borderRadius: 14, background: '#060e1a', zIndex: 3 }} />
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, marginTop: 12 }}>
-                <span style={{ fontSize: 20 }}>🏀</span>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: '#fff' }}>LA Lakers @ Boston Celtics</div>
-                  <div style={{ fontSize: 11, color: '#5e7390', fontWeight: 600 }}>NBA · Today, 10:30 AM AEST</div>
+              <div style={{ borderRadius: 32, overflow: 'hidden', background: '#0a1929', border: '1px solid rgba(255,255,255,.06)', paddingTop: 44, paddingBottom: 22 }}>
+                {/* app header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <LogoMark size={22} />
+                    <span style={{ fontWeight: 900, fontSize: 12, letterSpacing: 1.5 }}>SHADOW SIGNALS</span>
+                  </div>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#00e676' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00e676', boxShadow: '0 0 8px #00e676', display: 'inline-block' }} />
+                    LIVE SIGNAL
+                  </span>
                 </div>
-              </div>
 
-              <div style={{ background: 'rgba(0,0,0,.35)', borderRadius: 12, padding: '16px', border: '1px solid rgba(255,255,255,.05)', marginBottom: 14, marginTop: 14 }}>
-                <div style={{ fontSize: 10, color: '#5e7390', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6, fontWeight: 700 }}>Recommended Bet</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#fff', fontWeight: 900, fontSize: 18 }}>Lakers Moneyline</span>
-                  <div style={{ background: '#0a1929', padding: '5px 12px', borderRadius: 8, border: '1px solid rgba(41,121,255,.25)', fontWeight: 800, fontSize: 18, color: '#2979ff', fontFamily: 'JetBrains Mono, monospace' }}>
-                    1.95
+                {/* match card */}
+                <div style={{ margin: '0 14px', borderRadius: 16, background: 'rgba(18,41,68,.6)', border: '1px solid rgba(41,121,255,.18)', overflow: 'hidden' }}>
+                  <div style={{ padding: '9px 14px', background: 'linear-gradient(135deg,#0c1a45,#1e3a8a)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,.75)', letterSpacing: 1 }}>🏉 NRL · ROUND 14</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.5)' }}>Sat 7:35 PM</span>
+                  </div>
+
+                  {/* OUR PICK side */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', background: 'rgba(0,230,118,.07)', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
+                    <TeamLogo name="Gold Coast Titans" color="#00bcd4" size={34} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>Titans</div>
+                      <div style={{ fontSize: 10, color: '#9eb1c8' }}>Gold Coast</div>
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 900, color: '#030711', background: '#00e676', padding: '3px 9px', borderRadius: 10, letterSpacing: .5, boxShadow: '0 0 14px rgba(0,230,118,.5)' }}>
+                      OUR PICK
+                    </span>
+                  </div>
+
+                  {/* PASS side */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', opacity: .45 }}>
+                    <TeamLogo name="Penrith Panthers" color="#475569" size={34} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: '#94a3b8' }}>Panthers</div>
+                      <div style={{ fontSize: 10, color: '#5e7390' }}>Penrith</div>
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: '#64748b', border: '1px solid rgba(255,255,255,.15)', padding: '3px 9px', borderRadius: 10, letterSpacing: .5 }}>
+                      PASS
+                    </span>
+                  </div>
+
+                  {/* confidence + stake */}
+                  <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,.05)' }}>
+                    <ConfidenceBar score={87} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 11 }}>
+                      <span style={{ color: '#5e7390' }}>Suggested stake</span>
+                      <span style={{ color: '#fff', fontWeight: 800, fontFamily: 'JetBrains Mono, monospace' }}>0.8% of bankroll</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 11 }}>
+                      <span style={{ color: '#5e7390' }}>Your edge</span>
+                      <span style={{ color: '#00e676', fontWeight: 800, fontFamily: 'JetBrains Mono, monospace' }}>+6.2%</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                <div style={{ background: 'rgba(34,197,94,.07)', border: '1px solid rgba(34,197,94,.2)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: '#00e676', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Est. Win Prob</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}>58.2%</div>
+                <div style={{ textAlign: 'center', marginTop: 14, fontSize: 10, color: '#5e7390', fontWeight: 600 }}>
+                  This is what every signal looks like.
                 </div>
-                <div style={{ background: 'rgba(41,121,255,.07)', border: '1px solid rgba(41,121,255,.2)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 10, color: '#2979ff', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Math Edge</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', fontFamily: 'JetBrains Mono, monospace' }}>+13.4%</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <span style={{ background: '#2979ff', color: '#0a1929', fontSize: 10, fontWeight: 900, padding: '3px 10px', borderRadius: 5, letterSpacing: .5 }}>GRADE S+</span>
-                <span style={{ fontSize: 11, color: '#5e7390' }}>Highest confidence tier</span>
               </div>
             </div>
+            {/* Operative peeking at the mockup — drops in when the asset lands in /public/operatives/ */}
+            <OperativePeek page="landing" side="right" width={170} bottom={-40} />
           </div>
         </div>
       </section>
@@ -297,6 +334,52 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* ── Education: what are shadow signals? ───────────── */}
+      <section style={{ padding: '72px 24px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>The Edge</div>
+          <h2 style={{ fontSize: 'clamp(26px,4vw,42px)', fontWeight: 900, letterSpacing: -1, marginBottom: 20 }}>
+            What are shadow signals?
+          </h2>
+          <p style={{ fontSize: 17, color: '#9eb1c8', lineHeight: 1.75, marginBottom: 16 }}>
+            Traditional betting platforms are built to hide value. Their algorithms exist to take
+            your money. <strong style={{ color: '#fff' }}>Shadow signals are the edges nobody else talks
+            about</strong> — the mispriced lines, the slow-moving odds, the gaps between what a bookmaker
+            thinks and what the market knows.
+          </p>
+          <p style={{ fontSize: 17, color: '#9eb1c8', lineHeight: 1.75 }}>
+            We find them. <strong style={{ color: '#00e676' }}>You profit.</strong>
+          </p>
+        </div>
+      </section>
+
+      {/* ── Walkthrough ────────────────────────────────────── */}
+      <section style={{ padding: '72px 24px', borderBottom: '1px solid rgba(255,255,255,.06)', background: 'rgba(0,0,0,.15)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>How it works</div>
+            <h2 style={{ fontSize: 'clamp(24px,3.5vw,38px)', fontWeight: 900, letterSpacing: -1, marginBottom: 12 }}>
+              Most platforms use algorithms to take your money.
+            </h2>
+            <p style={{ color: '#9eb1c8', fontSize: 16 }}>We use ours to help you beat the line. Here&apos;s how we find shadow signals.</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14 }}>
+            {[
+              { n: '01', title: 'The markets feed', desc: 'Every fixture across AFL, NRL, cricket and more — one card per match, best odds across 12 bookies.' },
+              { n: '02', title: 'Spot the signal', desc: 'The confidence score tells you instantly: green means back it, red means walk away. No jargon.' },
+              { n: '03', title: 'The arb finder', desc: 'When bookmakers disagree, lock in guaranteed profit regardless of the result.' },
+              { n: '04', title: 'The CLV tracker', desc: 'Proof of long-term edge. Every bet tracked against the closing line — the only metric that matters.' },
+            ].map(s => (
+              <div key={s.n} style={{ padding: 26, background: 'rgba(18,41,68,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16 }}>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 800, color: '#2979ff', marginBottom: 12 }}>{s.n}</div>
+                <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 10 }}>{s.title}</div>
+                <div style={{ color: '#9eb1c8', fontSize: 14, lineHeight: 1.65 }}>{s.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── Sports Coverage ────────────────────────────────── */}
       <section style={{ padding: '64px 24px', maxWidth: 1280, margin: '0 auto' }}>
@@ -363,28 +446,91 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Pricing CTA ─────────────────────────────────────── */}
-      <section style={{ padding: '64px 32px', borderTop: '1px solid rgba(255,255,255,.06)', textAlign: 'center' }}>
-        <div style={{ maxWidth: 480, margin: '0 auto' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Pricing</div>
-          <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 900, marginBottom: 8 }}>Start free. Pay when winning.</h2>
-          <p style={{ color: '#9eb1c8', marginBottom: 32, fontSize: 15 }}>7-day free trial. No credit card required.</p>
-          <div style={{ background: 'rgba(18,41,68,.6)', border: '1px solid rgba(41,121,255,.2)', borderRadius: 20, padding: 32, marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#2979ff', marginBottom: 10, letterSpacing: .5 }}>PRO — MOST POPULAR</div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 40, fontWeight: 900, marginBottom: 4 }}>$19.99</div>
-            <div style={{ color: '#5e7390', fontSize: 13, marginBottom: 24 }}>AUD / month</div>
-            <ul style={{ listStyle: 'none', textAlign: 'left', marginBottom: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {['Unlimited +EV scanner','All 12 AU bookmakers','Grade S+, A, B confidence ratings','Arb finder','CLV tracker','Live edge alerts'].map(f => (
-                <li key={f} style={{ display: 'flex', gap: 10, fontSize: 14 }}>
-                  <span style={{ color: '#00e676', fontWeight: 700, flexShrink: 0 }}>✓</span> {f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/signup" style={{ display: 'block', padding: '13px', borderRadius: 10, fontSize: 15, fontWeight: 700, color: '#0a1929', background: 'linear-gradient(135deg,#2979ff,#0099cc)', textAlign: 'center' }}>
-              ⚡ Start Free Trial →
-            </Link>
+      {/* ── Pricing — all 4 tiers ───────────────────────────── */}
+      <section style={{ padding: '64px 32px', borderTop: '1px solid rgba(255,255,255,.06)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Pricing</div>
+            <h2 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 900, marginBottom: 10 }}>Start free. Pay when winning.</h2>
+            <p style={{ color: '#9eb1c8', fontSize: 15, maxWidth: 620, margin: '0 auto 36px', lineHeight: 1.65 }}>
+              These tiers should cost 5–10x more. We&apos;re charging next to nothing just to keep the
+              lights on — professional-grade edge detection for pocket change.
+            </p>
           </div>
-          <Link href="/pricing" style={{ fontSize: 14, color: '#5e7390' }}>See all plans →</Link>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 24 }}>
+            {[
+              { name: 'FREE', price: '$0', sub: 'forever', accent: '#94a3b8', features: ['One sport', 'See the signal', 'Stats blurred', 'Basic access'], popular: false },
+              { name: 'STARTER', price: '$4.99', sub: 'first month, then $9.99', accent: '#60a5fa', features: ['All sports unlocked', 'Reasoning visible', 'Email alerts', 'Stake blurred'], popular: false },
+              { name: 'PRO', price: '$19.99', sub: '/month', accent: '#2979ff', features: ['Everything visible', 'Live alerts', 'Full CLV tracker', 'Arb finder', 'All 12 bookmakers'], popular: true },
+              { name: 'ELITE', price: '$49.99', sub: '/month', accent: '#c084fc', features: ['Everything in Pro', 'API access', 'Multi-account tools', 'Private Discord', 'Priority support'], popular: false },
+            ].map(t => (
+              <div key={t.name} style={{
+                position: 'relative',
+                background: 'rgba(18,41,68,.5)',
+                border: `1px solid ${t.popular ? '#2979ff' : 'rgba(255,255,255,.08)'}`,
+                boxShadow: t.popular ? '0 0 0 1px rgba(41,121,255,.25), 0 16px 40px rgba(41,121,255,.12)' : 'none',
+                borderRadius: 18, padding: 24,
+                display: 'flex', flexDirection: 'column',
+              }}>
+                {t.popular && (
+                  <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: '#2979ff', color: '#030711', fontSize: 10, fontWeight: 900, letterSpacing: 1.5, padding: '3px 14px', borderRadius: 99, whiteSpace: 'nowrap' }}>
+                    MOST POPULAR
+                  </div>
+                )}
+                <div style={{ fontSize: 12, fontWeight: 800, color: t.accent, letterSpacing: 1.5, marginBottom: 10 }}>{t.name}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 16 }}>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 30, fontWeight: 900 }}>{t.price}</span>
+                  <span style={{ fontSize: 11, color: '#5e7390' }}>{t.sub}</span>
+                </div>
+                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20, flex: 1 }}>
+                  {t.features.map(f => (
+                    <li key={f} style={{ display: 'flex', gap: 8, fontSize: 13, color: '#9eb1c8' }}>
+                      <span style={{ color: '#00e676', fontWeight: 700, flexShrink: 0 }}>✓</span> {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={t.name === 'FREE' ? '/signup' : '/pricing'} style={{
+                  display: 'block', padding: '11px', borderRadius: 10, fontSize: 14, fontWeight: 800, textAlign: 'center',
+                  color: t.popular ? '#0a1929' : '#fff',
+                  background: t.popular ? 'linear-gradient(135deg,#2979ff,#0099cc)' : 'rgba(255,255,255,.05)',
+                  border: t.popular ? 'none' : '1px solid rgba(255,255,255,.12)',
+                }}>
+                  {t.name === 'FREE' ? 'Start free →' : 'Start free trial →'}
+                </Link>
+              </div>
+            ))}
+          </div>
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#5e7390' }}>
+            7-day free trial on every paid plan · Cancel anytime · <Link href="/pricing" style={{ color: '#2979ff' }}>Compare all plans →</Link>
+          </p>
+        </div>
+      </section>
+
+      {/* ── Bottom CTA ──────────────────────────────────────── */}
+      <section style={{ padding: '80px 32px', borderTop: '1px solid rgba(255,255,255,.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -150, left: '50%', transform: 'translateX(-50%)', width: 700, height: 500, background: 'radial-gradient(ellipse, rgba(0,230,118,.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ maxWidth: 560, margin: '0 auto', position: 'relative' }}>
+          <h2 style={{ fontSize: 'clamp(26px,4vw,42px)', fontWeight: 900, letterSpacing: -1, marginBottom: 14 }}>
+            Your results could be next.
+          </h2>
+          <p style={{ color: '#9eb1c8', fontSize: 16, marginBottom: 32, lineHeight: 1.65 }}>
+            Join the punters who stopped guessing and started backing signals with a real edge.
+          </p>
+          <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '17px 38px', borderRadius: 12, fontSize: 17, fontWeight: 800, color: '#0a1929', background: 'linear-gradient(135deg,#00e676,#00c853)', boxShadow: '0 10px 36px -5px rgba(0,230,118,.4)', marginBottom: 28 }}>
+            ⚡ Start free trial now
+          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <div style={{ display: 'flex' }}>
+              {[
+                'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=80&h=80&fit=crop&crop=face',
+                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=face',
+                'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=80&h=80&fit=crop&crop=face',
+              ].map((src, i) => (
+                <img key={i} src={src} alt="" width={32} height={32} style={{ borderRadius: '50%', border: '2px solid #0a1929', marginLeft: i > 0 ? -8 : 0, objectFit: 'cover' }} />
+              ))}
+            </div>
+            <span style={{ fontSize: 13, color: '#9eb1c8', fontWeight: 600 }}>7,410 Aussie sharps signed up</span>
+          </div>
         </div>
       </section>
 

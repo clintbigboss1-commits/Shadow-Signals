@@ -9,7 +9,7 @@ import Logo from '../../components/Logo';
 
 const BENEFITS = [
   '12 AU bookmakers scanned in real-time',
-  'Grade S+, A, B confidence on every bet',
+  '0–100% confidence score on every bet',
   'Arb finder locks in guaranteed profit',
   'Betfair CLV tracking proves your edge',
 ];
@@ -77,7 +77,7 @@ export default function Login() {
           <div style={{ background: 'rgba(41,121,255,.05)', border: '1px solid rgba(41,121,255,.18)', borderRadius: 14, padding: '16px 18px', marginBottom: 32, maxWidth: 360 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#2979ff', boxShadow: '0 0 8px #2979ff' }} />
-              <span style={{ fontSize: 10, fontWeight: 800, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 1.2 }}>Grade S+ Alert</span>
+              <span style={{ fontSize: 10, fontWeight: 800, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 1.2 }}>92% Confidence Alert</span>
             </div>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#ffffff', marginBottom: 6 }}>Manchester City v Arsenal</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
