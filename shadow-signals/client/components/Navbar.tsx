@@ -132,6 +132,14 @@ export default function Navbar() {
           <div className="navbar-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {user ? (
               <>
+                {user.role === 'admin' && (
+                  <Link href="/admin" style={{
+                    fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 4,
+                    background: 'rgba(255,171,0,.12)', color: '#ffab00',
+                    textTransform: 'uppercase', letterSpacing: .8,
+                    border: '1px solid rgba(255,171,0,.3)',
+                  }}>Admin</Link>
+                )}
                 <span style={{
                   fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 4,
                   background: `${PLAN_COL[user.plan] || '#64748b'}18`,

@@ -3,6 +3,7 @@ export interface User {
   email: string;
   name: string;
   plan: 'free' | 'starter' | 'pro' | 'elite';
+  role?: 'admin' | 'customer';
   created_at: string;
 }
 

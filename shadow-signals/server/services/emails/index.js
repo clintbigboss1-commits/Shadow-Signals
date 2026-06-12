@@ -296,6 +296,53 @@ async function sendPasswordReset(user, token) {
   return send(user.email, 'Reset your Shadow Signals password', html);
 }
 
+// ── 7. Admin invite — free access granted ───────────────────────────────────
+async function sendAdminInvite(user, token, plan) {
+  const link = `${BASE}/reset?token=${token}`;
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#071120;font-family:Inter,Arial,sans-serif;color:#e2e8f0;">
+  <div style="max-width:580px;margin:0 auto;padding:40px 24px;">
+
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="display:inline-block;background:#2979ff;width:48px;height:48px;border-radius:12px;line-height:48px;font-size:22px;font-weight:900;color:#071120;text-align:center;">S</div>
+      <h1 style="color:#e2e8f0;font-size:20px;font-weight:900;margin:16px 0 4px;letter-spacing:2px;">SHADOW SIGNALS</h1>
+      <p style="color:#64748b;font-size:13px;margin:0;">We see what the market misses</p>
+    </div>
+
+    <h2 style="color:#e2e8f0;font-size:24px;font-weight:800;margin:0 0 12px;">
+      You're in${user.name ? `, ${user.name}` : ''}. 🎯
+    </h2>
+    <p style="color:#9eb1c8;font-size:14px;line-height:1.7;margin:0 0 8px;">
+      You've been given <b style="color:#ffab00;">${planLabel}</b> access to Shadow Signals — on the house.
+    </p>
+    <p style="color:#9eb1c8;font-size:14px;line-height:1.7;margin:0 0 24px;">
+      Tap the button to set your password and start seeing the signals the market misses.
+      This link works for <b style="color:#e2e8f0;">7 days</b>.
+    </p>
+
+    <a href="${link}" style="display:block;text-align:center;background:#2979ff;color:#071120;font-weight:800;font-size:16px;padding:14px 24px;border-radius:10px;text-decoration:none;margin:0 0 20px;">
+      Set password &amp; get started →
+    </a>
+
+    <p style="color:#475569;font-size:12px;line-height:1.7;margin:0 0 8px;">
+      If the button doesn't work, copy this link into your browser:<br>
+      <a href="${link}" style="color:#2979ff;word-break:break-all;">${link}</a>
+    </p>
+
+    <p style="color:#475569;font-size:11px;text-align:center;margin:24px 0 0;">
+      18+ Only · Gambling Help <a href="tel:1800858858" style="color:#2979ff;">1800 858 858</a>
+    </p>
+  </div>
+</body>
+</html>`;
+
+  return send(user.email, `You've been given ${planLabel} access to Shadow Signals 🎯`, html);
+}
+
 module.exports = {
   sendWelcome,
   sendTrialEnding,
@@ -303,4 +350,5 @@ module.exports = {
   sendPaymentFailed,
   sendEdgeAlert,
   sendPasswordReset,
+  sendAdminInvite,
 };

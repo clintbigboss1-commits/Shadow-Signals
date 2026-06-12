@@ -186,6 +186,76 @@ router.get('/me', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/auth/admin/users (Admin only) — list all accounts
+router.get('/admin/users', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Admins only' });
+    }
+    const result = await db.query(
+      `SELECT id, email, name, plan, created_at FROM users ORDER BY created_at DESC LIMIT 500`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/admin/invite (Admin only) — add someone on any plan for free.
+// Creates the account if needed and emails them a link to set their password.
+router.post('/admin/invite', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Admins only' });
+    }
+
+    const { email, plan, name } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    const validPlans = ['free', 'starter', 'pro', 'elite'];
+    const targetPlan = (plan || 'pro').toLowerCase();
+    if (!validPlans.includes(targetPlan)) {
+      return res.status(400).json({ error: 'Invalid plan tier' });
+    }
+
+    const existing = await db.query('SELECT id, email, name, plan FROM users WHERE email = $1', [email.toLowerCase()]);
+    let user;
+    let created = false;
+
+    if (existing.rows.length > 0) {
+      const r = await db.query(
+        'UPDATE users SET plan = $1 WHERE email = $2 RETURNING id, email, name, plan',
+        [targetPlan, email.toLowerCase()]
+      );
+      user = r.rows[0];
+    } else {
+      // New account with an unguessable password — they set their own via the invite link
+      const randomPassword = crypto.randomBytes(24).toString('hex');
+      const hash = await bcrypt.hash(randomPassword, 12);
+      const r = await db.query(
+        `INSERT INTO users (email, password_hash, name, plan)
+         VALUES ($1,$2,$3,$4) RETURNING id, email, name, plan`,
+        [email.toLowerCase(), hash, name || email.split('@')[0], targetPlan]
+      );
+      user = r.rows[0];
+      created = true;
+    }
+
+    // Invite link doubles as a password (re)set — valid 7 days
+    const token = crypto.randomBytes(32).toString('hex');
+    await db.query('DELETE FROM password_resets WHERE user_id = $1', [user.id]);
+    await db.query(
+      `INSERT INTO password_resets (user_id, token_hash, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+      [user.id, hashToken(token)]
+    );
+    emails.sendAdminInvite(user, token, targetPlan).catch(() => {});
+
+    res.json({ ok: true, created, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/auth/admin/upgrade (Admin only)
 router.post('/admin/upgrade', requireAuth, async (req, res) => {
   try {
