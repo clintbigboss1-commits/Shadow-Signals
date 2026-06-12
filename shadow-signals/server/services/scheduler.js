@@ -26,15 +26,53 @@ function isGameDay() {
   return [0, 4, 5, 6].includes(new Date().getDay());
 }
 
-function isNBLActiveSeason() {
-  // NBL season runs Oct-June in Australia
+function monthIn(months) {
   const m = new Date().getMonth() + 1;
-  return m >= 10 || m <= 6;
+  return months.includes(m);
 }
 
-function isUFCActiveWeekend() {
-  // UFC events typically Fri/Sat/Sun
-  return [0, 5, 6].includes(new Date().getDay());
+// ── Season-aware fetch schedule ──────────────────────────────────────────────
+// Off-season sports are skipped entirely (a 0-event poll still costs credits).
+// Cadence in minutes; game days (Thu-Sun) poll faster. AU winter codes lead.
+const SPORT_SCHEDULE = [
+  // Australian winter — the headline content Mar-Sep
+  { key: 'aussierules_afl',      inSeason: () => monthIn([3,4,5,6,7,8,9]),              gameDayMin: 15, offDayMin: 45 },
+  { key: 'rugbyleague_nrl',      inSeason: () => monthIn([3,4,5,6,7,8,9,10]),           gameDayMin: 15, offDayMin: 45 },
+  // US majors
+  { key: 'basketball_nba',       inSeason: () => monthIn([10,11,12,1,2,3,4,5,6]),       gameDayMin: 30, offDayMin: 30 },
+  { key: 'baseball_mlb',         inSeason: () => monthIn([4,5,6,7,8,9,10]),             gameDayMin: 30, offDayMin: 30 },
+  { key: 'icehockey_nhl',        inSeason: () => monthIn([10,11,12,1,2,3,4,5,6]),       gameDayMin: 30, offDayMin: 60 },
+  { key: 'americanfootball_nfl', inSeason: () => monthIn([9,10,11,12,1,2]),             gameDayMin: 15, offDayMin: 30 },
+  // Australian summer
+  { key: 'basketball_nbl',       inSeason: () => monthIn([10,11,12,1,2,3]),             gameDayMin: 30, offDayMin: 60 },
+  { key: 'soccer_a_league',      inSeason: () => monthIn([10,11,12,1,2,3,4,5]),         gameDayMin: 30, offDayMin: 60 },
+  { key: 'cricket_big_bash',     inSeason: () => monthIn([12,1]),                       gameDayMin: 30, offDayMin: 60 },
+  // European soccer (Aug-May)
+  { key: 'soccer_epl',           inSeason: () => monthIn([8,9,10,11,12,1,2,3,4,5]),     gameDayMin: 15, offDayMin: 30 },
+  { key: 'soccer_ucl',           inSeason: () => monthIn([9,10,11,12,1,2,3,4,5,6]),     gameDayMin: 30, offDayMin: 60 },
+  { key: 'soccer_la_liga',       inSeason: () => monthIn([8,9,10,11,12,1,2,3,4,5]),     gameDayMin: 30, offDayMin: 60 },
+  { key: 'soccer_bundesliga',    inSeason: () => monthIn([8,9,10,11,12,1,2,3,4,5]),     gameDayMin: 30, offDayMin: 60 },
+  { key: 'soccer_serie_a',       inSeason: () => monthIn([8,9,10,11,12,1,2,3,4,5]),     gameDayMin: 30, offDayMin: 60 },
+  { key: 'soccer_europa',        inSeason: () => monthIn([9,10,11,12,1,2,3,4,5]),       gameDayMin: 30, offDayMin: 60 },
+  { key: 'soccer_ligue_1',       inSeason: () => monthIn([8,9,10,11,12,1,2,3,4,5]),     gameDayMin: 30, offDayMin: 60 },
+  // Year-round-ish leagues
+  { key: 'soccer_mls',           inSeason: () => monthIn([2,3,4,5,6,7,8,9,10,11]),      gameDayMin: 60, offDayMin: 60 },
+  { key: 'soccer_brazil',        inSeason: () => monthIn([4,5,6,7,8,9,10,11,12]),       gameDayMin: 60, offDayMin: 60 },
+  // Event-driven
+  { key: 'mma_ufc',              inSeason: () => [0, 5, 6].includes(new Date().getDay()), gameDayMin: 30, offDayMin: 30 },
+];
+
+const _lastFetch = {};
+
+async function fetchDueSports() {
+  const now = Date.now();
+  for (const s of SPORT_SCHEDULE) {
+    if (!s.inSeason()) continue;
+    const cadenceMin = isGameDay() ? s.gameDayMin : s.offDayMin;
+    if (_lastFetch[s.key] && now - _lastFetch[s.key] < cadenceMin * 60 * 1000) continue;
+    _lastFetch[s.key] = now;
+    try { await fetchFromOddsAPI(s.key); } catch (_) {}
+  }
 }
 
 // Recompute EV + Arb from cache — ZERO API calls
@@ -125,82 +163,27 @@ function printBudget() {
 }
 
 function initScheduler() {
-  console.log('⏰ Initialising Smart Scheduler (SportGameOdds)...');
+  console.log('⏰ Initialising Smart Scheduler (The Odds API, season-aware)...');
   printBudget();
 
   // Recompute EV every 45s — FREE (reads DB only)
   cron.schedule('*/45 * * * * *', recomputeAll);
 
-  // ── Immediate initial fetch (first data on startup) ──────────────────────
+  // ── Immediate initial fetch: every in-season sport, AU codes first ───────
   setTimeout(async () => {
-    console.log('🔄 Initial fetch: fetching odds data on startup...');
-    const starters = [
-      'soccer_epl', 'basketball_nba', 'americanfootball_nfl',
-      'soccer_la_liga', 'soccer_bundesliga', 'soccer_serie_a', 'soccer_ucl',
-      'baseball_mlb', 'icehockey_nhl',
-    ];
-    for (const sport of starters) {
+    const inSeason = SPORT_SCHEDULE.filter(s => s.inSeason()).map(s => s.key);
+    console.log(`🔄 Initial fetch (in season now): ${inSeason.join(', ')}`);
+    const now = Date.now();
+    for (const sport of inSeason) {
+      _lastFetch[sport] = now;
       try { await fetchFromOddsAPI(sport); } catch (_) {}
     }
     console.log('✅ Initial fetch complete — computing EV...');
     await recomputeAll();
   }, 2000);
 
-  // Top-tier sports — every 3 min on game days
-  cron.schedule('*/3 * * * *', async () => {
-    if (isGameDay()) {
-      await fetchFromOddsAPI('soccer_epl');
-      await fetchFromOddsAPI('basketball_nba');
-      await fetchFromOddsAPI('americanfootball_nfl');
-    }
-  });
-
-  // Soccer leagues — every 10 min
-  cron.schedule('*/10 * * * *', async () => {
-    await fetchFromOddsAPI('soccer_la_liga');
-    await fetchFromOddsAPI('soccer_bundesliga');
-    await fetchFromOddsAPI('soccer_serie_a');
-    await fetchFromOddsAPI('soccer_ucl');
-  });
-
-  // Other soccer — every 20 min
-  cron.schedule('*/20 * * * *', async () => {
-    await fetchFromOddsAPI('soccer_europa');
-    await fetchFromOddsAPI('soccer_ligue_1');
-    await fetchFromOddsAPI('soccer_mls');
-    await fetchFromOddsAPI('soccer_brazil');
-  });
-
-  // Baseball / Hockey — every 30 min
-  cron.schedule('*/30 * * * *', async () => {
-    await fetchFromOddsAPI('baseball_mlb');
-    await fetchFromOddsAPI('icehockey_nhl');
-  });
-
-  // NBL (Australian basketball) — every 30 min in season
-  cron.schedule('*/30 * * * *', async () => {
-    if (isNBLActiveSeason()) {
-      await fetchFromOddsAPI('basketball_nbl');
-    }
-  });
-
-  // UFC / Boxing — every 20 min on event weekends
-  cron.schedule('*/20 * * * *', async () => {
-    if (isUFCActiveWeekend()) {
-      await fetchFromOddsAPI('mma_ufc');
-      await fetchFromOddsAPI('mma_boxing');
-    }
-  });
-
-  // Tennis — every 30 min
-  cron.schedule('*/30 * * * *', async () => {
-    await fetchFromOddsAPI('tennis_atp');
-  });
-
-  // Golf — every 60 min (slower sport)
-  cron.schedule('0 * * * *', async () => {
-    await fetchFromOddsAPI('golf_pga');
-  });
+  // One engine: every minute, fetch whatever is due per its season + cadence
+  cron.schedule('* * * * *', fetchDueSports);
 
   // Daily cleanup at midnight AEST (2pm UTC)
   cron.schedule('0 14 * * *', async () => {
@@ -208,7 +191,8 @@ function initScheduler() {
     printBudget();
   });
 
-  console.log('✅ Scheduler running (BoltOdds)');
+  const active = SPORT_SCHEDULE.filter(s => s.inSeason()).length;
+  console.log(`✅ Scheduler running — ${active}/${SPORT_SCHEDULE.length} sports in season`);
 }
 
 module.exports = { initScheduler, setIO, recomputeAll, printBudget };
