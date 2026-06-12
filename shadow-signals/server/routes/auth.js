@@ -10,16 +10,32 @@ const { createNotification } = require('../services/notifications');
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
 
-// Reset tokens live here, not on users — idempotent bootstrap on startup
-db.query(`
-  CREATE TABLE IF NOT EXISTS password_resets (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    token_hash VARCHAR(64) NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-  )
-`).catch(err => console.error('password_resets bootstrap failed:', err.message));
+// Reset tokens live here, not on users — idempotent bootstrap on startup.
+// users.id is a UUID; drop any earlier table created with an integer column.
+(async () => {
+  try {
+    await db.query(`
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_name='password_resets' AND column_name='user_id'
+                   AND data_type='integer') THEN
+          DROP TABLE password_resets;
+        END IF;
+      END $$;
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS password_resets (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL,
+        token_hash VARCHAR(64) NOT NULL,
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+  } catch (err) {
+    console.error('password_resets bootstrap failed:', err.message);
+  }
+})();
 
 const hashToken = (t) => crypto.createHash('sha256').update(t).digest('hex');
 

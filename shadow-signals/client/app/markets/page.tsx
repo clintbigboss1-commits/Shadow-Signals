@@ -67,7 +67,7 @@ function sportLabel(key: string) {
   const m: Record<string, string> = {
     aussierules_afl: 'AFL', rugbyleague_nrl: 'NRL',
     cricket_odi: 'ODI Cricket', cricket_t20: 'T20 Cricket',
-    cricket_test_match: 'Test Cricket',
+    cricket_test_match: 'Test Cricket', cricket_big_bash: 'BBL',
     soccer_a_league: 'A-League', soccer_epl: 'EPL',
     mma_mixed_martial_arts: 'UFC/MMA', basketball_nbl: 'NBL',
     tennis_atp_aus_open: 'Tennis',
@@ -99,9 +99,13 @@ function fmtTime(dt: string) {
   });
 }
 
-// AFL/NRL/Cricket/A-League removed — BoltOdds API does not carry these sports
+// AU sports lead — The Odds API carries AFL, NRL, A-League and BBL
 const SPORT_TABS = [
   { key: 'all',                    label: 'All Markets' },
+  { key: 'aussierules_afl',        label: '🏉 AFL' },
+  { key: 'rugbyleague_nrl',        label: '🏉 NRL' },
+  { key: 'soccer_a_league',        label: '⚽ A-League' },
+  { key: 'cricket_big_bash',       label: '🏏 BBL' },
   { key: 'soccer_epl',             label: '⚽ EPL' },
   { key: 'soccer_la_liga',         label: '⚽ La Liga' },
   { key: 'soccer_bundesliga',      label: '⚽ Bundesliga' },

@@ -53,6 +53,9 @@ function fmtTime(dt: string) {
 
 // AFL/NRL/Cricket removed — BoltOdds API does not carry these sports
 const SPORTS_NAV = [
+  { key:'aussierules_afl',        label:'AFL',         icon:'🏉', live:true  },
+  { key:'rugbyleague_nrl',        label:'NRL',         icon:'🏉', live:true  },
+  { key:'soccer_a_league',        label:'A-League',    icon:'⚽', live:false },
   { key:'soccer_epl',             label:'EPL',         icon:'⚽', live:true  },
   { key:'soccer_la_liga',         label:'La Liga',     icon:'⚽', live:true  },
   { key:'soccer_bundesliga',      label:'Bundesliga',  icon:'⚽', live:false },
