@@ -9,357 +9,416 @@ import API from '../../lib/api';
 import { getSocket, connectSocket } from '../../lib/socket';
 import { getToken } from '../../lib/auth';
 
-interface EVOpp {
-  id: string;
-  sport_key: string;
-  event_name: string;
-  event_id: string;
+/* ─── Types ───────────────────────────────────────────────────────────── */
+
+interface EVPick {
   selection: string;
   bookie: string;
-  bookie_odds: number | string;
-  fair_odds:   number | string;
-  ev_percent:  number | string;
-  kelly_percent: number | string;
+  bookie_odds: number;
+  fair_odds: number;
+  ev_percent: number;
+  kelly_percent: number;
+  market: string;
+}
+
+interface Game {
+  event_id: string;
+  sport_key: string;
+  home_team: string;
+  away_team: string;
+  event_name: string;
   commence_time: string;
-  market?: string;
+  bookmaker_count: number;
+  best_odds: { selection: string; bookmaker: string; odds: number }[];
+  all_bookmakers: Record<string, Record<string, number>>;
+  ev_pick: EVPick | null;
 }
 
 /* ─── helpers ─────────────────────────────────────────────────────────── */
 
 function grade(ev: number) {
-  if (ev >= 8) return { label: 'S+ · STRONGEST PLAY', bg: '#2979ff', color: '#030711' };
-  if (ev >= 5) return { label: 'A · STRONG PLAY',     bg: '#00c853', color: '#030711' };
-  if (ev >= 3) return { label: 'B · GOOD PLAY',       bg: '#ffab00', color: '#030711' };
-  return              { label: 'C · SMALL EDGE',      bg: '#64748b', color: '#fff'    };
+  if (ev >= 8) return { label: 'S+ PLAY', bg: '#2979ff', color: '#fff' };
+  if (ev >= 5) return { label: 'A PLAY',  bg: '#00c853', color: '#030711' };
+  if (ev >= 3) return { label: 'B PLAY',  bg: '#ffab00', color: '#030711' };
+  return              { label: 'EDGE',    bg: '#475569', color: '#fff' };
 }
 
-function confidence(ev: number) {
-  if (ev >= 8) return { label: 'VERY HIGH', color: '#2979ff' };
-  if (ev >= 5) return { label: 'HIGH',      color: '#00c853' };
-  if (ev >= 3) return { label: 'MEDIUM',    color: '#ffab00' };
-  return              { label: 'LOW',       color: '#64748b' };
-}
-
-function sportBg(key: string) {
-  const m: Record<string, string> = {
-    aussierules_afl:        'linear-gradient(135deg,#1a2a1a,#0a1a0a)',
-    rugbyleague_nrl:        'linear-gradient(135deg,#1a1a2a,#0a0a1a)',
-    cricket_odi:            'linear-gradient(135deg,#2a1a0a,#1a0a00)',
-    cricket_t20:            'linear-gradient(135deg,#2a1a0a,#1a0a00)',
-    soccer_a_league:        'linear-gradient(135deg,#0a1a2a,#001a2a)',
-    soccer_epl:             'linear-gradient(135deg,#1a002a,#0a0020)',
-    mma_mixed_martial_arts: 'linear-gradient(135deg,#2a0a0a,#1a0000)',
-    basketball_nbl:         'linear-gradient(135deg,#1a1000,#0a0800)',
+function sportMeta(key: string): { emoji: string; label: string; bg: string } {
+  const m: Record<string, { emoji: string; label: string; bg: string }> = {
+    aussierules_afl:      { emoji: '🏉', label: 'AFL',        bg: 'linear-gradient(135deg,#1a2a1a,#0a1400)' },
+    rugbyleague_nrl:      { emoji: '🏉', label: 'NRL',        bg: 'linear-gradient(135deg,#1a1a2a,#080818)' },
+    cricket_big_bash:     { emoji: '🏏', label: 'BBL',        bg: 'linear-gradient(135deg,#2a1a00,#180e00)' },
+    cricket_odi:          { emoji: '🏏', label: 'Cricket',    bg: 'linear-gradient(135deg,#2a1a00,#180e00)' },
+    soccer_a_league:      { emoji: '⚽', label: 'A-League',   bg: 'linear-gradient(135deg,#0a1a2a,#001020)' },
+    soccer_epl:           { emoji: '⚽', label: 'EPL',        bg: 'linear-gradient(135deg,#1a002a,#0a0018)' },
+    soccer_ucl:           { emoji: '⚽', label: 'UCL',        bg: 'linear-gradient(135deg,#1a1500,#0a0c00)' },
+    soccer_la_liga:       { emoji: '⚽', label: 'La Liga',    bg: 'linear-gradient(135deg,#2a0a0a,#180000)' },
+    soccer_bundesliga:    { emoji: '⚽', label: 'Bundesliga', bg: 'linear-gradient(135deg,#2a0a00,#180500)' },
+    soccer_serie_a:       { emoji: '⚽', label: 'Serie A',    bg: 'linear-gradient(135deg,#00102a,#000818)' },
+    soccer_mls:           { emoji: '⚽', label: 'MLS',        bg: 'linear-gradient(135deg,#001a2a,#001020)' },
+    soccer_brazil:        { emoji: '⚽', label: 'Brasileirão',bg: 'linear-gradient(135deg,#0a2a0a,#041804)' },
+    basketball_nba:       { emoji: '🏀', label: 'NBA',        bg: 'linear-gradient(135deg,#1a0800,#100500)' },
+    basketball_nbl:       { emoji: '🏀', label: 'NBL',        bg: 'linear-gradient(135deg,#1a1000,#0a0800)' },
+    americanfootball_nfl: { emoji: '🏈', label: 'NFL',        bg: 'linear-gradient(135deg,#001a10,#001008)' },
+    baseball_mlb:         { emoji: '⚾', label: 'MLB',        bg: 'linear-gradient(135deg,#1a1a00,#0e0e00)' },
+    icehockey_nhl:        { emoji: '🏒', label: 'NHL',        bg: 'linear-gradient(135deg,#00102a,#000818)' },
+    mma_ufc:              { emoji: '🥊', label: 'UFC',        bg: 'linear-gradient(135deg,#2a0a0a,#180000)' },
+    mma_boxing:           { emoji: '🥊', label: 'Boxing',     bg: 'linear-gradient(135deg,#2a0a0a,#180000)' },
+    tennis_atp:           { emoji: '🎾', label: 'Tennis',     bg: 'linear-gradient(135deg,#001a0a,#001006)' },
+    golf_pga:             { emoji: '⛳', label: 'Golf',       bg: 'linear-gradient(135deg,#001a0a,#000e04)' },
   };
-  return m[key] || 'linear-gradient(135deg,#111827,#0d1526)';
-}
-
-function sportEmoji(key: string) {
-  const m: Record<string, string> = {
-    aussierules_afl: '🏉', rugbyleague_nrl: '🏉',
-    cricket_odi: '🏏', cricket_t20: '🏏', cricket_test_match: '🏏',
-    soccer_a_league: '⚽', soccer_epl: '⚽',
-    mma_mixed_martial_arts: '🥊', basketball_nbl: '🏀',
-    tennis_atp_aus_open: '🎾',
-  };
-  return m[key] || '🏆';
-}
-
-function sportLabel(key: string) {
-  const m: Record<string, string> = {
-    aussierules_afl: 'AFL', rugbyleague_nrl: 'NRL',
-    cricket_odi: 'ODI Cricket', cricket_t20: 'T20 Cricket',
-    cricket_test_match: 'Test Cricket', cricket_big_bash: 'BBL',
-    soccer_a_league: 'A-League', soccer_epl: 'EPL',
-    mma_mixed_martial_arts: 'UFC/MMA', basketball_nbl: 'NBL',
-    tennis_atp_aus_open: 'Tennis',
-  };
-  return m[key] || key.replace(/_/g, ' ').toUpperCase();
-}
-
-function parseTeams(eventName: string) {
-  const parts = eventName.split(' v ');
-  return { home: parts[0] || '—', away: parts[1] || '—' };
-}
-
-function teamInitial(name: string) {
-  return name.trim().charAt(0).toUpperCase();
+  return m[key] || { emoji: '🏆', label: key.replace(/_/g, ' ').toUpperCase(), bg: 'linear-gradient(135deg,#111827,#0d1526)' };
 }
 
 function teamColor(name: string) {
-  const colors = ['#2979ff','#00c853','#ffab00','#8b5cf6','#ec4899','#6366f1','#ef4444','#14b8a6'];
+  const colors = ['#2979ff','#00c853','#ffab00','#8b5cf6','#ec4899','#6366f1','#ef4444','#14b8a6','#f97316','#06b6d4'];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
 }
 
 function fmtTime(dt: string) {
-  return new Date(dt).toLocaleString('en-AU', {
-    timeZone: 'Australia/Sydney',
-    weekday: 'short', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
+  const d = new Date(dt);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = d.toDateString() === tomorrow.toDateString();
+
+  const time = d.toLocaleString('en-AU', { timeZone: 'Australia/Sydney', hour: '2-digit', minute: '2-digit' });
+  if (isToday)    return `Today ${time}`;
+  if (isTomorrow) return `Tomorrow ${time}`;
+  return d.toLocaleString('en-AU', { timeZone: 'Australia/Sydney', weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-// AU sports lead — The Odds API carries AFL, NRL, A-League and BBL
+function msUntil(dt: string) {
+  return new Date(dt).getTime() - Date.now();
+}
+
+function countdown(dt: string) {
+  const ms = msUntil(dt);
+  if (ms < 0) return 'LIVE';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h === 0) return `${m}m`;
+  if (h < 24) return `${h}h ${m}m`;
+  return `${Math.floor(h / 24)}d`;
+}
+
 const SPORT_TABS = [
-  { key: 'all',                    label: 'All Markets' },
-  { key: 'aussierules_afl',        label: '🏉 AFL' },
-  { key: 'rugbyleague_nrl',        label: '🏉 NRL' },
-  { key: 'soccer_a_league',        label: '⚽ A-League' },
-  { key: 'cricket_big_bash',       label: '🏏 BBL' },
-  { key: 'soccer_epl',             label: '⚽ EPL' },
-  { key: 'soccer_la_liga',         label: '⚽ La Liga' },
-  { key: 'soccer_bundesliga',      label: '⚽ Bundesliga' },
-  { key: 'soccer_serie_a',         label: '⚽ Serie A' },
-  { key: 'soccer_ucl',             label: '⚽ UCL' },
-  { key: 'basketball_nba',         label: '🏀 NBA' },
-  { key: 'basketball_nbl',         label: '🏀 NBL' },
-  { key: 'americanfootball_nfl',   label: '🏈 NFL' },
-  { key: 'baseball_mlb',           label: '⚾ MLB' },
-  { key: 'icehockey_nhl',          label: '🏒 NHL' },
-  { key: 'mma_ufc',                label: '🥊 UFC' },
-  { key: 'mma_boxing',             label: '🥊 Boxing' },
-  { key: 'tennis_atp',             label: '🎾 Tennis' },
-  { key: 'golf_pga',               label: '⛳ Golf' },
+  { key: 'all',                    label: 'All',         emoji: '🏆' },
+  { key: 'aussierules_afl',        label: 'AFL',         emoji: '🏉' },
+  { key: 'rugbyleague_nrl',        label: 'NRL',         emoji: '🏉' },
+  { key: 'soccer_a_league',        label: 'A-League',    emoji: '⚽' },
+  { key: 'cricket_big_bash',       label: 'BBL',         emoji: '🏏' },
+  { key: 'soccer_epl',             label: 'EPL',         emoji: '⚽' },
+  { key: 'soccer_la_liga',         label: 'La Liga',     emoji: '⚽' },
+  { key: 'soccer_bundesliga',      label: 'Bundesliga',  emoji: '⚽' },
+  { key: 'soccer_serie_a',         label: 'Serie A',     emoji: '⚽' },
+  { key: 'soccer_ucl',             label: 'UCL',         emoji: '⚽' },
+  { key: 'basketball_nba',         label: 'NBA',         emoji: '🏀' },
+  { key: 'basketball_nbl',         label: 'NBL',         emoji: '🏀' },
+  { key: 'americanfootball_nfl',   label: 'NFL',         emoji: '🏈' },
+  { key: 'baseball_mlb',           label: 'MLB',         emoji: '⚾' },
+  { key: 'icehockey_nhl',          label: 'NHL',         emoji: '🏒' },
+  { key: 'mma_ufc',                label: 'UFC',         emoji: '🥊' },
+  { key: 'tennis_atp',             label: 'Tennis',      emoji: '🎾' },
+  { key: 'golf_pga',               label: 'Golf',        emoji: '⛳' },
 ];
 
-/* ─── Slip (bet slip state) ───────────────────────────────────────────── */
-interface SlipItem { ev: EVOpp; }
+/* ─── Bet Slip types ──────────────────────────────────────────────────── */
+interface SlipItem {
+  event_id: string;
+  event_name: string;
+  sport_key: string;
+  selection: string;
+  bookie: string;
+  odds: number;
+  fair_odds?: number;
+  ev_percent?: number;
+  kelly_percent?: number;
+  commence_time: string;
+}
 
-/* ─── Event Card ──────────────────────────────────────────────────────── */
-function EventCard({
-  ev, onAddToSlip, inSlip, onOpen,
+/* ─── Game Card ───────────────────────────────────────────────────────── */
+function GameCard({
+  game, onOpen, onAddToSlip, inSlip,
 }: {
-  ev: EVOpp;
-  onAddToSlip: (ev: EVOpp) => void;
-  inSlip: boolean;
-  onOpen: (ev: EVOpp) => void;
+  game: Game;
+  onOpen: () => void;
+  onAddToSlip: (item: SlipItem) => void;
+  inSlip: (sel: string) => boolean;
 }) {
-  const evNum  = Number(ev.ev_percent);
-  const g      = grade(evNum);
-  const conf   = confidence(evNum);
-  const teams  = parseTeams(ev.event_name);
-  const barW   = Math.min((evNum / 15) * 100, 100);
-  const hColor = teamColor(teams.home);
-  const aColor = teamColor(teams.away);
-  const odds   = Number(ev.bookie_odds);
-  const fair   = Number(ev.fair_odds);
+  const meta = sportMeta(game.sport_key);
+  const ev = game.ev_pick;
+  const hColor = teamColor(game.home_team);
+  const aColor = teamColor(game.away_team);
+  const ms = msUntil(game.commence_time);
+  const isLive = ms < 0;
+  const isSoon = ms > 0 && ms < 3600000;
+
+  // Best odds for home / away from best_odds array
+  const homeBest = game.best_odds.find(o => o.selection === game.home_team);
+  const awayBest = game.best_odds.find(o => o.selection === game.away_team);
+  const drawBest = game.best_odds.find(o => o.selection === 'Draw');
+
+  const g = ev ? grade(ev.ev_percent) : null;
 
   return (
-    <div style={{
-      background: '#0d1526',
-      border: `1px solid ${evNum >= 8 ? 'rgba(41,121,255,.25)' : 'rgba(255,255,255,.07)'}`,
-      borderRadius: 16,
-      overflow: 'hidden',
-      transition: 'border-color .2s, transform .15s',
-      cursor: 'pointer',
-    }}
-      onClick={() => onOpen(ev)}
-      onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'}
-      onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'}
+    <div
+      onClick={onOpen}
+      style={{
+        background: '#0d1526',
+        border: `1px solid ${ev && ev.ev_percent >= 5 ? 'rgba(41,121,255,.22)' : ev ? 'rgba(0,200,83,.14)' : 'rgba(255,255,255,.07)'}`,
+        borderRadius: 16,
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'transform .15s, box-shadow .15s',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(0,0,0,.4)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+      }}
     >
-      {/* Card header — sport image strip */}
+      {/* Sport header strip */}
       <div style={{
-        background: sportBg(ev.sport_key),
-        padding: '12px 14px',
+        background: meta.bg,
+        padding: '10px 14px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        minHeight: 52,
-        position: 'relative',
-        overflow: 'hidden',
       }}>
-        {/* Grade badge */}
-        <span style={{
-          background: g.bg, color: g.color,
-          fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 6,
-          letterSpacing: .5, position: 'relative', zIndex: 1,
-        }}>{g.label}</span>
-
-        {/* Time + live indicator */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, position: 'relative', zIndex: 1 }}>
-          <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600 }}>
-            {fmtTime(ev.commence_time)} AEST
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <span style={{ fontSize: 15 }}>{meta.emoji}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: 1 }}>{meta.label}</span>
+          {isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4, letterSpacing: .5 }}>LIVE</span>}
+          {isSoon && !isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ffab00', background: 'rgba(255,171,0,.1)', border: '1px solid rgba(255,171,0,.25)', padding: '1px 7px', borderRadius: 4 }}>SOON</span>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {g && (
+            <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 5, background: g.bg, color: g.color, letterSpacing: .5 }}>
+              {g.label}
+            </span>
+          )}
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', fontWeight: 600 }}>
+            {countdown(game.commence_time)}
           </span>
         </div>
       </div>
 
-      {/* Sport label */}
-      <div style={{ padding: '8px 14px 0', fontSize: 11, color: '#475569', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8 }}>
-        {sportEmoji(ev.sport_key)} {sportLabel(ev.sport_key)}
-      </div>
-
-      {/* Teams — tick marks the side we're backing */}
-      <div style={{ padding: '12px 14px' }}>
+      {/* Teams */}
+      <div style={{ padding: '14px 14px 10px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
         {[
-          { name: teams.home, color: hColor },
-          { name: teams.away, color: aColor },
-        ].map((t, i) => (
-          <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: i === 0 ? 10 : 0 }}>
-            <TeamLogo name={t.name} color={t.color} size={32} />
-            <span style={{ fontWeight: 700, fontSize: 15, flex: 1 }}>{t.name}</span>
-            {ev.selection === t.name && (
-              <span style={{ background: 'rgba(0,230,118,.12)', border: '1px solid rgba(0,230,118,.35)', color: '#00e676', fontSize: 10, fontWeight: 800, letterSpacing: .8, padding: '3px 9px', borderRadius: 20 }}>
-                ✓ OUR PICK
-              </span>
-            )}
+          { team: game.home_team, color: hColor, bestOdds: homeBest },
+          { team: game.away_team, color: aColor, bestOdds: awayBest },
+        ].map(({ team, color, bestOdds }) => {
+          const isPick = ev?.selection === team;
+          return (
+            <div key={team} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <TeamLogo name={team} color={color} size={30} />
+              <span style={{ flex: 1, fontWeight: isPick ? 800 : 600, fontSize: 14, color: isPick ? '#fff' : '#94a3b8' }}>{team}</span>
+              {isPick && (
+                <span style={{ fontSize: 9, fontWeight: 800, color: '#00e676', background: 'rgba(0,230,118,.1)', border: '1px solid rgba(0,230,118,.25)', padding: '2px 7px', borderRadius: 10, letterSpacing: .5 }}>
+                  OUR PICK
+                </span>
+              )}
+              {bestOdds && (
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onAddToSlip({
+                      event_id: game.event_id,
+                      event_name: game.event_name,
+                      sport_key: game.sport_key,
+                      selection: team,
+                      bookie: bestOdds.bookmaker,
+                      odds: bestOdds.odds,
+                      fair_odds: ev?.selection === team ? ev.fair_odds : undefined,
+                      ev_percent: ev?.selection === team ? ev.ev_percent : undefined,
+                      kelly_percent: ev?.selection === team ? ev.kelly_percent : undefined,
+                      commence_time: game.commence_time,
+                    });
+                  }}
+                  style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontWeight: 800,
+                    fontSize: 15,
+                    color: inSlip(team) ? '#2979ff' : isPick ? '#00e676' : '#fff',
+                    background: inSlip(team) ? 'rgba(41,121,255,.1)' : isPick ? 'rgba(0,230,118,.07)' : 'rgba(255,255,255,.05)',
+                    border: `1px solid ${inSlip(team) ? 'rgba(41,121,255,.3)' : isPick ? 'rgba(0,230,118,.2)' : 'rgba(255,255,255,.08)'}`,
+                    borderRadius: 8,
+                    padding: '4px 11px',
+                    cursor: 'pointer',
+                    transition: 'all .15s',
+                    minWidth: 56,
+                    textAlign: 'center',
+                  }}
+                  title={`${bestOdds.bookmaker} — tap to add to slip`}
+                >
+                  {bestOdds.odds.toFixed(2)}
+                </button>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Draw odds for soccer */}
+        {drawBest && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center', fontSize: 12, color: '#475569' }}>≡</div>
+            <span style={{ flex: 1, fontWeight: 500, fontSize: 13, color: '#64748b' }}>Draw</span>
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                onAddToSlip({
+                  event_id: game.event_id,
+                  event_name: game.event_name,
+                  sport_key: game.sport_key,
+                  selection: 'Draw',
+                  bookie: drawBest.bookmaker,
+                  odds: drawBest.odds,
+                  commence_time: game.commence_time,
+                });
+              }}
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontWeight: 800, fontSize: 15,
+                color: inSlip('Draw') ? '#2979ff' : '#94a3b8',
+                background: inSlip('Draw') ? 'rgba(41,121,255,.1)' : 'rgba(255,255,255,.04)',
+                border: `1px solid ${inSlip('Draw') ? 'rgba(41,121,255,.3)' : 'rgba(255,255,255,.07)'}`,
+                borderRadius: 8, padding: '4px 11px',
+                cursor: 'pointer', minWidth: 56, textAlign: 'center',
+              }}
+            >
+              {drawBest.odds.toFixed(2)}
+            </button>
           </div>
-        ))}
+        )}
       </div>
 
-      {/* The play, in plain English */}
-      <div style={{ margin: '0 14px 12px', background: 'rgba(0,230,118,.07)', border: '1px solid rgba(0,230,118,.22)', borderRadius: 10, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 13, color: '#9eb1c8', minWidth: 0 }}>
-          🎯 Back <b style={{ color: '#fff' }}>{ev.selection}</b>
-        </span>
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#00e676', whiteSpace: 'nowrap' }}>@ {odds.toFixed(2)}</span>
-      </div>
+      {/* EV row — only when we have a pick */}
+      {ev && (
+        <div style={{ margin: '0 14px 12px', padding: '9px 12px', background: 'rgba(0,200,83,.06)', border: '1px solid rgba(0,200,83,.15)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 12, color: '#64748b' }}>
+            🎯 <b style={{ color: '#fff' }}>{ev.selection}</b>
+            <span style={{ color: '#475569', marginLeft: 6, fontSize: 11, textTransform: 'capitalize' }}>via {ev.bookie?.replace(/_/g, ' ')}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14, color: '#00c853' }}>+{ev.ev_percent.toFixed(1)}%</div>
+              <div style={{ fontSize: 10, color: '#475569' }}>edge</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#2979ff' }}>{ev.kelly_percent.toFixed(1)}%</div>
+              <div style={{ fontSize: 10, color: '#475569' }}>kelly</div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Numbers, labelled like a human */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,.05)', margin: '0 14px' }} />
-      <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-          <span style={{ color: '#64748b' }}>Odds you get <span style={{ color: '#94a3b8', textTransform: 'capitalize' }}>({ev.bookie?.replace(/_/g, ' ')})</span></span>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#fff' }}>{odds.toFixed(2)}</span>
+      {/* Footer: time + book count + explore link */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,.04)', padding: '9px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 11, color: '#475569' }}>
+          {fmtTime(game.commence_time)} AEST
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-          <span style={{ color: '#64748b' }}>What the odds <i>should</i> be</span>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#94a3b8' }}>{fair.toFixed(2)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 11, color: '#334155' }}>{game.bookmaker_count} books</span>
+          <span style={{ fontSize: 12, color: '#2979ff', fontWeight: 700 }}>Full analysis →</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }} title="Based on the Kelly Criterion — a staking formula pros use to size bets to the edge">
-          <span style={{ color: '#64748b' }}>Suggested stake</span>
-          <span style={{ color: '#2979ff', fontWeight: 700 }}>{Number(ev.kelly_percent).toFixed(1)}% of your bankroll</span>
-        </div>
-      </div>
-
-      {/* Edge bar */}
-      <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.05)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }} title="How much better the price you get is than the true price — your mathematical advantage">
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>Your edge</span>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14, color: '#00c853' }}>+{evNum.toFixed(1)}%</span>
-        </div>
-        <div style={{ height: 6, background: 'rgba(255,255,255,.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 6 }}>
-          <div style={{ height: '100%', width: `${barW}%`, background: evNum >= 8 ? 'linear-gradient(90deg,#2979ff,#1e63d9)' : evNum >= 5 ? '#00c853' : '#ffab00', borderRadius: 99, transition: 'width .5s' }} />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-          <span style={{ color: '#475569' }}>Price found at <span style={{ color: '#94a3b8', textTransform: 'capitalize' }}>{ev.bookie?.replace(/_/g,' ')}</span></span>
-          <span style={{ color: conf.color, fontWeight: 700 }}>Confidence: {conf.label}</span>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,.05)', display: 'flex', alignItems: 'center' }}>
-        <button
-          onClick={e => { e.stopPropagation(); onAddToSlip(ev); }}
-          style={{
-            flex: 1, padding: '13px 16px', background: inSlip ? 'rgba(41,121,255,.08)' : 'transparent',
-            border: 'none', color: inSlip ? '#2979ff' : '#94a3b8',
-            fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'all .15s',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            fontFamily: 'Inter, sans-serif',
-          }}
-        >
-          {inSlip ? '✓ In Slip' : '+ Add to Slip'}
-        </button>
-        <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,.05)' }} />
-        <button onClick={e => e.stopPropagation()} style={{ padding: '13px 16px', background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 16 }} title="Bookmark">🔖</button>
-        <div style={{ width: 1, height: 44, background: 'rgba(255,255,255,.05)' }} />
-        <button onClick={e => e.stopPropagation()} style={{ padding: '13px 16px', background: 'transparent', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 16 }} title="Share">↗</button>
       </div>
     </div>
   );
 }
 
-/* ─── Bet Slip sidebar ────────────────────────────────────────────────── */
-function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (id: string) => void; onClear: () => void }) {
-  const [stake, setStake]   = useState(50);
+/* ─── Bet Slip ────────────────────────────────────────────────────────── */
+function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (key: string) => void; onClear: () => void }) {
+  const [stake, setStake]     = useState(50);
   const [logging, setLogging] = useState(false);
   const [logged, setLogged]   = useState(false);
+
   if (items.length === 0) return null;
 
-  const totalKelly = items.reduce((a, i) => a + Number(i.ev.kelly_percent), 0) / items.length;
+  const avgKelly = items.filter(i => i.kelly_percent).reduce((a, i) => a + (i.kelly_percent || 0), 0) / (items.filter(i => i.kelly_percent).length || 1);
 
-  async function logAllBets() {
+  async function logBets() {
     setLogging(true);
     try {
-      await Promise.all(items.map(({ ev }) =>
+      await Promise.all(items.map(item =>
         API.post('/bets', {
-          event_name:     ev.event_name,
-          sport:          ev.sport_key,
-          market:         ev.market || 'h2h',
-          selection:      ev.selection,
-          bookie:         ev.bookie,
-          odds_taken:     Number(ev.bookie_odds),
-          fair_odds:      Number(ev.fair_odds),
-          ev_percent:     Number(ev.ev_percent),
-          kelly_fraction: Number(ev.kelly_percent) / 100,
+          event_name:     item.event_name,
+          sport:          item.sport_key,
+          market:         'h2h',
+          selection:      item.selection,
+          bookie:         item.bookie,
+          odds_taken:     item.odds,
+          fair_odds:      item.fair_odds,
+          ev_percent:     item.ev_percent,
+          kelly_fraction: item.kelly_percent ? item.kelly_percent / 100 : null,
           stake_aud:      stake,
-          event_time:     ev.commence_time,
+          event_time:     item.commence_time,
         })
       ));
       setLogged(true);
       setTimeout(() => { onClear(); setLogged(false); }, 1500);
-    } catch {
-      // silently fail — user can retry
-    } finally {
-      setLogging(false);
-    }
+    } catch { /* silently fail */ } finally { setLogging(false); }
   }
 
   return (
     <div style={{
       position: 'fixed', bottom: 24, right: 24, zIndex: 200,
-      width: 320, background: '#0d1526',
-      border: '1px solid rgba(41,121,255,.25)',
-      borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,.6)',
+      width: 330, background: '#0d1526',
+      border: '1px solid rgba(41,121,255,.3)',
+      borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,.7)',
       overflow: 'hidden',
     }}>
-      <div style={{ padding: '14px 16px', background: 'rgba(41,121,255,.06)', borderBottom: '1px solid rgba(41,121,255,.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: '13px 16px', background: 'rgba(41,121,255,.07)', borderBottom: '1px solid rgba(41,121,255,.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontWeight: 800, fontSize: 14, color: '#2979ff' }}>⚡ Bet Slip ({items.length})</span>
-        <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13 }}>Clear all</button>
+        <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13 }}>Clear</button>
       </div>
 
-      <div style={{ maxHeight: 260, overflowY: 'auto', padding: '8px 0' }}>
-        {items.map(({ ev }) => (
-          <div key={ev.id} style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>{ev.event_name}</div>
-              <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>
-                {ev.selection} · {ev.bookie?.replace(/_/g,' ')}
+      <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+        {items.map(item => {
+          const key = `${item.event_id}:${item.selection}`;
+          return (
+            <div key={key} style={{ padding: '9px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>{item.event_name}</div>
+                <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>{item.selection} · {item.bookie?.replace(/_/g, ' ')}</div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 10 }}>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: item.ev_percent ? '#00c853' : '#fff', fontSize: 14 }}>
+                  ${item.odds.toFixed(2)}
+                </div>
+                <button onClick={() => onRemove(key)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 11 }}>✕</button>
               </div>
             </div>
-            <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 10 }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#00c853', fontSize: 14 }}>
-                ${Number(ev.bookie_odds).toFixed(2)}
-              </div>
-              <button onClick={() => onRemove(ev.id)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 11 }}>remove</button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div style={{ padding: 14, borderTop: '1px solid rgba(255,255,255,.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <label style={{ fontSize: 12, color: '#64748b', fontWeight: 600, margin: 0, textTransform: 'none', letterSpacing: 0 }}>Stake per bet:</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ color: '#64748b', fontSize: 14 }}>$</span>
-            <input
-              type="number"
-              value={stake}
-              onChange={e => setStake(Number(e.target.value))}
-              style={{ width: 70, fontSize: 14, padding: '5px 8px', textAlign: 'right' }}
-            />
+          <label style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Stake per bet</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ color: '#64748b' }}>$</span>
+            <input type="number" value={stake} onChange={e => setStake(Number(e.target.value))} style={{ width: 70, fontSize: 14, padding: '4px 8px', textAlign: 'right' }} />
           </div>
         </div>
-        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 12, display: 'flex', justifyContent: 'space-between' }}>
-          <span>Avg Kelly: {totalKelly.toFixed(1)}%</span>
-          <span>Total: ${(stake * items.length).toFixed(0)}</span>
-        </div>
+        {avgKelly > 0 && (
+          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 10, display: 'flex', justifyContent: 'space-between' }}>
+            <span>Avg Kelly: {avgKelly.toFixed(1)}%</span>
+            <span>Total: ${(stake * items.length).toFixed(0)}</span>
+          </div>
+        )}
         <button
-          onClick={logAllBets}
+          onClick={logBets}
           disabled={logging || logged}
-          style={{ width: '100%', padding: '11px', borderRadius: 10, background: logged ? '#00c853' : 'linear-gradient(135deg,#2979ff,#1e63d9)', border: 'none', color: '#030711', fontWeight: 800, fontSize: 14, cursor: logging ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif', opacity: logging ? 0.7 : 1 }}
+          style={{ width: '100%', padding: '11px', borderRadius: 10, background: logged ? '#00c853' : 'linear-gradient(135deg,#2979ff,#1e63d9)', border: 'none', color: logged ? '#030711' : '#fff', fontWeight: 800, fontSize: 14, cursor: logging ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif' }}
         >
           {logged ? '✓ Logged to CLV Tracker' : logging ? 'Logging...' : `Log ${items.length} Bet${items.length > 1 ? 's' : ''} →`}
         </button>
@@ -371,39 +430,62 @@ function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (i
 /* ─── Main Page ───────────────────────────────────────────────────────── */
 export default function MarketsPage() {
   const router = useRouter();
-  const [data, setData]       = useState<EVOpp[]>([]);
+  const [data, setData]       = useState<Game[]>([]);
   const [sport, setSport]     = useState('all');
-  const [minEV, setMinEV]     = useState(0);
+  const [filter, setFilter]   = useState<'all' | 'edge'>('all');
   const [loading, setLoading] = useState(true);
   const [updated, setUpdated] = useState(new Date());
   const [slip, setSlip]       = useState<SlipItem[]>([]);
 
   const load = useCallback(async () => {
     try {
-      const res = await API.get('/ev', { params: { sport, minEV, limit: 100 } });
+      const res = await API.get('/games', { params: { sport, limit: 80 } });
       setData(res.data.data || []);
       setUpdated(new Date());
     } catch (e: unknown) {
       const err = e as { response?: { status?: number } };
       if (err.response?.status !== 401) console.error(e);
     } finally { setLoading(false); }
-  }, [sport, minEV]);
+  }, [sport]);
 
   useEffect(() => { setLoading(true); load(); }, [load]);
-  useEffect(() => { const t = setInterval(load, 45000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { const t = setInterval(load, 60000); return () => clearInterval(t); }, [load]);
 
-  // WebSocket — mount once, independent of sport/filter changes
   useEffect(() => {
     const token = getToken();
     if (token) connectSocket(token);
     const s = getSocket();
-    const onEV = (evs: EVOpp[]) => { if (evs?.length) { setData(evs); setUpdated(new Date()); } };
-    s.on('ev:update', onEV);
-    return () => { s.off('ev:update', onEV); };
-  }, []);
+    const onUpdate = () => load();
+    s.on('ev:update', onUpdate);
+    return () => { s.off('ev:update', onUpdate); };
+  }, [load]);
 
-  function addToSlip(ev: EVOpp) {
-    setSlip(prev => prev.find(i => i.ev.id === ev.id) ? prev.filter(i => i.ev.id !== ev.id) : [...prev, { ev }]);
+  const displayed = filter === 'edge' ? data.filter(g => g.ev_pick) : data;
+  const edgeCount = data.filter(g => g.ev_pick).length;
+
+  function slipKey(eventId: string, sel: string) { return `${eventId}:${sel}`; }
+  function addToSlip(item: SlipItem) {
+    const key = slipKey(item.event_id, item.selection);
+    setSlip(prev => prev.find(i => slipKey(i.event_id, i.selection) === key)
+      ? prev.filter(i => slipKey(i.event_id, i.selection) !== key)
+      : [...prev, item]);
+  }
+  function inSlip(eventId: string, sel: string) {
+    return slip.some(i => slipKey(i.event_id, i.selection) === slipKey(eventId, sel));
+  }
+
+  // Group by date for "All" tab
+  const grouped: Record<string, Game[]> = {};
+  for (const g of displayed) {
+    const d = new Date(g.commence_time);
+    const now = new Date();
+    const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+    let label: string;
+    if (d.toDateString() === now.toDateString()) label = 'Today';
+    else if (d.toDateString() === tomorrow.toDateString()) label = 'Tomorrow';
+    else label = d.toLocaleString('en-AU', { timeZone: 'Australia/Sydney', weekday: 'long', month: 'long', day: 'numeric' });
+    if (!grouped[label]) grouped[label] = [];
+    grouped[label].push(g);
   }
 
   return (
@@ -411,33 +493,43 @@ export default function MarketsPage() {
       <div className="page">
         <Navbar />
 
-        {/* Top bar */}
-        <div style={{ borderBottom: '1px solid rgba(255,255,255,.05)', padding: '10px 20px', background: 'rgba(8,17,30,.8)', backdropFilter: 'blur(8px)', position: 'sticky', top: 52, zIndex: 90 }}>
-          <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        {/* Sticky sport tabs */}
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,.05)', background: 'rgba(8,17,30,.95)', backdropFilter: 'blur(12px)', position: 'sticky', top: 52, zIndex: 90 }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 20px' }}>
 
-            {/* Sport tabs */}
-            <div style={{ display: 'flex', gap: 4, overflowX: 'auto' }}>
+            {/* Sport tabs row */}
+            <div style={{ display: 'flex', gap: 2, overflowX: 'auto', paddingTop: 10, paddingBottom: 4, scrollbarWidth: 'none' }}>
               {SPORT_TABS.map(s => (
-                <button key={s.key} onClick={() => setSport(s.key)}
+                <button
+                  key={s.key}
+                  onClick={() => setSport(s.key)}
                   className={`tab${sport === s.key ? ' active' : ''}`}
-                  style={{ fontSize: 13, padding: '6px 14px' }}>
-                  {s.label}
+                  style={{ fontSize: 12, padding: '6px 13px', whiteSpace: 'nowrap', flexShrink: 0 }}
+                >
+                  {s.emoji} {s.label}
                 </button>
               ))}
             </div>
 
-            {/* Right controls */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+            {/* Filter row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, paddingTop: 6 }}>
               <div style={{ display: 'flex', gap: 4 }}>
-                {[{ label: 'All', v: 0 }, { label: '3%+', v: 3 }, { label: '5%+', v: 5 }, { label: '8%+', v: 8 }].map(f => (
-                  <button key={f.v} onClick={() => setMinEV(f.v)}
-                    className={`tab${minEV === f.v ? ' active' : ''}`}
-                    style={{ fontSize: 12, padding: '5px 12px' }}>
-                    {f.label}
-                  </button>
-                ))}
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`tab${filter === 'all' ? ' active' : ''}`}
+                  style={{ fontSize: 12, padding: '4px 12px' }}
+                >
+                  All {data.length > 0 && <span style={{ color: 'rgba(255,255,255,.4)', marginLeft: 4 }}>{data.length}</span>}
+                </button>
+                <button
+                  onClick={() => setFilter('edge')}
+                  className={`tab${filter === 'edge' ? ' active' : ''}`}
+                  style={{ fontSize: 12, padding: '4px 12px' }}
+                >
+                  ⚡ Edge plays {edgeCount > 0 && <span style={{ background: '#2979ff', color: '#fff', fontSize: 10, fontWeight: 800, padding: '1px 6px', borderRadius: 10, marginLeft: 5 }}>{edgeCount}</span>}
+                </button>
               </div>
-              <div style={{ fontSize: 12, color: '#475569', display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 11, color: '#334155', display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span className="dot-live" />
                 {updated.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
               </div>
@@ -445,50 +537,63 @@ export default function MarketsPage() {
           </div>
         </div>
 
-        {/* Tip bar */}
-        <div style={{ background: 'rgba(41,121,255,.04)', borderBottom: '1px solid rgba(41,121,255,.08)', padding: '8px 20px', textAlign: 'center', fontSize: 12, color: '#475569' }}>
-          Tap any decimal price to add it to your slip. We only show markets with confirmed edge.
-        </div>
-
-        {/* Grid */}
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 120px' }}>
+        {/* Content */}
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 140px' }}>
           {loading ? (
             <div style={{ padding: 80, textAlign: 'center', color: '#64748b' }}>
               <div className="spinner" style={{ margin: '0 auto 16px' }} />
-              <p>Scanning bookmakers for edge...</p>
+              <p>Loading fixtures...</p>
             </div>
-          ) : data.length === 0 ? (
+          ) : displayed.length === 0 ? (
             <div style={{ padding: 80, textAlign: 'center', color: '#64748b' }}>
-              <div style={{ fontSize: 40, marginBottom: 16 }}>🔍</div>
-              <h3 style={{ fontWeight: 700, marginBottom: 8, color: '#94a3b8' }}>No markets with edge right now</h3>
-              <p style={{ fontSize: 14 }}>Try lowering the EV filter or check back when AU games go live.</p>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>📅</div>
+              <h3 style={{ fontWeight: 700, marginBottom: 8, color: '#94a3b8' }}>
+                {filter === 'edge' ? 'No edge plays right now' : 'No upcoming fixtures'}
+              </h3>
+              <p style={{ fontSize: 14, marginBottom: 20 }}>
+                {filter === 'edge'
+                  ? 'Switch to "All" to browse all upcoming games — edges will appear as we find them.'
+                  : 'Odds for this sport haven\'t loaded yet. Check back soon.'}
+              </p>
+              {filter === 'edge' && (
+                <button onClick={() => setFilter('all')} className="btn btn-outline" style={{ display: 'inline-flex' }}>
+                  Show all games
+                </button>
+              )}
             </div>
           ) : (
-            <>
-              <div style={{ fontSize: 13, color: '#64748b', marginBottom: 16 }}>
-                <span style={{ fontWeight: 700, color: '#e2e8f0' }}>{data.length}</span> markets with confirmed edge
+            Object.entries(grouped).map(([dateLabel, games]) => (
+              <div key={dateLabel} style={{ marginBottom: 40 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <h2 style={{ fontSize: 14, fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: 1.2 }}>{dateLabel}</h2>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,.06)' }} />
+                  <span style={{ fontSize: 11, color: '#334155' }}>{games.length} {games.length === 1 ? 'match' : 'matches'}</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: 14 }}>
+                  {games.map(game => (
+                    <GameCard
+                      key={game.event_id}
+                      game={game}
+                      onOpen={() => router.push(`/match/${encodeURIComponent(game.event_id)}`)}
+                      onAddToSlip={addToSlip}
+                      inSlip={sel => inSlip(game.event_id, sel)}
+                    />
+                  ))}
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-                {data.map(ev => (
-                  <EventCard
-                    key={ev.id || ev.event_id}
-                    ev={ev}
-                    onAddToSlip={addToSlip}
-                    inSlip={slip.some(i => i.ev.id === ev.id)}
-                    onOpen={e => e.event_id && router.push(`/match/${encodeURIComponent(e.event_id)}`)}
-                  />
-                ))}
-              </div>
-            </>
+            ))
           )}
         </div>
 
-        {/* Bet slip */}
         <BetSlip
           items={slip}
-          onRemove={id => setSlip(prev => prev.filter(i => i.ev.id !== id))}
+          onRemove={key => setSlip(prev => prev.filter(i => `${i.event_id}:${i.selection}` !== key))}
           onClear={() => setSlip([])}
         />
+
+        <style>{`
+          div[style*="overflowX: auto"]::-webkit-scrollbar { display: none; }
+        `}</style>
       </div>
     </ProtectedRoute>
   );
