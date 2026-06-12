@@ -9,7 +9,6 @@ import OperativePeek from '../../components/OperativePeek';
 import API from '../../lib/api';
 import { getSocket, connectSocket } from '../../lib/socket';
 import { getToken } from '../../lib/auth';
-import { confidenceFromEV, confidenceColor } from '../../lib/confidence';
 
 /* ─── Types ───────────────────────────────────────────────────────────── */
 
@@ -38,11 +37,6 @@ interface Game {
 
 /* ─── helpers ─────────────────────────────────────────────────────────── */
 
-function confidenceBadge(ev: number) {
-  const score = confidenceFromEV(ev);
-  const color = confidenceColor(score);
-  return { label: `${score}% CONFIDENCE`, bg: color, color: '#030711', score };
-}
 
 function sportMeta(key: string): { emoji: string; label: string; bg: string } {
   const m: Record<string, { emoji: string; label: string; bg: string }> = {
@@ -162,106 +156,102 @@ function GameCard({
   const awayBest = game.best_odds.find(o => o.selection === game.away_team);
   const drawBest = game.best_odds.find(o => o.selection === 'Draw');
 
-  const g = ev ? confidenceBadge(ev.ev_percent) : null;
+  const hasEdge = !!ev;
+  const cardBorder = hasEdge ? '1px solid rgba(0,230,118,.3)' : '1px solid rgba(255,255,255,.1)';
+  const cardAccent = hasEdge ? '3px solid #00e676' : '3px solid transparent';
 
   return (
     <div
       onClick={onOpen}
       style={{
-        background: '#0d1526',
-        border: `1px solid ${ev && ev.ev_percent >= 5 ? 'rgba(41,121,255,.22)' : ev ? 'rgba(0,200,83,.14)' : 'rgba(255,255,255,.07)'}`,
-        borderRadius: 16,
+        background: '#111d35',
+        border: cardBorder,
+        borderLeft: cardAccent,
+        borderRadius: 14,
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'transform .15s, box-shadow .15s',
         display: 'flex',
         flexDirection: 'column',
+        boxShadow: hasEdge ? '0 0 0 1px rgba(0,230,118,.08)' : 'none',
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(0,0,0,.4)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
+        (e.currentTarget as HTMLElement).style.boxShadow = hasEdge
+          ? '0 12px 36px rgba(0,0,0,.5), 0 0 0 1px rgba(0,230,118,.15)'
+          : '0 12px 36px rgba(0,0,0,.5)';
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+        (e.currentTarget as HTMLElement).style.boxShadow = hasEdge ? '0 0 0 1px rgba(0,230,118,.08)' : 'none';
       }}
     >
-      {/* Sport header strip */}
-      <div style={{
-        background: meta.bg,
-        padding: '10px 14px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}>
+      {/* Header row */}
+      <div style={{ padding: '10px 14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <span style={{ fontSize: 15 }}>{meta.emoji}</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: 1 }}>{meta.label}</span>
+          <span style={{ fontSize: 14 }}>{meta.emoji}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: .8 }}>{meta.label}</span>
           {isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4, letterSpacing: .5 }}>LIVE</span>}
           {isSoon && !isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ffab00', background: 'rgba(255,171,0,.1)', border: '1px solid rgba(255,171,0,.25)', padding: '1px 7px', borderRadius: 4 }}>SOON</span>}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {g && (
-            <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 5, background: g.bg, color: g.color, letterSpacing: .5 }}>
-              {g.label}
-            </span>
-          )}
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', fontWeight: 600 }}>
-            {countdown(game.commence_time)}
-          </span>
-        </div>
+        <span style={{ fontSize: 11, color: '#334155', fontWeight: 600 }}>{countdown(game.commence_time)}</span>
       </div>
 
       {/* Teams */}
-      <div style={{ padding: '14px 14px 10px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         {[
           { team: game.home_team, color: hColor, bestOdds: homeBest },
           { team: game.away_team, color: aColor, bestOdds: awayBest },
-        ].map(({ team, color, bestOdds }) => {
+        ].map(({ team, color, bestOdds }, idx) => {
           const isPick = ev?.selection === team;
           return (
-            <div key={team} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <SportIcon sportKey={game.sport_key} name={team} color={color} size={30} />
-              <span style={{ flex: 1, fontWeight: isPick ? 800 : 600, fontSize: 14, color: isPick ? '#fff' : '#94a3b8' }}>{team}</span>
-              {isPick && (
-                <span style={{ fontSize: 9, fontWeight: 800, color: '#00e676', background: 'rgba(0,230,118,.1)', border: '1px solid rgba(0,230,118,.25)', padding: '2px 7px', borderRadius: 10, letterSpacing: .5 }}>
-                  OUR PICK
-                </span>
-              )}
+            <div
+              key={team}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '11px 14px',
+                background: isPick ? 'rgba(0,230,118,.05)' : 'transparent',
+                borderBottom: idx === 0 ? '1px solid rgba(255,255,255,.04)' : 'none',
+              }}
+            >
+              <SportIcon sportKey={game.sport_key} name={team} color={color} size={32} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: isPick ? 800 : 600, fontSize: 14, color: isPick ? '#ffffff' : '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{team}</div>
+                {isPick && (
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#00e676', letterSpacing: .5, marginTop: 1 }}>OUR PICK</div>
+                )}
+              </div>
               {bestOdds && (
                 <button
                   onClick={e => {
                     e.stopPropagation();
                     onAddToSlip({
-                      event_id: game.event_id,
-                      event_name: game.event_name,
-                      sport_key: game.sport_key,
-                      selection: team,
-                      bookie: bestOdds.bookmaker,
-                      odds: bestOdds.odds,
-                      fair_odds: ev?.selection === team ? ev.fair_odds : undefined,
-                      ev_percent: ev?.selection === team ? ev.ev_percent : undefined,
-                      kelly_percent: ev?.selection === team ? ev.kelly_percent : undefined,
+                      event_id: game.event_id, event_name: game.event_name,
+                      sport_key: game.sport_key, selection: team,
+                      bookie: bestOdds.bookmaker, odds: bestOdds.odds,
+                      fair_odds: isPick ? ev!.fair_odds : undefined,
+                      ev_percent: isPick ? ev!.ev_percent : undefined,
+                      kelly_percent: isPick ? ev!.kelly_percent : undefined,
                       commence_time: game.commence_time,
                     });
                   }}
                   style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
                     fontFamily: 'JetBrains Mono, monospace',
-                    fontWeight: 800,
-                    fontSize: 15,
-                    color: inSlip(team) ? '#2979ff' : isPick ? '#00e676' : '#fff',
-                    background: inSlip(team) ? 'rgba(41,121,255,.1)' : isPick ? 'rgba(0,230,118,.07)' : 'rgba(255,255,255,.05)',
-                    border: `1px solid ${inSlip(team) ? 'rgba(41,121,255,.3)' : isPick ? 'rgba(0,230,118,.2)' : 'rgba(255,255,255,.08)'}`,
-                    borderRadius: 8,
-                    padding: '4px 11px',
-                    cursor: 'pointer',
-                    transition: 'all .15s',
-                    minWidth: 56,
-                    textAlign: 'center',
+                    fontWeight: 800, fontSize: 16,
+                    color: inSlip(team) ? '#2979ff' : isPick ? '#00e676' : '#e2e8f0',
+                    background: inSlip(team) ? 'rgba(41,121,255,.12)' : isPick ? 'rgba(0,230,118,.1)' : 'rgba(255,255,255,.06)',
+                    border: `1px solid ${inSlip(team) ? 'rgba(41,121,255,.35)' : isPick ? 'rgba(0,230,118,.3)' : 'rgba(255,255,255,.1)'}`,
+                    borderRadius: 9, padding: '6px 13px',
+                    cursor: 'pointer', transition: 'all .15s',
+                    minWidth: 68, textAlign: 'center', flexShrink: 0,
                   }}
                   title={`${bestOdds.bookmaker} — tap to add to slip`}
                 >
                   {bestOdds.odds.toFixed(2)}
+                  <span style={{ fontSize: 9, fontWeight: 600, color: inSlip(team) ? '#2979ff' : '#475569', textTransform: 'capitalize', letterSpacing: .3, marginTop: 2 }}>
+                    {bestOdds.bookmaker?.replace(/_/g, ' ').split(' ')[0]}
+                  </span>
                 </button>
               )}
             </div>
@@ -270,66 +260,56 @@ function GameCard({
 
         {/* Draw odds for soccer */}
         {drawBest && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,.06)', display: 'grid', placeItems: 'center', fontSize: 12, color: '#475569' }}>≡</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid rgba(255,255,255,.04)' }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,.05)', display: 'grid', placeItems: 'center', fontSize: 13, color: '#475569' }}>≡</div>
             <span style={{ flex: 1, fontWeight: 500, fontSize: 13, color: '#64748b' }}>Draw</span>
             <button
               onClick={e => {
                 e.stopPropagation();
-                onAddToSlip({
-                  event_id: game.event_id,
-                  event_name: game.event_name,
-                  sport_key: game.sport_key,
-                  selection: 'Draw',
-                  bookie: drawBest.bookmaker,
-                  odds: drawBest.odds,
-                  commence_time: game.commence_time,
-                });
+                onAddToSlip({ event_id: game.event_id, event_name: game.event_name, sport_key: game.sport_key, selection: 'Draw', bookie: drawBest.bookmaker, odds: drawBest.odds, commence_time: game.commence_time });
               }}
               style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontWeight: 800, fontSize: 15,
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16,
                 color: inSlip('Draw') ? '#2979ff' : '#94a3b8',
-                background: inSlip('Draw') ? 'rgba(41,121,255,.1)' : 'rgba(255,255,255,.04)',
-                border: `1px solid ${inSlip('Draw') ? 'rgba(41,121,255,.3)' : 'rgba(255,255,255,.07)'}`,
-                borderRadius: 8, padding: '4px 11px',
-                cursor: 'pointer', minWidth: 56, textAlign: 'center',
+                background: inSlip('Draw') ? 'rgba(41,121,255,.12)' : 'rgba(255,255,255,.06)',
+                border: `1px solid ${inSlip('Draw') ? 'rgba(41,121,255,.35)' : 'rgba(255,255,255,.1)'}`,
+                borderRadius: 9, padding: '6px 13px', cursor: 'pointer', minWidth: 68, textAlign: 'center', flexShrink: 0,
               }}
             >
               {drawBest.odds.toFixed(2)}
+              <span style={{ fontSize: 9, fontWeight: 600, color: '#475569', letterSpacing: .3, marginTop: 2 }}>Draw</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* EV row — only when we have a pick */}
+      {/* Edge banner — hero stat when we have a pick */}
       {ev && (
-        <div style={{ margin: '0 14px 12px', padding: '9px 12px', background: 'rgba(0,200,83,.06)', border: '1px solid rgba(0,200,83,.15)', borderRadius: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: 12, color: '#64748b' }}>
-            🎯 <b style={{ color: '#fff' }}>{ev.selection}</b>
-            <span style={{ color: '#475569', marginLeft: 6, fontSize: 11, textTransform: 'capitalize' }}>via {ev.bookie?.replace(/_/g, ' ')}</span>
+        <div style={{ padding: '11px 14px', background: 'rgba(0,230,118,.07)', borderTop: '1px solid rgba(0,230,118,.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#00e676', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Edge detected</div>
+            <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>{ev.bookie?.replace(/_/g, ' ')}</div>
           </div>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14, color: '#00c853' }}>+{ev.ev_percent.toFixed(1)}%</div>
-              <div style={{ fontSize: 10, color: '#475569' }}>your edge</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 900, fontSize: 22, color: '#00e676', lineHeight: 1 }}>+{ev.ev_percent.toFixed(1)}%</div>
+              <div style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>your edge</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#2979ff' }}>{ev.kelly_percent.toFixed(1)}%</div>
-              <div style={{ fontSize: 10, color: '#475569' }}>suggested stake</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#2979ff', lineHeight: 1 }}>{ev.kelly_percent.toFixed(1)}%</div>
+              <div style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>stake</div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Footer: time + book count + explore link */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,.04)', padding: '9px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 11, color: '#475569' }}>
-          {fmtTime(game.commence_time)} AEST
-        </div>
+      {/* Footer */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,.04)', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.15)' }}>
+        <div style={{ fontSize: 11, color: '#334155' }}>{fmtTime(game.commence_time)} AEST</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 11, color: '#334155' }}>{game.bookmaker_count} books</span>
-          <span style={{ fontSize: 12, color: '#2979ff', fontWeight: 700 }}>Full analysis →</span>
+          <span style={{ fontSize: 11, color: '#1e3a5f' }}>{game.bookmaker_count} books</span>
+          <span style={{ fontSize: 12, color: '#2979ff', fontWeight: 700 }}>Analyse →</span>
         </div>
       </div>
     </div>
