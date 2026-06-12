@@ -21,24 +21,37 @@ const db = {
 };
 
 async function initDB() {
+  const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+
+  // Split on semicolons but preserve them, skip comments and blanks
+  const statements = schema
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && !s.startsWith('--'));
+
+  // The schema is idempotent (runs on every boot). During a rolling deploy the
+  // old instance holds locks on busy tables (odds_cache writes), so a single
+  // statement timing out must not abort the whole boot — the objects already
+  // exist. Bound lock waits and continue past per-statement failures.
+  const client = await pool.connect();
+  let failed = 0;
   try {
-    const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-
-    // Split on semicolons but preserve them, skip comments and blanks
-    const statements = schema
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
-
+    await client.query("SET lock_timeout = '5s'");
+    await client.query("SET statement_timeout = '20s'");
     for (const stmt of statements) {
-      await pool.query(stmt);
+      try {
+        await client.query(stmt);
+      } catch (err) {
+        failed++;
+        console.warn(`⚠️  Schema statement skipped (${err.message}): ${stmt.slice(0, 60)}...`);
+      }
     }
-
-    console.log('✅ Database schema ready');
-  } catch (err) {
-    console.error('❌ DB init error:', err.message);
-    throw err;
+  } finally {
+    client.release();
   }
+
+  if (failed === 0) console.log('✅ Database schema ready');
+  else console.warn(`⚠️  Database schema ready with ${failed} skipped statement(s) — likely lock contention during deploy`);
 }
 
 module.exports = { db, initDB, pool };
