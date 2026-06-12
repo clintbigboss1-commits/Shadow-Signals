@@ -2,12 +2,26 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { db } = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const emails = require('../services/emails');
 const { createNotification } = require('../services/notifications');
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+
+// Reset tokens live here, not on users — idempotent bootstrap on startup
+db.query(`
+  CREATE TABLE IF NOT EXISTS password_resets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )
+`).catch(err => console.error('password_resets bootstrap failed:', err.message));
+
+const hashToken = (t) => crypto.createHash('sha256').update(t).digest('hex');
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
@@ -77,6 +91,59 @@ router.post('/login', async (req, res) => {
     const { password_hash, ...safeUser } = user;
     safeUser.role = role;
     res.json({ token, user: safeUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/forgot — request a reset link
+router.post('/forgot', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+
+    // Always answer ok so the endpoint can't be used to probe which emails exist
+    const result = await db.query('SELECT id, email, name FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      const token = crypto.randomBytes(32).toString('hex');
+      await db.query('DELETE FROM password_resets WHERE user_id = $1', [user.id]);
+      await db.query(
+        `INSERT INTO password_resets (user_id, token_hash, expires_at)
+         VALUES ($1, $2, NOW() + INTERVAL '1 hour')`,
+        [user.id, hashToken(token)]
+      );
+      emails.sendPasswordReset(user, token).catch(() => {});
+    }
+    res.json({ ok: true, message: 'If that email has an account, a reset link is on its way.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/reset — set a new password using the emailed token
+router.post('/reset', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password)
+      return res.status(400).json({ error: 'Token and new password required' });
+    if (password.length < 8)
+      return res.status(400).json({ error: 'Password must be 8+ characters' });
+
+    const result = await db.query(
+      `SELECT user_id FROM password_resets
+       WHERE token_hash = $1 AND expires_at > NOW()`,
+      [hashToken(token)]
+    );
+    if (result.rows.length === 0)
+      return res.status(400).json({ error: 'Reset link is invalid or has expired. Request a new one.' });
+
+    const userId = result.rows[0].user_id;
+    const hash = await bcrypt.hash(password, 12);
+    await db.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, userId]);
+    await db.query('DELETE FROM password_resets WHERE user_id = $1', [userId]);
+
+    res.json({ ok: true, message: 'Password updated. You can log in now.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

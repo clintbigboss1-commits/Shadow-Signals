@@ -23,16 +23,27 @@ const { webhookHandler }  = require('./routes/payments');
 
 const app    = express();
 const server = http.createServer(app);
-const FRONTEND = process.env.FRONTEND_URL || 'http://localhost:3000';
+const FRONTEND = process.env.FRONTEND_URL || 'https://shadowsignals.app';
+
+// All origins the browser may call the API from. FRONTEND_URL may be a
+// comma-separated list; the production domains are always included so a
+// missing env var can never lock users out of login again.
+const ALLOWED_ORIGINS = [...new Set([
+  ...FRONTEND.split(',').map(s => s.trim()).filter(Boolean),
+  'https://shadowsignals.app',
+  'https://www.shadowsignals.app',
+  'https://shadow-signals.vercel.app',
+  'http://localhost:3000',
+])];
 
 const io = new Server(server, {
-  cors: { origin: FRONTEND, credentials: true },
+  cors: { origin: ALLOWED_ORIGINS, credentials: true },
 });
 setIO(io);
 setNotifIO(io);
 
 app.set('trust proxy', 1);
-app.use(cors({ origin: FRONTEND, credentials: true }));
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(helmet({ contentSecurityPolicy: false }));
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -127,7 +127,7 @@ export default function Login() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <label style={{ fontSize: 11, fontWeight: 700, color: '#5e7390', textTransform: 'uppercase', letterSpacing: 1 }}>Password</label>
-                <span style={{ fontSize: 12, color: '#2979ff', cursor: 'pointer' }}>Forgot password?</span>
+                <Link href="/forgot" style={{ fontSize: 12, color: '#2979ff', cursor: 'pointer' }}>Forgot password?</Link>
               </div>
               <input type="password" placeholder="Your password" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
