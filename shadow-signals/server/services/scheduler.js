@@ -7,6 +7,8 @@ const { db } = require('../db');
 const { API_BUDGETS } = require('./cacheManager');
 const emails = require('./emails');
 const { createNotification } = require('./notifications');
+const { fetchAllScores, backfillHistoricalOdds } = require('./historicalFetcher');
+const { runBacktest } = require('./backtester');
 
 let _io = null;
 function setIO(io) { _io = io; }
@@ -217,6 +219,24 @@ function initScheduler() {
   cron.schedule('0 14 * * *', async () => {
     await cleanCache();
     printBudget();
+  });
+
+  // Daily scores sweep at 8am AEST (10pm UTC prev day) — 2 credits per sport
+  cron.schedule('0 22 * * *', async () => {
+    try { await fetchAllScores(); } catch (err) { console.error('Score sweep error:', err.message); }
+  });
+
+  // Weekly historical odds backfill — Sunday 3am AEST (5pm UTC Sat)
+  // One call per unique (sport, timestamp) = 10 credits each
+  cron.schedule('0 17 * * 6', async () => {
+    try {
+      await backfillHistoricalOdds();
+      // Run backtest immediately after fresh history arrives
+      const summary = await runBacktest();
+      console.log(`📈 Backtest: ${summary.signals} signals, ${summary.winRate}% hit rate, ${summary.roi}% ROI`);
+    } catch (err) {
+      console.error('Backfill/backtest error:', err.message);
+    }
   });
 
   const active = SPORT_SCHEDULE.filter(s => s.inSeason()).length;

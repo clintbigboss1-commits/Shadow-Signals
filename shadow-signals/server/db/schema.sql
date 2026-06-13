@@ -125,3 +125,41 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read, created_at DESC);
 
 ALTER TABLE ev_opportunities ADD COLUMN IF NOT EXISTS alert_sent BOOLEAN DEFAULT FALSE;
+
+-- ── Historical data — backtest pipeline ─────────────────────────────────────
+
+-- Actual match outcomes fetched from The Odds API scores endpoint
+CREATE TABLE IF NOT EXISTS game_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id VARCHAR(255) NOT NULL UNIQUE,
+  sport_key VARCHAR(100) NOT NULL,
+  home_team VARCHAR(255) NOT NULL,
+  away_team VARCHAR(255) NOT NULL,
+  commence_time TIMESTAMPTZ NOT NULL,
+  home_score NUMERIC(8,2),
+  away_score NUMERIC(8,2),
+  winner VARCHAR(10) CHECK (winner IN ('home','away','draw')),
+  completed BOOLEAN DEFAULT FALSE,
+  fetched_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Historical odds snapshots at key windows before kickoff
+-- One call per (sport, timestamp) covers all games at that moment
+CREATE TABLE IF NOT EXISTS historical_odds (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id VARCHAR(255) NOT NULL,
+  sport_key VARCHAR(100) NOT NULL,
+  snapshot_time TIMESTAMPTZ NOT NULL,
+  bookmaker VARCHAR(100) NOT NULL,
+  market VARCHAR(50) NOT NULL DEFAULT 'h2h',
+  selection VARCHAR(255) NOT NULL,
+  odds DECIMAL(10,4) NOT NULL,
+  hours_before_kickoff DECIMAL(8,2),
+  fetched_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(event_id, snapshot_time, bookmaker, market, selection)
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_results_sport ON game_results(sport_key, completed);
+CREATE INDEX IF NOT EXISTS idx_game_results_time ON game_results(commence_time DESC);
+CREATE INDEX IF NOT EXISTS idx_hist_odds_event ON historical_odds(event_id);
+CREATE INDEX IF NOT EXISTS idx_hist_odds_sport_snap ON historical_odds(sport_key, snapshot_time DESC);
