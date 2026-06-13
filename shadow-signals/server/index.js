@@ -153,19 +153,23 @@ io.on('connection', (socket) => {
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
 async function start() {
+  const sk = process.env.STRIPE_SECRET_KEY || '';
+  const wh = process.env.STRIPE_WEBHOOK_SECRET;
+
+  // Listen immediately so Railway healthcheck passes while migrations run in background
+  server.listen(PORT, () => {
+    console.log(`\nShadow Syndicate API -> port ${PORT}`);
+    console.log(`   Stripe:  ${sk.startsWith('sk_live') ? 'LIVE' : sk.startsWith('sk_test') ? 'TEST' : 'NOT SET'}`);
+    console.log(`   Webhook: ${wh ? 'set' : 'NOT SET - plans wont update after payment'}`);
+    console.log(`   DB:      ${process.env.DATABASE_URL ? 'set' : 'NOT SET'}`);
+    console.log(`   Visit /api/health to see full config status\n`);
+  });
+
+  // Run DB migrations + scheduler in background after port is open
   try {
     await initDB();
     initScheduler();
     initGhost();
-    server.listen(PORT, () => {
-      const sk = process.env.STRIPE_SECRET_KEY || '';
-      const wh = process.env.STRIPE_WEBHOOK_SECRET;
-      console.log(`\nShadow Syndicate API -> port ${PORT}`);
-      console.log(`   Stripe:  ${sk.startsWith('sk_live') ? 'LIVE' : sk.startsWith('sk_test') ? 'TEST' : 'NOT SET'}`);
-      console.log(`   Webhook: ${wh ? 'set' : 'NOT SET - plans wont update after payment'}`);
-      console.log(`   DB:      ${process.env.DATABASE_URL ? 'set' : 'NOT SET'}`);
-      console.log(`   Visit /api/health to see full config status\n`);
-    });
   } catch (err) {
     console.error('Startup failed:', err.message);
     process.exit(1);
