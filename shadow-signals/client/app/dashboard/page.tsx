@@ -47,25 +47,6 @@ const BOOKIE_LABEL: Record<string, string> = {
   neds:'Neds', pointsbet:'PointsBet', bluebet:'BlueBet', betfair:'Betfair',
 };
 
-const FALLBACK_SIGNALS: EVOpp[] = [
-  { id:'f1', sport_key:'aussierules_afl',    event_name:'Geelong Cats v Collingwood',       selection:'Geelong Cats',       bookie:'sportsbet', bookie_odds:2.30, fair_odds:2.85, ev_percent:12.2, commence_time:new Date(Date.now()+18*3600000).toISOString() },
-  { id:'f2', sport_key:'aussierules_afl',    event_name:'Carlton Blues v Essendon Bombers', selection:'Carlton Blues',       bookie:'pointsbet', bookie_odds:2.55, fair_odds:2.30, ev_percent:10.9, commence_time:new Date(Date.now()+42*3600000).toISOString() },
-  { id:'f3', sport_key:'rugbyleague_nrl',    event_name:'Panthers v Titans',                selection:'Penrith Panthers',   bookie:'tab',       bookie_odds:1.85, fair_odds:1.70, ev_percent:5.7,  commence_time:new Date(Date.now()+18*3600000).toISOString() },
-  { id:'f4', sport_key:'rugbyleague_nrl',    event_name:'Storm v Roosters',                 selection:'Melbourne Storm',    bookie:'bet365',    bookie_odds:2.10, fair_odds:1.88, ev_percent:9.8,  commence_time:new Date(Date.now()+26*3600000).toISOString() },
-  { id:'f5', sport_key:'basketball_nba',     event_name:'Lakers v Celtics',                 selection:'LA Lakers',          bookie:'sportsbet', bookie_odds:1.95, fair_odds:1.75, ev_percent:7.7,  commence_time:new Date(Date.now()+14*3600000).toISOString() },
-  { id:'f6', sport_key:'soccer_a_league',    event_name:'Brisbane Roar v Melbourne City',   selection:'Melbourne City',     bookie:'tab',       bookie_odds:2.20, fair_odds:1.98, ev_percent:6.1,  commence_time:new Date(Date.now()+22*3600000).toISOString() },
-  { id:'f7', sport_key:'mma_ufc',            event_name:'Adesanya v Pereira 3',             selection:'Israel Adesanya',    bookie:'bet365',    bookie_odds:3.50, fair_odds:3.10, ev_percent:8.3,  commence_time:new Date(Date.now()+72*3600000).toISOString() },
-  { id:'f8', sport_key:'cricket_t20',        event_name:'Brisbane Heat v Sydney Thunder',   selection:'Brisbane Heat',      bookie:'sportsbet', bookie_odds:2.05, fair_odds:1.82, ev_percent:6.8,  commence_time:new Date(Date.now()+30*3600000).toISOString() },
-  { id:'f9', sport_key:'horse_racing_au',    event_name:'Randwick R5',                      selection:'Artorius',           bookie:'tab',       bookie_odds:4.20, fair_odds:3.50, ev_percent:11.4, commence_time:new Date(Date.now()+8*3600000).toISOString() },
-  { id:'f10',sport_key:'greyhound_racing_au',event_name:'Wentworth Park R8',               selection:'Trap 3 — Bolt',      bookie:'sportsbet', bookie_odds:3.80, fair_odds:3.20, ev_percent:7.2,  commence_time:new Date(Date.now()+5*3600000).toISOString() },
-];
-
-const FALLBACK_BETS: Bet[] = [
-  { id:'b1', event_name:'Brisbane Lions v GWS Giants',            selection:'Brisbane Lions',    bookie:'sportsbet', odds_taken:1.85, profit_aud:42.5,  placed_at:'2026-06-09T00:00:00Z', result:'win'     },
-  { id:'b2', event_name:'Sydney Roosters v Newcastle Knights',    selection:'Sydney Roosters',   bookie:'tab',       odds_taken:1.72, profit_aud:-75,   placed_at:'2026-06-07T00:00:00Z', result:'loss'    },
-  { id:'b3', event_name:'Geelong Cats v Hawthorn',                selection:'Geelong Cats',      bookie:'bet365',    odds_taken:1.95, profit_aud:57,    placed_at:'2026-06-03T00:00:00Z', result:'win'     },
-  { id:'b4', event_name:'Parramatta Eels v Manly Sea Eagles',     selection:'Parramatta Eels',   bookie:'neds',      odds_taken:2.18, profit_aud:0,     placed_at:'2026-06-12T00:00:00Z', result:'pending' },
-];
 
 /* ─── helpers ────────────────────────────────────────────── */
 function timeAgo(dt: string) {
@@ -270,6 +251,19 @@ function RecentBetsPanel({ bets }: { bets: Bet[] }) {
     return Number(b.profit_aud) >= 0 ? '#00e676' : '#ef4444';
   };
 
+  if (bets.length === 0) return (
+    <div style={{ background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:14,padding:0,overflow:'hidden' }}>
+      <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border)',fontWeight:700,fontSize:14 }}>Recent Bets</div>
+      <div style={{ padding:'32px 16px',textAlign:'center',color:'var(--muted)',fontSize:13 }}>
+        No bets logged yet.<br />
+        <span style={{ fontSize:12,marginTop:4,display:'block' }}>Place a bet and track it from the Wins page.</span>
+      </div>
+      <div style={{ padding:'10px 16px' }}>
+        <Link href="/wins" style={{ fontSize:12,color:'var(--cyan)',fontWeight:700 }}>Go to Wins →</Link>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:14,padding:0,overflow:'hidden' }}>
       <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border)',fontWeight:700,fontSize:14 }}>Recent Bets</div>
@@ -390,10 +384,8 @@ function DashboardInner() {
   /* signals for the active sport — B2: activeSport actually filters content now */
   const signals    = evOpps.filter(e => e.sport_key === activeSport);
   const allSignals = evOpps;
-  const displayBets = bets.length > 0 ? bets : FALLBACK_BETS;
-
   /* stat card values */
-  const settled = displayBets.filter(b => b.result !== 'pending');
+  const settled = bets.filter(b => b.result !== 'pending');
   const wins    = settled.filter(b => b.result === 'win');
   const profit  = settled.reduce((a,b) => a + Number(b.profit_aud||0), 0);
   const clvWin  = settled.length ? Math.round((wins.length/settled.length)*100) : 0;
@@ -429,7 +421,7 @@ function DashboardInner() {
               { label:'ACTIVE SIGNALS', value:String(allSignals.length),      sub:'Right now',           color:'var(--cyan)'  },
               { label:'TOTAL P&L',      value:`${profit>=0?'+':''}$${Math.abs(profit).toFixed(0)}`, sub:'All settled bets', color:profit>=0?'var(--green)':'var(--red)' },
               { label:'CLV WIN RATE',   value:settled.length ? `${clvWin}%` : '—',  sub:'Beats closing line',  color:'var(--gold)'  },
-              { label:'BETS TRACKED',   value:String(displayBets.length),     sub:`${wins.length}W · ${settled.length-wins.length}L · ${displayBets.filter(b=>b.result==='pending').length} pending`, color:'var(--text)' },
+              { label:'BETS TRACKED',   value:String(bets.length),     sub:`${wins.length}W · ${settled.length-wins.length}L · ${bets.filter(b=>b.result==='pending').length} pending`, color:'var(--text)' },
             ].map(c => (
               <div key={c.label} className="stat-card">
                 <div className="label">{c.label}</div>
@@ -467,7 +459,7 @@ function DashboardInner() {
               <div style={{ marginBottom:14 }}>
                 <MarketPulse />
               </div>
-              <RecentBetsPanel bets={displayBets} />
+              <RecentBetsPanel bets={bets} />
               <TopConfidencePanel signals={allSignals} />
             </div>
           </div>
