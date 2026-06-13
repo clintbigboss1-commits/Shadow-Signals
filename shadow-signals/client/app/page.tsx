@@ -154,67 +154,99 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── RIGHT: glass signal card + operative */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minHeight: 520 }}>
-            {/* Signal card */}
+          {/* ── RIGHT: phone mockup of dashboard */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 580, flex: 1 }}>
+            {/* Glow behind phone */}
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 320, height: 320, background: 'radial-gradient(ellipse, rgba(41,121,255,.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+            {/* Phone frame */}
             <div style={{
-              background: 'rgba(12,28,49,.85)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(41,121,255,.18)',
-              borderRadius: 24,
-              padding: 28,
-              width: 420,
-              maxWidth: '100%',
-              boxShadow: '0 30px 80px rgba(0,0,0,.5), inset 0 0 0 1px rgba(41,121,255,.1)',
-              position: 'relative',
-              zIndex: 3,
+              position: 'relative', width: 270, height: 560,
+              background: '#0c0f1a',
+              borderRadius: 44,
+              border: '2px solid rgba(255,255,255,.12)',
+              boxShadow: '0 50px 120px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.04), inset 0 0 0 1px rgba(255,255,255,.05)',
+              overflow: 'hidden',
               flexShrink: 0,
+              zIndex: 3,
             }}>
-              {/* TODAY'S TOP SIGNAL pill */}
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#ffd24a,#ffab00)', color: '#1a1500', fontSize: 11, fontWeight: 800, letterSpacing: 1.5, padding: '5px 14px', borderRadius: 99, marginBottom: 20 }}>
-                ⭐ TODAY&apos;S TOP SIGNAL
-              </div>
+              {/* Dynamic island */}
+              <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', width: 90, height: 26, background: '#000', borderRadius: 13, zIndex: 10 }} />
 
-              {/* Event row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '14px 16px', background: 'rgba(7,17,32,.4)', borderRadius: 14, border: '1px solid rgba(255,255,255,.06)' }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(41,121,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>🏀</div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>LA Lakers @ Boston Celtics</div>
-                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>NBA · Today, 10:30 AM AEST</div>
+              {/* Screen */}
+              <div style={{ position: 'absolute', inset: 0, background: '#050d18', padding: '52px 10px 24px', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+                {/* Top bar */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+                  <div>
+                    <div style={{ fontSize: 9, fontWeight: 900, color: '#fff', letterSpacing: .5 }}>DASHBOARD</div>
+                    <div style={{ fontSize: 7, color: '#5e7390', marginTop: 1 }}>Live signals · 14 found today</div>
+                  </div>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg,#2979ff,#00e676)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, color: '#fff' }}>C</div>
                 </div>
-              </div>
 
-              {/* Recommended bet caption */}
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Recommended Bet</div>
-
-              {/* Bet row */}
-              <div style={{ background: 'rgba(7,17,32,.6)', borderRadius: 12, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, border: '1px solid rgba(255,255,255,.06)' }}>
-                <span style={{ fontSize: 18, fontWeight: 600, color: '#fff' }}>Lakers Moneyline</span>
-                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 800, color: '#2979ff' }}>1.95</span>
-              </div>
-
-              {/* Win Prob / Math Edge grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-                <div style={{ background: 'rgba(0,230,118,.06)', border: '1px solid rgba(0,230,118,.2)', borderRadius: 14, padding: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#00e676', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>Est. Win Prob</div>
-                  <div style={{ fontFamily: 'Bebas Neue, var(--display)', fontSize: 28, color: '#00e676', lineHeight: 1 }}>58.2%</div>
+                {/* Stat row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 5, marginBottom: 10 }}>
+                  {[['14','Signals'],['68%','CLV Rate'],['+$312','P&L']].map(([v,l],i) => (
+                    <div key={i} style={{ background: '#111827', borderRadius: 8, padding: '7px 6px', textAlign: 'center', border: '1px solid rgba(255,255,255,.06)' }}>
+                      <div style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 900, color: i===2?'#00e676':i===1?'#ffab00':'#fff' }}>{v}</div>
+                      <div style={{ fontSize: 6.5, color: '#5e7390', marginTop: 2 }}>{l}</div>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ background: 'rgba(41,121,255,.08)', border: '1px solid rgba(41,121,255,.25)', borderRadius: 14, padding: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#5b8cff', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>Math Edge</div>
-                  <div style={{ fontFamily: 'Bebas Neue, var(--display)', fontSize: 28, color: '#5b8cff', lineHeight: 1 }}>+13.4%</div>
-                </div>
+
+                {/* Signal cards */}
+                <div style={{ fontSize: 8, fontWeight: 800, color: '#5e7390', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Live Signals</div>
+                {[
+                  { icon:'⚽', event:'AUS vs France', market:'AUS Win', ev:'+9.2%', odds:'3.40', bookie:'Bet365', conf:91, color:'#00e676' },
+                  { icon:'🏉', event:'Storm vs Roosters', market:'Storm -4.5', ev:'+6.8%', odds:'1.95', bookie:'Sportsbet', conf:77, color:'#00e676' },
+                  { icon:'🏈', event:'Collingwood vs GWS', market:'Collingwood ML', ev:'+5.1%', odds:'2.10', bookie:'TAB', conf:65, color:'#ffab00' },
+                  { icon:'🏀', event:'Celtics vs Mavs', market:'Celtics ML', ev:'+4.3%', odds:'1.72', bookie:'Neds', conf:61, color:'#ffab00' },
+                ].map((s, i) => (
+                  <div key={i} style={{ background: '#111827', border: '1px solid rgba(255,255,255,.07)', borderRadius: 9, padding: '8px 9px', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ fontSize: 11 }}>{s.icon}</span>
+                        <div>
+                          <div style={{ fontSize: 8, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{s.event}</div>
+                          <div style={{ fontSize: 6.5, color: '#5e7390', marginTop: 1 }}>{s.market}</div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 11, fontWeight: 900, color: s.color, fontFamily: 'monospace' }}>{s.ev}</div>
+                        <div style={{ fontSize: 7, color: '#5e7390' }}>{s.odds}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 7, color: '#5e7390', background: 'rgba(255,255,255,.05)', padding: '2px 6px', borderRadius: 4 }}>{s.bookie}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <div style={{ width: 36, height: 3, background: 'rgba(255,255,255,.08)', borderRadius: 2 }}>
+                          <div style={{ width: `${s.conf}%`, height: '100%', background: s.color, borderRadius: 2 }} />
+                        </div>
+                        <span style={{ fontSize: 7, color: s.color, fontWeight: 700 }}>{s.conf}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Grade pill */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ background: 'rgba(41,121,255,.15)', color: '#5b8cff', fontWeight: 800, fontSize: 12, padding: '4px 12px', borderRadius: 99 }}>GRADE S+</span>
-                <span style={{ fontSize: 12, color: '#64748b' }}>Highest confidence tier</span>
-              </div>
+              {/* Home indicator */}
+              <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', width: 90, height: 4, background: 'rgba(255,255,255,.25)', borderRadius: 2 }} />
             </div>
 
-            {/* Operative — overlaps behind right edge of the card */}
-            <OperativePeek page="landing" leftOffset={340} width={360} bottom={-40} />
+            {/* Floating badge */}
+            <div style={{ position: 'absolute', top: 60, right: 10, background: '#111827', border: '1px solid rgba(0,230,118,.3)', borderRadius: 12, padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,.5)', zIndex: 4 }}>
+              <div style={{ fontSize: 10, color: '#5e7390', marginBottom: 3 }}>Today&apos;s top pick</div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#00e676', fontFamily: 'monospace' }}>+9.2% EV ⚡</div>
+              <div style={{ fontSize: 9, color: '#9eb1c8', marginTop: 2 }}>AUS vs France</div>
+            </div>
+
+            {/* Floating badge 2 */}
+            <div style={{ position: 'absolute', bottom: 80, left: 0, background: '#111827', border: '1px solid rgba(41,121,255,.3)', borderRadius: 12, padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,.5)', zIndex: 4 }}>
+              <div style={{ fontSize: 10, color: '#5e7390', marginBottom: 3 }}>CLV this week</div>
+              <div style={{ fontSize: 13, fontWeight: 900, color: '#2979ff', fontFamily: 'monospace' }}>68% positive</div>
+              <div style={{ fontSize: 9, color: '#9eb1c8', marginTop: 2 }}>Beating the close</div>
+            </div>
           </div>
         </div>
       </section>
@@ -267,7 +299,7 @@ export default function Home() {
               { n: '03', title: 'The arb finder', desc: 'When bookmakers disagree, lock in guaranteed profit regardless of the result.' },
               { n: '04', title: 'The CLV tracker', desc: 'Proof of long-term edge. Every bet tracked against the closing line — the only metric that matters.' },
             ].map(s => (
-              <div key={s.n} style={{ padding: 26, background: 'rgba(18,41,68,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16 }}>
+              <div key={s.n} style={{ padding: 26, background: '#111827', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16 }}>
                 <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 800, color: '#2979ff', marginBottom: 12 }}>{s.n}</div>
                 <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 10 }}>{s.title}</div>
                 <div style={{ color: '#9eb1c8', fontSize: 14, lineHeight: 1.65 }}>{s.desc}</div>
@@ -312,7 +344,7 @@ export default function Home() {
           <p style={{ fontSize: 10, fontWeight: 800, color: '#2d4060', textTransform: 'uppercase', letterSpacing: 2, textAlign: 'center', marginBottom: 18 }}>Syncing odds live from</p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 10 }}>
             {BOOKIES.map(b => (
-              <span key={b} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,.06)', background: 'rgba(18,41,68,.4)', fontSize: 13, color: '#9eb1c8', fontWeight: 600 }}>
+              <span key={b} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,.06)', background: '#111827', fontSize: 13, color: '#9eb1c8', fontWeight: 600 }}>
                 <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#2979ff', boxShadow: '0 0 7px #2979ff', display: 'inline-block', flexShrink: 0 }} />
                 {b}
               </span>
@@ -330,7 +362,7 @@ export default function Home() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
             {FEATURES.map((f, i) => (
-              <div key={i} style={{ padding: 26, background: 'rgba(18,41,68,.5)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div key={i} style={{ padding: 26, background: '#111827', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>{f.icon}</div>
                 <div style={{ fontWeight: 800, fontSize: 16 }}>{f.title}</div>
                 <div style={{ color: '#9eb1c8', fontSize: 14, lineHeight: 1.65 }}>{f.desc}</div>
@@ -360,7 +392,7 @@ export default function Home() {
             ].map(t => (
               <div key={t.name} style={{
                 position: 'relative',
-                background: 'rgba(18,41,68,.5)',
+                background: '#111827',
                 border: `1px solid ${t.popular ? '#2979ff' : 'rgba(255,255,255,.08)'}`,
                 boxShadow: t.popular ? '0 0 0 1px rgba(41,121,255,.25), 0 16px 40px rgba(41,121,255,.12)' : 'none',
                 borderRadius: 18, padding: 24,
