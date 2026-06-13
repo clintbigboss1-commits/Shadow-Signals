@@ -32,37 +32,78 @@ interface Game {
   bookmaker_count: number;
   best_odds: { selection: string; bookmaker: string; odds: number }[];
   all_bookmakers: Record<string, Record<string, number>>;
-  ev_pick: EVPick | null;
+  ev_picks: EVPick[];
+  shadow_pick: boolean;
 }
 
 /* ─── helpers ─────────────────────────────────────────────────────────── */
 
 
-function sportMeta(key: string): { emoji: string; label: string; bg: string } {
-  const m: Record<string, { emoji: string; label: string; bg: string }> = {
-    aussierules_afl:      { emoji: '🏉', label: 'AFL',        bg: 'linear-gradient(135deg,#1a2a1a,#0a1400)' },
-    rugbyleague_nrl:      { emoji: '🏉', label: 'NRL',        bg: 'linear-gradient(135deg,#1a1a2a,#080818)' },
-    cricket_big_bash:     { emoji: '🏏', label: 'BBL',        bg: 'linear-gradient(135deg,#2a1a00,#180e00)' },
-    cricket_odi:          { emoji: '🏏', label: 'Cricket',    bg: 'linear-gradient(135deg,#2a1a00,#180e00)' },
-    soccer_a_league:      { emoji: '⚽', label: 'A-League',   bg: 'linear-gradient(135deg,#0a1a2a,#001020)' },
-    soccer_epl:           { emoji: '⚽', label: 'EPL',        bg: 'linear-gradient(135deg,#1a002a,#0a0018)' },
-    soccer_ucl:           { emoji: '⚽', label: 'UCL',        bg: 'linear-gradient(135deg,#1a1500,#0a0c00)' },
-    soccer_la_liga:       { emoji: '⚽', label: 'La Liga',    bg: 'linear-gradient(135deg,#2a0a0a,#180000)' },
-    soccer_bundesliga:    { emoji: '⚽', label: 'Bundesliga', bg: 'linear-gradient(135deg,#2a0a00,#180500)' },
-    soccer_serie_a:       { emoji: '⚽', label: 'Serie A',    bg: 'linear-gradient(135deg,#00102a,#000818)' },
-    soccer_mls:           { emoji: '⚽', label: 'MLS',        bg: 'linear-gradient(135deg,#001a2a,#001020)' },
-    soccer_brazil:        { emoji: '⚽', label: 'Brasileirão',bg: 'linear-gradient(135deg,#0a2a0a,#041804)' },
-    basketball_nba:       { emoji: '🏀', label: 'NBA',        bg: 'linear-gradient(135deg,#1a0800,#100500)' },
-    basketball_nbl:       { emoji: '🏀', label: 'NBL',        bg: 'linear-gradient(135deg,#1a1000,#0a0800)' },
-    americanfootball_nfl: { emoji: '🏈', label: 'NFL',        bg: 'linear-gradient(135deg,#001a10,#001008)' },
-    baseball_mlb:         { emoji: '⚾', label: 'MLB',        bg: 'linear-gradient(135deg,#1a1a00,#0e0e00)' },
-    icehockey_nhl:        { emoji: '🏒', label: 'NHL',        bg: 'linear-gradient(135deg,#00102a,#000818)' },
-    mma_ufc:              { emoji: '🥊', label: 'UFC',        bg: 'linear-gradient(135deg,#2a0a0a,#180000)' },
-    mma_boxing:           { emoji: '🥊', label: 'Boxing',     bg: 'linear-gradient(135deg,#2a0a0a,#180000)' },
-    tennis_atp:           { emoji: '🎾', label: 'Tennis',     bg: 'linear-gradient(135deg,#001a0a,#001006)' },
-    golf_pga:             { emoji: '⛳', label: 'Golf',       bg: 'linear-gradient(135deg,#001a0a,#000e04)' },
+function sportMeta(key: string): { emoji: string; label: string } {
+  const m: Record<string, { emoji: string; label: string }> = {
+    aussierules_afl:                       { emoji: '🏉', label: 'AFL' },
+    rugbyleague_nrl:                       { emoji: '🏉', label: 'NRL' },
+    rugbyleague_nrl_state_of_origin:       { emoji: '🏉', label: 'State of Origin' },
+    cricket_international_t20:             { emoji: '🏏', label: 'T20I' },
+    cricket_odi:                           { emoji: '🏏', label: 'ODI' },
+    cricket_test_match:                    { emoji: '🏏', label: 'Test Cricket' },
+    cricket_big_bash:                      { emoji: '🏏', label: 'BBL' },
+    soccer_a_league:                       { emoji: '⚽', label: 'A-League' },
+    soccer_epl:                            { emoji: '⚽', label: 'EPL' },
+    soccer_ucl:                            { emoji: '⚽', label: 'UCL' },
+    soccer_la_liga:                        { emoji: '⚽', label: 'La Liga' },
+    soccer_bundesliga:                     { emoji: '⚽', label: 'Bundesliga' },
+    soccer_serie_a:                        { emoji: '⚽', label: 'Serie A' },
+    soccer_europa:                         { emoji: '⚽', label: 'Europa League' },
+    soccer_ligue_1:                        { emoji: '⚽', label: 'Ligue 1' },
+    soccer_mls:                            { emoji: '⚽', label: 'MLS' },
+    soccer_brazil:                         { emoji: '⚽', label: 'Brasileirão' },
+    soccer_brazil_serie_b:                 { emoji: '⚽', label: 'Brazil B' },
+    soccer_fifa_world_cup:                 { emoji: '⚽', label: 'World Cup' },
+    soccer_fifa_world_cup_winner:          { emoji: '⚽', label: 'WC Winner' },
+    soccer_conmebol_copa_libertadores:     { emoji: '⚽', label: 'Copa Lib' },
+    soccer_conmebol_copa_sudamericana:     { emoji: '⚽', label: 'Copa Sud' },
+    soccer_germany_dfb_pokal:              { emoji: '⚽', label: 'DFB-Pokal' },
+    soccer_norway_eliteserien:             { emoji: '⚽', label: 'Eliteserien' },
+    soccer_sweden_allsvenskan:             { emoji: '⚽', label: 'Allsvenskan' },
+    soccer_sweden_superettan:              { emoji: '⚽', label: 'Superettan' },
+    soccer_finland_veikkausliiga:          { emoji: '⚽', label: 'Finland Liga' },
+    soccer_spain_segunda_division:         { emoji: '⚽', label: 'La Liga 2' },
+    soccer_chile_campeonato:               { emoji: '⚽', label: 'Chile Liga' },
+    soccer_china_superleague:              { emoji: '⚽', label: 'China SL' },
+    soccer_league_of_ireland:              { emoji: '⚽', label: 'Ireland League' },
+    basketball_nba:                        { emoji: '🏀', label: 'NBA' },
+    basketball_nba_championship_winner:    { emoji: '🏀', label: 'NBA Title' },
+    basketball_nbl:                        { emoji: '🏀', label: 'NBL' },
+    basketball_wnba:                       { emoji: '🏀', label: 'WNBA' },
+    americanfootball_nfl:                  { emoji: '🏈', label: 'NFL' },
+    americanfootball_nfl_preseason:        { emoji: '🏈', label: 'NFL Preseason' },
+    americanfootball_nfl_super_bowl_winner:{ emoji: '🏈', label: 'Super Bowl' },
+    americanfootball_ncaaf:                { emoji: '🏈', label: 'NCAAF' },
+    americanfootball_cfl:                  { emoji: '🏈', label: 'CFL' },
+    americanfootball_ufl:                  { emoji: '🏈', label: 'UFL' },
+    baseball_mlb:                          { emoji: '⚾', label: 'MLB' },
+    baseball_mlb_world_series_winner:      { emoji: '⚾', label: 'World Series' },
+    baseball_milb:                         { emoji: '⚾', label: 'MiLB' },
+    baseball_kbo:                          { emoji: '⚾', label: 'KBO' },
+    baseball_npb:                          { emoji: '⚾', label: 'NPB' },
+    baseball_ncaa:                         { emoji: '⚾', label: 'NCAA Baseball' },
+    icehockey_nhl:                         { emoji: '🏒', label: 'NHL' },
+    icehockey_nhl_championship_winner:     { emoji: '🏒', label: 'Stanley Cup' },
+    icehockey_ahl:                         { emoji: '🏒', label: 'AHL' },
+    mma_mixed_martial_arts:                { emoji: '🥊', label: 'MMA' },
+    mma_ufc:                               { emoji: '🥊', label: 'MMA' },
+    boxing_boxing:                         { emoji: '🥊', label: 'Boxing' },
+    mma_boxing:                            { emoji: '🥊', label: 'Boxing' },
+    tennis_wta_queens_club_champ:          { emoji: '🎾', label: 'WTA Tennis' },
+    tennis_atp:                            { emoji: '🎾', label: 'Tennis' },
+    golf_the_open_championship_winner:     { emoji: '⛳', label: 'The Open' },
+    golf_us_open_winner:                   { emoji: '⛳', label: 'US Open Golf' },
+    golf_pga:                              { emoji: '⛳', label: 'Golf' },
+    lacrosse_pll:                          { emoji: '🥍', label: 'PLL' },
+    politics_us_presidential_election_winner: { emoji: '🗳️', label: 'US Election' },
   };
-  return m[key] || { emoji: '🏆', label: key.replace(/_/g, ' ').toUpperCase(), bg: 'linear-gradient(135deg,#111827,#0d1526)' };
+  return m[key] || { emoji: '🏆', label: key.replace(/_/g, ' ').toUpperCase() };
 }
 
 function teamColor(name: string) {
@@ -100,24 +141,47 @@ function countdown(dt: string) {
 }
 
 const SPORT_TABS = [
-  { key: 'all',                    label: 'All',         emoji: '🏆' },
-  { key: 'aussierules_afl',        label: 'AFL',         emoji: '🏉' },
-  { key: 'rugbyleague_nrl',        label: 'NRL',         emoji: '🏉' },
-  { key: 'soccer_a_league',        label: 'A-League',    emoji: '⚽' },
-  { key: 'cricket_big_bash',       label: 'BBL',         emoji: '🏏' },
-  { key: 'soccer_epl',             label: 'EPL',         emoji: '⚽' },
-  { key: 'soccer_la_liga',         label: 'La Liga',     emoji: '⚽' },
-  { key: 'soccer_bundesliga',      label: 'Bundesliga',  emoji: '⚽' },
-  { key: 'soccer_serie_a',         label: 'Serie A',     emoji: '⚽' },
-  { key: 'soccer_ucl',             label: 'UCL',         emoji: '⚽' },
-  { key: 'basketball_nba',         label: 'NBA',         emoji: '🏀' },
-  { key: 'basketball_nbl',         label: 'NBL',         emoji: '🏀' },
-  { key: 'americanfootball_nfl',   label: 'NFL',         emoji: '🏈' },
-  { key: 'baseball_mlb',           label: 'MLB',         emoji: '⚾' },
-  { key: 'icehockey_nhl',          label: 'NHL',         emoji: '🏒' },
-  { key: 'mma_ufc',                label: 'UFC',         emoji: '🥊' },
-  { key: 'tennis_atp',             label: 'Tennis',      emoji: '🎾' },
-  { key: 'golf_pga',               label: 'Golf',        emoji: '⛳' },
+  { key: 'all',                              label: 'All',         emoji: '🏆' },
+  // AU
+  { key: 'aussierules_afl',                  label: 'AFL',         emoji: '🏉' },
+  { key: 'rugbyleague_nrl',                  label: 'NRL',         emoji: '🏉' },
+  { key: 'rugbyleague_nrl_state_of_origin',  label: 'Origin',      emoji: '🏉' },
+  // Cricket
+  { key: 'cricket_international_t20',        label: 'T20I',        emoji: '🏏' },
+  { key: 'cricket_odi',                      label: 'ODI',         emoji: '🏏' },
+  { key: 'cricket_test_match',               label: 'Tests',       emoji: '🏏' },
+  // Basketball
+  { key: 'basketball_nba',                   label: 'NBA',         emoji: '🏀' },
+  { key: 'basketball_wnba',                  label: 'WNBA',        emoji: '🏀' },
+  { key: 'basketball_nbl',                   label: 'NBL',         emoji: '🏀' },
+  // Baseball
+  { key: 'baseball_mlb',                     label: 'MLB',         emoji: '⚾' },
+  { key: 'baseball_kbo',                     label: 'KBO',         emoji: '⚾' },
+  { key: 'baseball_npb',                     label: 'NPB',         emoji: '⚾' },
+  // Ice Hockey
+  { key: 'icehockey_nhl',                    label: 'NHL',         emoji: '🏒' },
+  // American Football
+  { key: 'americanfootball_nfl',             label: 'NFL',         emoji: '🏈' },
+  { key: 'americanfootball_cfl',             label: 'CFL',         emoji: '🏈' },
+  // Combat
+  { key: 'mma_mixed_martial_arts',           label: 'MMA',         emoji: '🥊' },
+  { key: 'boxing_boxing',                    label: 'Boxing',      emoji: '🥊' },
+  // Soccer
+  { key: 'soccer_fifa_world_cup',            label: 'World Cup',   emoji: '⚽' },
+  { key: 'soccer_conmebol_copa_libertadores',label: 'Copa Lib',    emoji: '⚽' },
+  { key: 'soccer_conmebol_copa_sudamericana',label: 'Copa Sud',    emoji: '⚽' },
+  { key: 'soccer_mls',                       label: 'MLS',         emoji: '⚽' },
+  { key: 'soccer_brazil',                    label: 'Brazil',      emoji: '⚽' },
+  { key: 'soccer_norway_eliteserien',        label: 'Eliteserien', emoji: '⚽' },
+  { key: 'soccer_sweden_allsvenskan',        label: 'Allsvenskan', emoji: '⚽' },
+  { key: 'soccer_epl',                       label: 'EPL',         emoji: '⚽' },
+  { key: 'soccer_ucl',                       label: 'UCL',         emoji: '⚽' },
+  { key: 'soccer_la_liga',                   label: 'La Liga',     emoji: '⚽' },
+  { key: 'soccer_bundesliga',                label: 'Bundesliga',  emoji: '⚽' },
+  { key: 'soccer_serie_a',                   label: 'Serie A',     emoji: '⚽' },
+  // Tennis / Golf
+  { key: 'tennis_wta_queens_club_champ',     label: 'Tennis',      emoji: '🎾' },
+  { key: 'golf_us_open_winner',              label: 'Golf',        emoji: '⛳' },
 ];
 
 /* ─── Bet Slip types ──────────────────────────────────────────────────── */
@@ -144,83 +208,118 @@ function GameCard({
   inSlip: (sel: string) => boolean;
 }) {
   const meta = sportMeta(game.sport_key);
-  const ev = game.ev_pick;
-  const hColor = teamColor(game.home_team);
-  const aColor = teamColor(game.away_team);
+  const picks = game.ev_picks || [];
+  const isShadowPick = game.shadow_pick;
+  const hasEdge = picks.length > 0;
   const ms = msUntil(game.commence_time);
   const isLive = ms < 0;
   const isSoon = ms > 0 && ms < 3600000;
+  const isTwoWay = !game.best_odds.some(o => o.selection === 'Draw');
 
-  // Best odds for home / away from best_odds array
-  const homeBest = game.best_odds.find(o => o.selection === game.home_team);
-  const awayBest = game.best_odds.find(o => o.selection === game.away_team);
+  // Per-outcome signals
+  const homePick = picks.find(p => p.selection === game.home_team);
+  const awayPick = picks.find(p => p.selection === game.away_team);
+  const drawPick = picks.find(p => p.selection === 'Draw');
   const drawBest = game.best_odds.find(o => o.selection === 'Draw');
 
-  const hasEdge = !!ev;
-  const cardBorder = hasEdge ? '1px solid rgba(0,230,118,.3)' : '1px solid rgba(255,255,255,.1)';
-  const cardAccent = hasEdge ? '3px solid #00e676' : '3px solid transparent';
+  // Derive win probabilities from fair odds
+  let homeWinProb: number | null = homePick ? Math.round(100 / homePick.fair_odds) : null;
+  let awayWinProb: number | null = awayPick ? Math.round(100 / awayPick.fair_odds) : null;
+  if (homeWinProb !== null && awayWinProb === null && isTwoWay) awayWinProb = 100 - homeWinProb;
+  if (awayWinProb !== null && homeWinProb === null && isTwoWay) homeWinProb = 100 - awayWinProb;
+
+  const accentLeft = isShadowPick ? '3px solid #ffab00' : hasEdge ? '3px solid #00e676' : '3px solid transparent';
+  const cardBorder = isShadowPick ? '1px solid rgba(255,171,0,.3)' : hasEdge ? '1px solid rgba(0,230,118,.2)' : '1px solid rgba(255,255,255,.07)';
+
+  const outcomes: { team: string; pick: EVPick | undefined; winProb: number | null }[] = [
+    { team: game.home_team, pick: homePick, winProb: homeWinProb },
+    { team: game.away_team, pick: awayPick, winProb: awayWinProb },
+  ];
 
   return (
     <div
       onClick={onOpen}
       style={{
-        background: '#111d35',
+        background: '#0d1829',
         border: cardBorder,
-        borderLeft: cardAccent,
+        borderLeft: accentLeft,
         borderRadius: 14,
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'transform .15s, box-shadow .15s',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: hasEdge ? '0 0 0 1px rgba(0,230,118,.08)' : 'none',
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
-        (e.currentTarget as HTMLElement).style.boxShadow = hasEdge
-          ? '0 12px 36px rgba(0,0,0,.5), 0 0 0 1px rgba(0,230,118,.15)'
-          : '0 12px 36px rgba(0,0,0,.5)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 40px rgba(0,0,0,.5)';
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-        (e.currentTarget as HTMLElement).style.boxShadow = hasEdge ? '0 0 0 1px rgba(0,230,118,.08)' : 'none';
+        (e.currentTarget as HTMLElement).style.transform = '';
+        (e.currentTarget as HTMLElement).style.boxShadow = '';
       }}
     >
-      {/* Header row */}
-      <div style={{ padding: '10px 14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <span style={{ fontSize: 14 }}>{meta.emoji}</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: .8 }}>{meta.label}</span>
-          {isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4, letterSpacing: .5 }}>LIVE</span>}
+      {/* SHADOW PICK banner */}
+      {isShadowPick && (
+        <div style={{ background: 'linear-gradient(90deg,rgba(255,171,0,.18),rgba(255,171,0,.04))', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,171,0,.2)' }}>
+          <span style={{ fontSize: 11, fontWeight: 900, color: '#ffab00', letterSpacing: 1 }}>⚡ SHADOW PICK</span>
+          <span style={{ fontSize: 10, color: 'rgba(255,171,0,.55)' }}>Signals aligned · high confidence</span>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ padding: '9px 14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 13 }}>{meta.emoji}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>{meta.label}</span>
+          {isLive  && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4 }}>LIVE</span>}
           {isSoon && !isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ffab00', background: 'rgba(255,171,0,.1)', border: '1px solid rgba(255,171,0,.25)', padding: '1px 7px', borderRadius: 4 }}>SOON</span>}
         </div>
-        <span style={{ fontSize: 11, color: '#334155', fontWeight: 600 }}>{countdown(game.commence_time)}</span>
+        <span style={{ fontSize: 11, color: '#2d3f5c', fontWeight: 600 }}>{countdown(game.commence_time)}</span>
       </div>
 
-      {/* Teams */}
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        {[
-          { team: game.home_team, color: hColor, bestOdds: homeBest },
-          { team: game.away_team, color: aColor, bestOdds: awayBest },
-        ].map(({ team, color, bestOdds }, idx) => {
-          const isPick = ev?.selection === team;
-          return (
-            <div
-              key={team}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '11px 14px',
-                background: isPick ? 'rgba(0,230,118,.05)' : 'transparent',
-                borderBottom: idx === 0 ? '1px solid rgba(255,255,255,.04)' : 'none',
-              }}
-            >
-              <SportIcon sportKey={game.sport_key} name={team} color={color} size={32} />
+      {/* Outcome rows — one per team */}
+      {outcomes.map(({ team, pick, winProb }, idx) => {
+        const bestOdds = game.best_odds.find(o => o.selection === team);
+        const color = teamColor(team);
+        const isInSlip = inSlip(team);
+        const evPct = pick?.ev_percent ?? 0;
+        const barColor = evPct >= 8 ? '#ffab00' : '#00e676';
+
+        return (
+          <div key={team} style={{ padding: '11px 14px', borderBottom: idx === 0 ? '1px solid rgba(255,255,255,.04)' : 'none', background: pick ? 'rgba(0,230,118,.025)' : 'transparent' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <SportIcon sportKey={game.sport_key} name={team} color={color} size={30} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: isPick ? 800 : 600, fontSize: 14, color: isPick ? '#ffffff' : '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{team}</div>
-                {isPick && (
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#00e676', letterSpacing: .5, marginTop: 1 }}>OUR PICK</div>
+                {/* Team name + win prob + EV badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: pick ? 5 : 0 }}>
+                  <span style={{ fontWeight: pick ? 800 : 600, fontSize: 13, color: pick ? '#fff' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130 }}>{team}</span>
+                  {winProb !== null && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#334155', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.06)', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
+                      {winProb}% win
+                    </span>
+                  )}
+                  {pick && (
+                    <span style={{ fontSize: 10, fontWeight: 900, color: evPct >= 8 ? '#ffab00' : '#00e676', flexShrink: 0 }}>
+                      +{evPct.toFixed(1)}% EV
+                    </span>
+                  )}
+                </div>
+
+                {/* Confidence bar + bookie name */}
+                {pick && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(evPct / 12 * 100, 100)}%`, background: barColor, borderRadius: 2 }} />
+                    </div>
+                    <span style={{ fontSize: 9, color: '#334155', flexShrink: 0, textTransform: 'capitalize' }}>
+                      {pick.bookie?.replace(/_/g, ' ').replace('betfair ex au', 'betfair').split(' ')[0]}
+                    </span>
+                  </div>
                 )}
               </div>
+
+              {/* Best odds button */}
               {bestOdds && (
                 <button
                   onClick={e => {
@@ -229,87 +328,73 @@ function GameCard({
                       event_id: game.event_id, event_name: game.event_name,
                       sport_key: game.sport_key, selection: team,
                       bookie: bestOdds.bookmaker, odds: bestOdds.odds,
-                      fair_odds: isPick ? ev!.fair_odds : undefined,
-                      ev_percent: isPick ? ev!.ev_percent : undefined,
-                      kelly_percent: isPick ? ev!.kelly_percent : undefined,
+                      fair_odds: pick?.fair_odds,
+                      ev_percent: pick?.ev_percent,
+                      kelly_percent: pick?.kelly_percent,
                       commence_time: game.commence_time,
                     });
                   }}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontWeight: 800, fontSize: 16,
-                    color: inSlip(team) ? '#2979ff' : isPick ? '#00e676' : '#e2e8f0',
-                    background: inSlip(team) ? 'rgba(41,121,255,.12)' : isPick ? 'rgba(0,230,118,.1)' : 'rgba(255,255,255,.06)',
-                    border: `1px solid ${inSlip(team) ? 'rgba(41,121,255,.35)' : isPick ? 'rgba(0,230,118,.3)' : 'rgba(255,255,255,.1)'}`,
-                    borderRadius: 9, padding: '6px 13px',
-                    cursor: 'pointer', transition: 'all .15s',
-                    minWidth: 68, textAlign: 'center', flexShrink: 0,
+                    fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16,
+                    color: isInSlip ? '#2979ff' : pick ? (evPct >= 8 ? '#ffab00' : '#00e676') : '#94a3b8',
+                    background: isInSlip ? 'rgba(41,121,255,.12)' : pick ? `rgba(${evPct >= 8 ? '255,171,0' : '0,230,118'},.1)` : 'rgba(255,255,255,.05)',
+                    border: `1px solid ${isInSlip ? 'rgba(41,121,255,.3)' : pick ? `rgba(${evPct >= 8 ? '255,171,0' : '0,230,118'},.25)` : 'rgba(255,255,255,.08)'}`,
+                    borderRadius: 9, padding: '6px 12px', cursor: 'pointer', minWidth: 64, textAlign: 'center', flexShrink: 0,
                   }}
-                  title={`${bestOdds.bookmaker} — tap to add to slip`}
                 >
                   {bestOdds.odds.toFixed(2)}
-                  <span style={{ fontSize: 9, fontWeight: 600, color: inSlip(team) ? '#2979ff' : '#475569', textTransform: 'capitalize', letterSpacing: .3, marginTop: 2 }}>
+                  <span style={{ fontSize: 8, fontWeight: 600, color: '#334155', textTransform: 'capitalize', marginTop: 2 }}>
                     {bestOdds.bookmaker?.replace(/_/g, ' ').split(' ')[0]}
                   </span>
                 </button>
               )}
             </div>
-          );
-        })}
+          </div>
+        );
+      })}
 
-        {/* Draw odds for soccer */}
-        {drawBest && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', borderTop: '1px solid rgba(255,255,255,.04)' }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,.05)', display: 'grid', placeItems: 'center', fontSize: 13, color: '#475569' }}>≡</div>
-            <span style={{ flex: 1, fontWeight: 500, fontSize: 13, color: '#64748b' }}>Draw</span>
+      {/* Draw row for soccer */}
+      {drawBest && (
+        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.04)', background: drawPick ? 'rgba(0,230,118,.025)' : 'transparent' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,.04)', display: 'grid', placeItems: 'center', fontSize: 12, color: '#334155', flexShrink: 0 }}>≡</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: drawPick ? 5 : 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Draw</span>
+                {drawPick && <span style={{ fontSize: 10, fontWeight: 900, color: '#00e676' }}>+{drawPick.ev_percent.toFixed(1)}% EV</span>}
+              </div>
+              {drawPick && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${Math.min(drawPick.ev_percent / 12 * 100, 100)}%`, background: '#00e676', borderRadius: 2 }} />
+                  </div>
+                  <span style={{ fontSize: 9, color: '#334155', flexShrink: 0, textTransform: 'capitalize' }}>{drawPick.bookie?.replace(/_/g, ' ').split(' ')[0]}</span>
+                </div>
+              )}
+            </div>
             <button
-              onClick={e => {
-                e.stopPropagation();
-                onAddToSlip({ event_id: game.event_id, event_name: game.event_name, sport_key: game.sport_key, selection: 'Draw', bookie: drawBest.bookmaker, odds: drawBest.odds, commence_time: game.commence_time });
-              }}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16,
-                color: inSlip('Draw') ? '#2979ff' : '#94a3b8',
-                background: inSlip('Draw') ? 'rgba(41,121,255,.12)' : 'rgba(255,255,255,.06)',
-                border: `1px solid ${inSlip('Draw') ? 'rgba(41,121,255,.35)' : 'rgba(255,255,255,.1)'}`,
-                borderRadius: 9, padding: '6px 13px', cursor: 'pointer', minWidth: 68, textAlign: 'center', flexShrink: 0,
-              }}
+              onClick={e => { e.stopPropagation(); onAddToSlip({ event_id: game.event_id, event_name: game.event_name, sport_key: game.sport_key, selection: 'Draw', bookie: drawBest.bookmaker, odds: drawBest.odds, fair_odds: drawPick?.fair_odds, ev_percent: drawPick?.ev_percent, kelly_percent: drawPick?.kelly_percent, commence_time: game.commence_time }); }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: inSlip('Draw') ? '#2979ff' : '#64748b', background: inSlip('Draw') ? 'rgba(41,121,255,.12)' : 'rgba(255,255,255,.05)', border: `1px solid ${inSlip('Draw') ? 'rgba(41,121,255,.3)' : 'rgba(255,255,255,.08)'}`, borderRadius: 9, padding: '6px 12px', cursor: 'pointer', minWidth: 64, textAlign: 'center', flexShrink: 0 }}
             >
               {drawBest.odds.toFixed(2)}
-              <span style={{ fontSize: 9, fontWeight: 600, color: '#475569', letterSpacing: .3, marginTop: 2 }}>Draw</span>
+              <span style={{ fontSize: 8, fontWeight: 600, color: '#334155', marginTop: 2 }}>Draw</span>
             </button>
-          </div>
-        )}
-      </div>
-
-      {/* Edge banner — hero stat when we have a pick */}
-      {ev && (
-        <div style={{ padding: '11px 14px', background: 'rgba(0,230,118,.07)', borderTop: '1px solid rgba(0,230,118,.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#00e676', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Edge detected</div>
-            <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>{ev.bookie?.replace(/_/g, ' ')}</div>
-          </div>
-          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 900, fontSize: 22, color: '#00e676', lineHeight: 1 }}>+{ev.ev_percent.toFixed(1)}%</div>
-              <div style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>your edge</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#2979ff', lineHeight: 1 }}>{ev.kelly_percent.toFixed(1)}%</div>
-              <div style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>stake</div>
-            </div>
           </div>
         </div>
       )}
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,.04)', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.15)' }}>
-        <div style={{ fontSize: 11, color: '#334155' }}>{fmtTime(game.commence_time)} AEST</div>
+      <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.2)' }}>
+        <span style={{ fontSize: 11, color: '#1e3a5f' }}>{fmtTime(game.commence_time)} AEST</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 11, color: '#1e3a5f' }}>{game.bookmaker_count} books</span>
-          <span style={{ fontSize: 12, color: '#2979ff', fontWeight: 700 }}>Analyse →</span>
+          {picks.length > 0 && (
+            <span style={{ fontSize: 10, fontWeight: 800, color: isShadowPick ? '#ffab00' : '#00e676', background: isShadowPick ? 'rgba(255,171,0,.1)' : 'rgba(0,230,118,.1)', padding: '1px 7px', borderRadius: 4 }}>
+              {picks.length} signal{picks.length > 1 ? 's' : ''}
+            </span>
+          )}
+          <span style={{ fontSize: 11, color: '#2979ff', fontWeight: 700 }}>Analyse →</span>
         </div>
       </div>
     </div>
@@ -441,8 +526,8 @@ export default function MarketsPage() {
     return () => { s.off('ev:update', onUpdate); };
   }, [load]);
 
-  const displayed = filter === 'edge' ? data.filter(g => g.ev_pick) : data;
-  const edgeCount = data.filter(g => g.ev_pick).length;
+  const displayed = filter === 'edge' ? data.filter(g => g.ev_picks.length > 0) : data;
+  const edgeCount = data.filter(g => g.ev_picks.length > 0).length;
 
   function slipKey(eventId: string, sel: string) { return `${eventId}:${sel}`; }
   function addToSlip(item: SlipItem) {

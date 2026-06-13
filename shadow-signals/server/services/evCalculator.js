@@ -23,13 +23,14 @@ function kellyFraction(bookedOdds, fairOdds, fraction = 0.25) {
   return parseFloat((Math.max(0, k * fraction) * 100).toFixed(3));
 }
 
-// A real edge is 2-15%. Anything above this is stale or broken source data,
-// and publishing it destroys member trust — discard, never display.
+// Genuine bookmaker edges sit between 3-15%. Below 3% is margin noise.
+// Above 20% is stale/broken data — discard both ends.
+const EV_MIN_PERCENT = 3.0;
 const EV_MAX_PERCENT = 20;
-// A price this far above the market median is a stale/error price.
-const OUTLIER_RATIO = 2.5;
-// Need a real market to estimate fair odds from.
-const MIN_BOOKS_PER_SELECTION = 3;
+// Price more than 2.2x market median = stale or error price, discard.
+const OUTLIER_RATIO = 2.2;
+// Need at least 4 books pricing a selection to estimate fair value reliably.
+const MIN_BOOKS_PER_SELECTION = 4;
 
 function median(values) {
   const s = [...values].sort((a, b) => a - b);
@@ -157,7 +158,7 @@ async function computeEVFromCache(sportKey = null) {
           if (bookedOdds > medians[sel] * OUTLIER_RATIO) continue;
 
           const ev = calcEVPercent(bookedOdds, fairOdds);
-          if (ev < 2.0) continue;           // Minimum 2% threshold
+          if (ev < EV_MIN_PERCENT) continue;  // Minimum 3% threshold — cut noise
           if (ev > EV_MAX_PERCENT) continue; // Data error, never display
 
           if (!best || ev > best.ev) best = { bookie, bookedOdds, ev };

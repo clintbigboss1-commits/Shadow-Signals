@@ -139,11 +139,10 @@ router.get('/', requireAuth, async (req, res) => {
       [eventIds]
     );
 
-    // Best EV pick per event (if any)
+    // ALL EV picks per event — one row per outcome that has an edge
     const evResult = await db.query(
-      `SELECT DISTINCT ON (event_id)
-         event_id, selection, bookie, bookie_odds, fair_odds,
-         ev_percent, kelly_percent, market
+      `SELECT event_id, selection, bookie, bookie_odds, fair_odds,
+              ev_percent, kelly_percent, market
        FROM ev_opportunities
        WHERE event_id = ANY($1)
          AND is_active = TRUE
@@ -171,9 +170,11 @@ router.get('/', requireAuth, async (req, res) => {
       allOddsMap[row.event_id][row.bookmaker][row.selection] = parseFloat(row.odds);
     }
 
-    const evMap = {};
+    // Group all EV picks per event into an array
+    const evPicksMap = {};
     for (const row of evResult.rows) {
-      evMap[row.event_id] = {
+      if (!evPicksMap[row.event_id]) evPicksMap[row.event_id] = [];
+      evPicksMap[row.event_id].push({
         selection:     row.selection,
         bookie:        row.bookie,
         bookie_odds:   parseFloat(row.bookie_odds),
@@ -181,21 +182,26 @@ router.get('/', requireAuth, async (req, res) => {
         ev_percent:    parseFloat(row.ev_percent),
         kelly_percent: parseFloat(row.kelly_percent),
         market:        row.market,
-      };
+      });
     }
 
-    let data = eventsResult.rows.map(event => ({
-      event_id:       event.event_id,
-      sport_key:      event.sport_key,
-      home_team:      event.home_team,
-      away_team:      event.away_team,
-      event_name:     `${event.home_team} v ${event.away_team}`,
-      commence_time:  event.commence_time,
-      bookmaker_count: parseInt(event.bookmaker_count),
-      best_odds:      bestOddsMap[event.event_id] || [],
-      all_bookmakers: allOddsMap[event.event_id] || {},
-      ev_pick:        evMap[event.event_id] || null,
-    }));
+    let data = eventsResult.rows.map(event => {
+      const picks = evPicksMap[event.event_id] || [];
+      return {
+        event_id:        event.event_id,
+        sport_key:       event.sport_key,
+        home_team:       event.home_team,
+        away_team:       event.away_team,
+        event_name:      `${event.home_team} v ${event.away_team}`,
+        commence_time:   event.commence_time,
+        bookmaker_count: parseInt(event.bookmaker_count),
+        best_odds:       bestOddsMap[event.event_id] || [],
+        all_bookmakers:  allOddsMap[event.event_id] || {},
+        ev_picks:        picks,
+        // Shadow pick: any outcome has ≥8% EV
+        shadow_pick:     picks.some(p => p.ev_percent >= 8),
+      };
+    });
 
     data = dedupeFixtures(data);
 
