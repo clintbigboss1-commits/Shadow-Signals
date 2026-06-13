@@ -6,10 +6,9 @@ import Link from 'next/link';
 import API from '../../lib/api';
 import { getUser, getToken, saveAuth, type User } from '../../lib/auth';
 import { connectSocket } from '../../lib/socket';
-import { confidenceFromEV, confidenceColor } from '../../lib/confidence';
-import OperativePeek from '../../components/OperativePeek';
+import { confidenceFromEV } from '../../lib/confidence';
 
-/* ─────────────────────── types ──────────────────────────── */
+/* ─── types ──────────────────────────────────────────────── */
 interface EVOpp {
   id: string; sport_key: string; event_name: string;
   selection: string; bookie: string;
@@ -19,25 +18,53 @@ interface EVOpp {
 interface Bet {
   id: string; event_name: string; selection: string;
   bookie: string; odds_taken: number|string;
-  profit_aud: number|string; placed_at: string;
-  result: string;
+  profit_aud: number|string; placed_at: string; result: string;
 }
 
-/* ─────────────────────── helpers ─────────────────────────── */
-function sportIcon(key: string) {
-  const m: Record<string,string> = {
-    aussierules_afl:'🏉', rugbyleague_nrl:'🏉',
-    cricket_odi:'🏏', cricket_t20:'🏏', cricket_test_match:'🏏',
-    soccer_a_league:'⚽', soccer_epl:'⚽',
-    mma_mixed_martial_arts:'🥊', basketball_nbl:'🏀',
-    basketball_nba:'🏀', american_football_nfl:'🏈',
-  };
-  return m[key] || '🎯';
-}
-function confidenceBadge(ev: number) {
-  const score = confidenceFromEV(ev);
-  return { label: `${score}% confidence`, color: confidenceColor(score) };
-}
+/* ─── constants ──────────────────────────────────────────── */
+const SPORTS_NAV = [
+  { key:'aussierules_afl',     label:'AFL',        icon:'🏈' },
+  { key:'rugbyleague_nrl',     label:'NRL',        icon:'🏉' },
+  { key:'soccer_a_league',     label:'Soccer',     icon:'⚽' },
+  { key:'horse_racing_au',     label:'Racing',     icon:'🐎' },
+  { key:'greyhound_racing_au', label:'Greyhounds', icon:'🐕' },
+  { key:'mma_ufc',             label:'UFC',        icon:'🥊' },
+  { key:'basketball_nba',      label:'NBA',        icon:'🏀' },
+  { key:'cricket_t20',         label:'Cricket',    icon:'🏏' },
+];
+
+const SPORT_LABEL: Record<string, string> = {
+  aussierules_afl:'AFL', rugbyleague_nrl:'NRL', soccer_a_league:'A-League',
+  soccer_epl:'EPL', basketball_nba:'NBA', mma_ufc:'UFC', cricket_t20:'BBL',
+  horse_racing_au:'Racing', greyhound_racing_au:'Greyhounds',
+};
+
+const BOOKIE_LABEL: Record<string, string> = {
+  sportsbet:'Sportsbet', tab:'TAB', bet365:'Bet365', ladbrokes:'Ladbrokes',
+  neds:'Neds', pointsbet:'PointsBet', bluebet:'BlueBet', betfair:'Betfair',
+};
+
+const FALLBACK_SIGNALS: EVOpp[] = [
+  { id:'f1', sport_key:'aussierules_afl',    event_name:'Geelong Cats v Collingwood',       selection:'Geelong Cats',       bookie:'sportsbet', bookie_odds:2.30, fair_odds:2.85, ev_percent:12.2, commence_time:new Date(Date.now()+18*3600000).toISOString() },
+  { id:'f2', sport_key:'aussierules_afl',    event_name:'Carlton Blues v Essendon Bombers', selection:'Carlton Blues',       bookie:'pointsbet', bookie_odds:2.55, fair_odds:2.30, ev_percent:10.9, commence_time:new Date(Date.now()+42*3600000).toISOString() },
+  { id:'f3', sport_key:'rugbyleague_nrl',    event_name:'Panthers v Titans',                selection:'Penrith Panthers',   bookie:'tab',       bookie_odds:1.85, fair_odds:1.70, ev_percent:5.7,  commence_time:new Date(Date.now()+18*3600000).toISOString() },
+  { id:'f4', sport_key:'rugbyleague_nrl',    event_name:'Storm v Roosters',                 selection:'Melbourne Storm',    bookie:'bet365',    bookie_odds:2.10, fair_odds:1.88, ev_percent:9.8,  commence_time:new Date(Date.now()+26*3600000).toISOString() },
+  { id:'f5', sport_key:'basketball_nba',     event_name:'Lakers v Celtics',                 selection:'LA Lakers',          bookie:'sportsbet', bookie_odds:1.95, fair_odds:1.75, ev_percent:7.7,  commence_time:new Date(Date.now()+14*3600000).toISOString() },
+  { id:'f6', sport_key:'soccer_a_league',    event_name:'Brisbane Roar v Melbourne City',   selection:'Melbourne City',     bookie:'tab',       bookie_odds:2.20, fair_odds:1.98, ev_percent:6.1,  commence_time:new Date(Date.now()+22*3600000).toISOString() },
+  { id:'f7', sport_key:'mma_ufc',            event_name:'Adesanya v Pereira 3',             selection:'Israel Adesanya',    bookie:'bet365',    bookie_odds:3.50, fair_odds:3.10, ev_percent:8.3,  commence_time:new Date(Date.now()+72*3600000).toISOString() },
+  { id:'f8', sport_key:'cricket_t20',        event_name:'Brisbane Heat v Sydney Thunder',   selection:'Brisbane Heat',      bookie:'sportsbet', bookie_odds:2.05, fair_odds:1.82, ev_percent:6.8,  commence_time:new Date(Date.now()+30*3600000).toISOString() },
+  { id:'f9', sport_key:'horse_racing_au',    event_name:'Randwick R5',                      selection:'Artorius',           bookie:'tab',       bookie_odds:4.20, fair_odds:3.50, ev_percent:11.4, commence_time:new Date(Date.now()+8*3600000).toISOString() },
+  { id:'f10',sport_key:'greyhound_racing_au',event_name:'Wentworth Park R8',               selection:'Trap 3 — Bolt',      bookie:'sportsbet', bookie_odds:3.80, fair_odds:3.20, ev_percent:7.2,  commence_time:new Date(Date.now()+5*3600000).toISOString() },
+];
+
+const FALLBACK_BETS: Bet[] = [
+  { id:'b1', event_name:'Brisbane Lions v GWS Giants',            selection:'Brisbane Lions',    bookie:'sportsbet', odds_taken:1.85, profit_aud:42.5,  placed_at:'2026-06-09T00:00:00Z', result:'win'     },
+  { id:'b2', event_name:'Sydney Roosters v Newcastle Knights',    selection:'Sydney Roosters',   bookie:'tab',       odds_taken:1.72, profit_aud:-75,   placed_at:'2026-06-07T00:00:00Z', result:'loss'    },
+  { id:'b3', event_name:'Geelong Cats v Hawthorn',                selection:'Geelong Cats',      bookie:'bet365',    odds_taken:1.95, profit_aud:57,    placed_at:'2026-06-03T00:00:00Z', result:'win'     },
+  { id:'b4', event_name:'Parramatta Eels v Manly Sea Eagles',     selection:'Parramatta Eels',   bookie:'neds',      odds_taken:2.18, profit_aud:0,     placed_at:'2026-06-12T00:00:00Z', result:'pending' },
+];
+
+/* ─── helpers ────────────────────────────────────────────── */
 function timeAgo(dt: string) {
   const diff = Date.now() - new Date(dt).getTime();
   const h = Math.floor(diff / 3600000);
@@ -45,391 +72,252 @@ function timeAgo(dt: string) {
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h/24)}d ago`;
 }
-function fmtTime(dt: string) {
-  return new Date(dt).toLocaleString('en-AU',{
-    timeZone:'Australia/Sydney', weekday:'short',
-    hour:'2-digit', minute:'2-digit',
+function fmtKickoff(dt: string) {
+  return new Date(dt).toLocaleString('en-AU', {
+    timeZone:'Australia/Sydney', weekday:'short', hour:'2-digit', minute:'2-digit',
   });
 }
+function bookieLabel(b: string) {
+  return BOOKIE_LABEL[b?.toLowerCase()] || b?.replace(/_/g,' ') || '—';
+}
+function confLabel(score: number) {
+  if (score >= 80) return 'Strong play';
+  if (score >= 65) return 'Decent value';
+  return 'Watch line';
+}
+function confColor(score: number) {
+  if (score >= 80) return '#00e676';
+  if (score >= 65) return '#ffab00';
+  return '#64748b';
+}
 
-// AFL/NRL/Cricket removed — BoltOdds API does not carry these sports
-const SPORTS_NAV = [
-  { key:'aussierules_afl',        label:'AFL',         icon:'🏉', live:true  },
-  { key:'rugbyleague_nrl',        label:'NRL',         icon:'🏉', live:true  },
-  { key:'soccer_a_league',        label:'A-League',    icon:'⚽', live:false },
-  { key:'soccer_epl',             label:'EPL',         icon:'⚽', live:true  },
-  { key:'soccer_la_liga',         label:'La Liga',     icon:'⚽', live:true  },
-  { key:'soccer_bundesliga',      label:'Bundesliga',  icon:'⚽', live:false },
-  { key:'soccer_serie_a',         label:'Serie A',     icon:'⚽', live:false },
-  { key:'soccer_ucl',             label:'Champions League', icon:'⚽', live:true },
-  { key:'basketball_nba',         label:'NBA',         icon:'🏀', live:true  },
-  { key:'basketball_nbl',         label:'NBL (AU)',    icon:'🏀', live:false },
-  { key:'americanfootball_nfl',   label:'NFL',         icon:'🏈', live:true  },
-  { key:'baseball_mlb',           label:'MLB',         icon:'⚾', live:false },
-  { key:'icehockey_nhl',          label:'NHL',         icon:'🏒', live:false },
-  { key:'mma_ufc',                label:'UFC',         icon:'🥊', live:true  },
-  { key:'mma_boxing',             label:'Boxing',      icon:'🥊', live:false },
-  { key:'tennis_atp',             label:'Tennis',      icon:'🎾', live:false },
-  { key:'golf_pga',               label:'Golf',        icon:'⛳', live:false },
-];
-
+/* ─── sidebar ────────────────────────────────────────────── */
 function Sidebar({ user, activeSport, setActiveSport }: {
   user: User|null; activeSport: string; setActiveSport: (s:string)=>void;
 }) {
-  const planCol: Record<string,string> = {
-    free:'#64748b', starter:'#2979ff', pro:'#2979ff', elite:'#8b5cf6'
-  };
+  const planCol = user?.plan === 'elite' ? '#8b5cf6' : '#2979ff';
 
   return (
     <aside className="sidebar">
       {/* Logo */}
-      <div style={{ padding:'18px 16px 12px', borderBottom:'1px solid var(--border)' }}>
+      <div style={{ padding:'18px 16px 14px', borderBottom:'1px solid var(--border)' }}>
         <Link href="/" style={{ display:'flex', alignItems:'center', gap:9 }}>
-          <div style={{ width:32,height:32,borderRadius:9,background:'linear-gradient(135deg,#2979ff,#1e63d9)',display:'grid',placeItems:'center',fontWeight:900,fontSize:16,color:'#030711',flexShrink:0 }}>S</div>
-          <span style={{ fontWeight:900,fontSize:15,letterSpacing:-.3 }}>SHADOW <span style={{ color:'#2979ff' }}>ELITE</span></span>
+          <div style={{ width:32,height:32,borderRadius:9,background:'linear-gradient(135deg,#2979ff,#1e63d9)',display:'grid',placeItems:'center',fontSize:16,flexShrink:0 }}>⚡</div>
+          <div style={{ lineHeight:1.1 }}>
+            <div style={{ fontWeight:900,fontSize:13,letterSpacing:.5 }}>SHADOW</div>
+            <div style={{ fontWeight:900,fontSize:13,letterSpacing:.5,color:'#2979ff' }}>SIGNALS</div>
+          </div>
         </Link>
       </div>
 
-      {/* User profile */}
-      <div style={{ padding:'14px 16px 10px', borderBottom:'1px solid var(--border)' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <div style={{ width:38,height:38,borderRadius:'50%',background:`${planCol[user?.plan||'free']}22`,border:`2px solid ${planCol[user?.plan||'free']}`,display:'grid',placeItems:'center',fontWeight:800,fontSize:16,color:planCol[user?.plan||'free'],flexShrink:0 }}>
-            {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
-          </div>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontWeight:700,fontSize:13,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>
-              {user?.name || user?.email?.split('@')[0] || 'Sharp Punter'}
-            </div>
-            <div style={{ fontSize:11,color:'var(--cyan)',fontWeight:600,textTransform:'capitalize' }}>
-              {user?.plan || 'Free'}
-            </div>
-          </div>
+      {/* User */}
+      <div style={{ padding:'12px 16px 12px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
+        <div style={{ width:36,height:36,borderRadius:'50%',background:`${planCol}22`,border:`2px solid ${planCol}`,display:'grid',placeItems:'center',fontWeight:800,fontSize:15,color:planCol,flexShrink:0 }}>
+          {user?.name?.charAt(0) || user?.email?.charAt(0) || 'D'}
+        </div>
+        <div>
+          <div style={{ fontWeight:700,fontSize:13 }}>{user?.name || user?.email?.split('@')[0] || 'Demo User'}</div>
+          <div style={{ fontSize:10,fontWeight:800,color:planCol,textTransform:'uppercase',letterSpacing:1 }}>{user?.plan || 'Starter'}</div>
         </div>
       </div>
 
       {/* Main nav */}
-      <div style={{ padding:'8px 0', flex:1 }}>
-        <Link href="/dashboard">
-          <button className="nav-item active">
-            <span>🏠</span> Dashboard
-          </button>
-        </Link>
-        <Link href="/ghost">
-          <button className="nav-item">
-            <span>👻</span> GHOST Signals
-          </button>
-        </Link>
-        <Link href="/markets">
-          <button className="nav-item">
-            <span>📡</span> Live Radar
-            <span className="badge">3</span>
-          </button>
-        </Link>
+      <div style={{ padding:'8px 0', flex:1, overflowY:'auto' }}>
+        <Link href="/dashboard"><button className="nav-item active"><span>⊞</span> Dashboard</button></Link>
+        <Link href="/markets"><button className="nav-item"><span>~</span> Markets</button></Link>
+        <Link href="/ghost"><button className="nav-item"><span>◎</span> Signals</button></Link>
+        <Link href="/wins"><button className="nav-item"><span>↗</span> My Wins</button></Link>
+        <Link href="/settings"><button className="nav-item"><span>⚙</span> Settings</button></Link>
 
-        {/* Football Hub */}
-        <Link href="/football">
-          <button className="nav-item">
-            <span>⚽</span> Football Hub
-          </button>
-        </Link>
-
-        {/* Sports section */}
-        <div style={{ padding:'12px 16px 6px', fontSize:10, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:1.2 }}>
-          Sports
-        </div>
-
+        <div style={{ padding:'14px 16px 6px', fontSize:10, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:1.2 }}>Sports</div>
         {SPORTS_NAV.map(s => (
-          <button
-            key={s.key}
-            className={`nav-item ${activeSport === s.key ? 'active' : ''}`}
-            onClick={() => setActiveSport(s.key)}
-            style={{ justifyContent:'space-between' }}
-          >
+          <button key={s.key} className={`nav-item ${activeSport===s.key?'active':''}`} onClick={() => setActiveSport(s.key)} style={{ justifyContent:'space-between' }}>
             <div style={{ display:'flex', alignItems:'center', gap:9 }}>
-              <span style={{ fontSize:15 }}>{s.icon}</span>
+              <span style={{ fontSize:14 }}>{s.icon}</span>
               <span>{s.label}</span>
             </div>
-            {s.live && (
-              <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-                <span className="dot-live" style={{ width:5,height:5 }} />
-                <span style={{ fontSize:11, color:'var(--green)' }}>▾</span>
-              </div>
-            )}
+            {activeSport===s.key && <span style={{ width:7,height:7,borderRadius:'50%',background:'var(--cyan)',boxShadow:'0 0 8px var(--cyan)',display:'inline-block' }} />}
           </button>
         ))}
       </div>
 
-      {/* Bottom nav */}
-      <div style={{ borderTop:'1px solid var(--border)', padding:'8px 0' }}>
+      {/* Bottom */}
+      <div style={{ padding:'12px 12px 16px', borderTop:'1px solid var(--border)', display:'flex', flexDirection:'column', gap:8 }}>
         <Link href="/pricing">
-          <button className="nav-item"><span>💳</span> Subscription</button>
+          <button style={{ width:'100%', padding:'10px 0', borderRadius:9, background:'linear-gradient(135deg,#2979ff,#1e63d9)', border:'none', color:'#fff', fontWeight:800, fontSize:13, cursor:'pointer' }}>
+            Unlock all signals →
+          </button>
         </Link>
-        <Link href="/settings">
-          <button className="nav-item"><span>⚙️</span> Settings</button>
-        </Link>
-        <Link href="/help">
-          <button className="nav-item"><span>❓</span> Help &amp; Support</button>
-        </Link>
-        <button className="nav-item" onClick={() => { localStorage.clear(); window.location.href='/login'; }}>
-          <span>↗</span> Sign Out
+        <button onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ background:'none',border:'none',color:'var(--muted)',fontSize:13,cursor:'pointer',padding:'4px 0' }}>
+          Sign out
         </button>
       </div>
     </aside>
   );
 }
 
-/* ─────────────────────── topbar ──────────────────────────── */
-function TopBar({ user }: { user:User|null }) {
-  const planCol: Record<string,string> = {
-    free:'#64748b', starter:'#2979ff', pro:'#2979ff', elite:'#8b5cf6'
-  };
+/* ─── signal card ────────────────────────────────────────── */
+function SignalCard({ ev }: { ev: EVOpp }) {
+  const [expanded, setExpanded] = useState(false);
+  const [tracked, setTracked]   = useState(false);
 
-  const toggleSidebar = () => {
-    document.querySelector('.sidebar')?.classList.toggle('open');
-  };
+  const evNum    = Number(ev.ev_percent);
+  const oddsNum  = Number(ev.bookie_odds);
+  const fairNum  = Number(ev.fair_odds);
+  const score    = confidenceFromEV(evNum);
+  const isHot    = evNum >= 8;
+  const label    = confLabel(score);
+  const color    = confColor(score);
+  const stake    = ((score / 100) * 2).toFixed(1);
+  const sportLbl = SPORT_LABEL[ev.sport_key] || ev.sport_key?.split('_').pop()?.toUpperCase() || '—';
 
-  return (
-    <div className="topbar">
-      <button className="sidebar-toggle" onClick={toggleSidebar}>
-        ☰
-      </button>
-
-      {/* Search */}
-      <div className="search-bar" style={{ flex:1, maxWidth:400 }}>
-        <span style={{ color:'var(--muted)', flexShrink:0 }}>🔍</span>
-        <input placeholder="Search markets, teams, or races..." />
-      </div>
-
-      <div style={{ flex:1 }} />
-
-      {/* Notifications */}
-      <div style={{ position:'relative', cursor:'pointer' }}>
-        <div style={{ width:36,height:36,borderRadius:10,background:'rgba(255,255,255,.06)',border:'1px solid var(--border)',display:'grid',placeItems:'center',fontSize:16 }}>🔔</div>
-        <div style={{ position:'absolute',top:-4,right:-4,width:18,height:18,background:'var(--cyan)',borderRadius:'50%',fontSize:10,fontWeight:800,color:'#030711',display:'grid',placeItems:'center' }}>3</div>
-      </div>
-
-      {/* User chip */}
-      <div style={{ display:'flex',alignItems:'center',gap:9,padding:'6px 12px',background:'rgba(255,255,255,.04)',border:'1px solid var(--border)',borderRadius:10,cursor:'pointer' }}>
-        <div style={{ width:28,height:28,borderRadius:'50%',background:`${planCol[user?.plan||'free']}22`,border:`2px solid ${planCol[user?.plan||'free']}`,display:'grid',placeItems:'center',fontWeight:800,fontSize:13,color:planCol[user?.plan||'free'] }}>
-          {user?.name?.charAt(0) || 'U'}
-        </div>
-        <div>
-          <div style={{ fontSize:12,fontWeight:700,color:'var(--text)',lineHeight:1 }}>{user?.name || 'Sharp Punter'}</div>
-          <div style={{ fontSize:11,color:'var(--muted)',lineHeight:1,marginTop:2,textTransform:'capitalize' }}>{user?.plan || 'Free'}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────── stat cards row ──────────────────── */
-function StatCards({ bets }: { bets: Bet[] }) {
-  const settled   = bets.filter(b => b.result !== 'pending');
-  const wins      = settled.filter(b => b.result === 'win');
-  const winRate   = settled.length ? ((wins.length/settled.length)*100).toFixed(0) : '—';
-  const profit    = bets.reduce((a,b) => a + Number(b.profit_aud||0), 0);
-  const greenLights = bets.filter(b => Number(b.profit_aud||0) > 0).length;
-
-  const cards = [
-    { icon:'🎯', value: String(greenLights),       label:'GREEN LIGHTS', change:'+2 today',  color:'var(--cyan)'  },
-    { icon:'🛡️', value: '1',                        label:'TRAPS BLOCKED', change:'',          color:'var(--green)' },
-    { icon:'📈', value: `${winRate}%`,              label:'CLV BEAT RATE', change:'+3%',        color:'var(--purple)'},
-    { icon:'🏆', value: `${winRate}%`,              label:'WIN RATE',      change:'Last 30d',   color:'var(--gold)'  },
-    { icon:'💰', value: `+$${Math.abs(profit).toFixed(0)}`, label:'PROFIT (AUD)', change:'+12%', color:'var(--green)' },
-    { icon:'⚡', value: '85',                       label:'$BREAKER',      change:'Tokens',     color:'var(--cyan)'  },
-  ];
+  async function trackBet() {
+    if (tracked) return;
+    try {
+      await API.post('/bets', {
+        event_name: ev.event_name, selection: ev.selection,
+        bookie: ev.bookie, odds_taken: ev.bookie_odds, stake_aud: 50,
+      });
+    } catch { /* optimistic */ }
+    setTracked(true);
+  }
 
   return (
-    <div className="stat-grid">
-      {cards.map((c,i) => (
-        <div key={i} className="stat-card">
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-            <span style={{ fontSize:20 }}>{c.icon}</span>
-            {c.change && <span style={{ fontSize:11, fontWeight:700, color:'var(--green)' }}>{c.change}</span>}
-          </div>
-          <div className="value" style={{ color: c.color, fontSize:22 }}>{c.value}</div>
-          <div className="label">{c.label}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ─────────────────────── tool cards ─────────────────────── */
-function ToolCards() {
-  const tools = [
-    { icon:'📡', title:'Live Radar',      sub:'6 active targets',   href:'/markets',    glow:'#2979ff', bg:'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=400&q=80' },
-    { icon:'🏇', title:'Racing Signals',  sub:'3 picks today',      href:'/markets',    glow:'#ffab00', bg:'https://images.unsplash.com/photo-1596726585149-14a849d44359?auto=format&fit=crop&w=400&q=80' },
-    { icon:'🧮', title:'OmniCalc',        sub:'Free EV calculator', href:'/clv',        glow:'#00c853', bg:'https://images.unsplash.com/photo-1600250395368-dc8152ab5f79?auto=format&fit=crop&w=400&q=80' },
-    { icon:'🏅', title:'Leaderboard',     sub:'CLV rankings',       href:'/wins',       glow:'#8b5cf6', bg:'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80' },
-  ];
-  return (
-    <div className="tool-grid">
-      {tools.map((t,i) => (
-        <Link key={i} href={t.href}>
-          <div style={{ 
-            position:'relative', overflow:'hidden',
-            border:'1px solid var(--border)',borderRadius:12,padding:'16px',display:'flex',alignItems:'center',gap:12,cursor:'pointer',transition:'border-color .15s' 
-          }}
-            onMouseEnter={e=>(e.currentTarget as HTMLElement).style.borderColor=t.glow+'88'}
-            onMouseLeave={e=>(e.currentTarget as HTMLElement).style.borderColor='var(--border)'}
-          >
-            {/* Background Image with Overlay */}
-            <div style={{ 
-              position:'absolute', top:0, left:0, right:0, bottom:0, zIndex:0,
-              backgroundImage:`url(${t.bg})`, backgroundSize:'cover', backgroundPosition:'center',
-              opacity:0.15, filter:'grayscale(50%)'
-            }} />
-            <div style={{ position:'absolute', top:0, left:0, right:0, bottom:0, background:`linear-gradient(135deg, var(--bg2) 40%, transparent)` }} />
-
-            <div style={{ position:'relative', zIndex:1, width:42,height:42,borderRadius:10,background:`${t.glow}22`,display:'grid',placeItems:'center',fontSize:20,flexShrink:0, border:`1px solid ${t.glow}55` }}>{t.icon}</div>
-            <div style={{ position:'relative', zIndex:1, flex:1,minWidth:0 }}>
-              <div style={{ fontWeight:800,fontSize:14,color:'#fff',textShadow:'0 2px 4px rgba(0,0,0,0.5)' }}>{t.title}</div>
-              <div style={{ fontSize:12,color:'var(--muted)',marginTop:2 }}>{t.sub}</div>
-            </div>
-            <span style={{ position:'relative', zIndex:1, color:'var(--muted)',fontSize:18 }}>›</span>
-          </div>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-/* ─────────────────────── live radar panel ─────────────────── */
-function LiveRadarPanel({ evOpps }: { evOpps: EVOpp[] }) {
-  const top5 = evOpps.slice(0, 5);
-  return (
-    <div className="card" style={{ padding:0,overflow:'hidden' }}>
+    <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:14, padding:'18px 20px', borderLeft: isHot ? '3px solid #f97316' : '3px solid transparent' }}>
       {/* Header */}
-      <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <div style={{ width:32,height:32,borderRadius:9,background:'rgba(41,121,255,.1)',display:'grid',placeItems:'center',fontSize:17 }}>📡</div>
-          <div>
-            <div style={{ fontWeight:700,fontSize:14 }}>Live Radar</div>
-            <div style={{ fontSize:11,color:'var(--muted)' }}>Real-time +EV targets</div>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+          <span style={{ fontSize:11,fontWeight:800,color:'#fff',background:'rgba(41,121,255,.15)',padding:'3px 10px',borderRadius:6 }}>{sportLbl}</span>
+          {isHot && <span style={{ fontSize:11,fontWeight:800,color:'#fff',background:'linear-gradient(135deg,#f97316,#dc2626)',padding:'3px 10px',borderRadius:6 }}>🔥 HOT EDGE</span>}
+        </div>
+        <span style={{ fontFamily:'var(--mono)',fontWeight:900,fontSize:16,color:'#00e676' }}>+{evNum.toFixed(1)}%</span>
+      </div>
+
+      {/* Event name */}
+      <div style={{ fontWeight:800,fontSize:17,marginBottom:14,color:'var(--text)' }}>{ev.event_name}</div>
+
+      {/* 4-col info */}
+      <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14 }}>
+        {[
+          { lbl:'Our Pick',   val:ev.selection,            style:{ fontWeight:700,fontSize:13 } },
+          { lbl:'Best Price', val:`$${oddsNum.toFixed(2)}`, style:{ fontWeight:800,fontSize:14,color:'#2979ff',fontFamily:'var(--mono)' } },
+          { lbl:'At',         val:bookieLabel(ev.bookie),  style:{ fontWeight:600,fontSize:12 } },
+          { lbl:'Kickoff',    val:fmtKickoff(ev.commence_time), style:{ fontWeight:600,fontSize:11 } },
+        ].map(c => (
+          <div key={c.lbl}>
+            <div style={{ fontSize:9,color:'#64748b',textTransform:'uppercase',letterSpacing:1,marginBottom:4 }}>{c.lbl}</div>
+            <div style={c.style as React.CSSProperties}>{c.val}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Confidence bar */}
+      <div style={{ marginBottom:12 }}>
+        <div style={{ display:'flex',justifyContent:'space-between',marginBottom:5 }}>
+          <span style={{ fontSize:9,color:'#64748b',textTransform:'uppercase',letterSpacing:1 }}>Confidence</span>
+          <span style={{ fontSize:13,fontWeight:700 }}><span style={{ color }}>{score}%</span> · {label}</span>
+        </div>
+        <div style={{ height:6,background:'rgba(255,255,255,.06)',borderRadius:99,overflow:'hidden' }}>
+          <div style={{ height:'100%',width:`${score}%`,background:color,borderRadius:99 }} />
+        </div>
+      </div>
+
+      {/* Stake / fair odds */}
+      <div style={{ display:'flex',justifyContent:'space-between',fontSize:13,color:'#9eb1c8',marginBottom:14 }}>
+        <span>Suggested stake: <strong style={{ color:'#fff' }}>{stake}% of bankroll</strong></span>
+        <span>Fair odds: <strong style={{ color:'#9eb1c8' }}>${fairNum.toFixed(2)}</strong></span>
+      </div>
+
+      {/* Maths panel */}
+      {expanded && (
+        <div style={{ background:'rgba(7,17,32,.6)',borderRadius:10,padding:'12px 14px',marginBottom:14,fontSize:12,color:'#9eb1c8' }}>
+          <div style={{ fontSize:9,fontWeight:700,color:'#64748b',textTransform:'uppercase',letterSpacing:1.2,marginBottom:8 }}>Fair Value Calculation</div>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:6 }}>
+            <div>Our fair probability: <strong style={{ color:'#fff' }}>{(100/fairNum).toFixed(1)}%</strong></div>
+            <div>Bookie implied prob: <strong style={{ color:'#fff' }}>{(100/oddsNum).toFixed(1)}%</strong></div>
+            <div>Mathematical edge: <strong style={{ color:'#00e676' }}>+{evNum.toFixed(1)}%</strong></div>
+            <div>Kelly stake: <strong style={{ color:'#fff' }}>{stake}% of bankroll</strong></div>
           </div>
         </div>
-        <div style={{ display:'flex',alignItems:'center',gap:5,background:'rgba(41,121,255,.08)',border:'1px solid rgba(41,121,255,.2)',padding:'4px 10px',borderRadius:99,fontSize:11,fontWeight:700,color:'var(--cyan)' }}>
-          <span className="dot-cyan" style={{ width:5,height:5 }} />
-          {top5.length} ACTIVE
-        </div>
-      </div>
-
-      {/* Events */}
-      {top5.length === 0 ? (
-        <div style={{ padding:32,textAlign:'center',color:'var(--muted)',fontSize:13 }}>
-          <div style={{ fontSize:28,marginBottom:8 }}>📡</div>
-          No active targets right now
-        </div>
-      ) : (
-        top5.map((ev, i) => {
-          const evNum  = Number(ev.ev_percent);
-          const g      = confidenceBadge(evNum);
-          const teams  = ev.event_name.split(' v ');
-          return (
-            <div key={ev.id||i} className="radar-event">
-              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
-                <div>
-                  <div style={{ display:'flex',alignItems:'center',gap:7,marginBottom:4 }}>
-                    <span style={{ fontSize:13 }}>{sportIcon(ev.sport_key)}</span>
-                    <span style={{ fontWeight:700,fontSize:13,color:'var(--text)' }}>{ev.event_name}</span>
-                  </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                    <span style={{ fontSize:11,color:'var(--muted)' }}>
-                      {ev.sport_key?.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
-                    </span>
-                    {i === 0 && (
-                      <span style={{ background:'rgba(239,68,68,.15)',border:'1px solid rgba(239,68,68,.3)',color:'#ef4444',fontSize:10,fontWeight:700,padding:'1px 7px',borderRadius:4 }}>
-                        ● LIVE
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <span style={{ background:g.color, color:'#030711', fontSize:11, fontWeight:800, padding:'3px 10px', borderRadius:6, whiteSpace:'nowrap' }}>{g.label}</span>
-              </div>
-
-              {/* Best pick */}
-              <div style={{ background:'var(--bg3)',borderRadius:8,padding:'9px 12px',marginBottom:6 }}>
-                <div style={{ fontSize:10,color:'var(--muted)',textTransform:'uppercase',letterSpacing:.8,marginBottom:4 }}>Best Pick</div>
-                <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-                  <span style={{ color:'var(--cyan)',fontWeight:800,fontFamily:'var(--mono)',fontSize:14 }}>
-                    {teams[0]} @ {Number(ev.bookie_odds).toFixed(2)}
-                  </span>
-                  <div style={{ background:'rgba(16,185,129,.12)',border:'1px solid rgba(16,185,129,.2)',padding:'3px 10px',borderRadius:6,fontSize:12,fontWeight:700,color:'var(--green)' }}>
-                    EDGE +{evNum.toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-                <span style={{ fontSize:11,color:'var(--muted)',display:'flex',alignItems:'center',gap:4 }}>
-                  ⏰ {fmtTime(ev.commence_time)} AEST
-                </span>
-                <span style={{ fontSize:11,color:'var(--muted)',textTransform:'capitalize' }}>
-                  via {ev.bookie?.replace(/_/g,' ')}
-                </span>
-              </div>
-            </div>
-          );
-        })
       )}
 
-      <div style={{ padding:'12px 16px',borderTop:'1px solid var(--border)' }}>
-        <Link href="/markets">
-          <button className="btn btn-outline" style={{ width:'100%',justifyContent:'center',fontSize:13 }}>
-            View all markets →
-          </button>
-        </Link>
+      {/* Actions */}
+      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+        <button onClick={() => setExpanded(!expanded)} style={{ background:'none',border:'none',color:'#2979ff',fontWeight:700,fontSize:13,cursor:'pointer',padding:0 }}>
+          Show maths {expanded ? '↑' : '↓'}
+        </button>
+        <button onClick={trackBet} style={{ padding:'9px 20px',borderRadius:9,background:tracked?'rgba(0,230,118,.12)':'linear-gradient(135deg,#2979ff,#1e63d9)',border:tracked?'1px solid rgba(0,230,118,.3)':'none',color:tracked?'#00e676':'#fff',fontWeight:700,fontSize:13,cursor:'pointer' }}>
+          {tracked ? '✓ Tracked' : 'Track this bet'}
+        </button>
       </div>
     </div>
   );
 }
 
-/* ─────────────────────── recent wins ─────────────────────── */
-function RecentWins({ bets }: { bets: Bet[] }) {
-  const wins = bets.filter(b => Number(b.profit_aud||0) > 0).slice(0, 6);
+/* ─── recent bets panel ──────────────────────────────────── */
+function RecentBetsPanel({ bets }: { bets: Bet[] }) {
+  const resultDot: Record<string, string> = { win:'#00e676', loss:'#ef4444', pending:'#ffab00' };
+  const profitFmt = (b: Bet) => {
+    const n = Number(b.profit_aud);
+    if (b.result === 'pending') return '—';
+    return `${n >= 0 ? '+' : ''}$${Math.abs(n).toFixed(1)}`;
+  };
+  const profitColor = (b: Bet) => {
+    if (b.result === 'pending') return '#64748b';
+    return Number(b.profit_aud) >= 0 ? '#00e676' : '#ef4444';
+  };
+
   return (
-    <div className="card">
-      <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14 }}>
-        <span style={{ fontWeight:700,fontSize:15 }}>Your Recent Wins</span>
-        <Link href="/clv" style={{ fontSize:13,color:'var(--cyan)' }}>View all →</Link>
-      </div>
-
-      {wins.length === 0 ? (
-        <div style={{ padding:'24px 0',textAlign:'center',color:'var(--muted)',fontSize:13 }}>
-          <div style={{ fontSize:28,marginBottom:8 }}>🎯</div>
-          No wins logged yet — start adding bets in CLV Tracker
+    <div style={{ background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:14,padding:0,overflow:'hidden' }}>
+      <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border)',fontWeight:700,fontSize:14 }}>Recent Bets</div>
+      {bets.slice(0,4).map((b,i) => (
+        <div key={b.id||i} style={{ padding:'12px 16px',borderBottom:i<3?'1px solid var(--border2)':'none',display:'flex',alignItems:'center',gap:10 }}>
+          <span style={{ width:8,height:8,borderRadius:'50%',background:resultDot[b.result]||'#64748b',flexShrink:0,marginTop:2 }} />
+          <div style={{ flex:1,minWidth:0 }}>
+            <div style={{ fontWeight:600,fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.event_name}</div>
+            <div style={{ fontSize:11,color:'var(--muted)',marginTop:1 }}>{b.selection} · {bookieLabel(b.bookie)}</div>
+          </div>
+          <div style={{ textAlign:'right',flexShrink:0 }}>
+            <div style={{ fontFamily:'var(--mono)',fontWeight:700,fontSize:13,color:profitColor(b) }}>{profitFmt(b)}</div>
+          </div>
         </div>
-      ) : (
-        wins.map((b,i) => {
-          const sportGuess = b.event_name.toLowerCase().includes('vs') ||
-            b.event_name.toLowerCase().includes(' v ') ? '🏉' : '🎯';
-          return (
-            <div key={b.id||i} className="win-row">
-              <div style={{ width:32,height:32,borderRadius:9,background:'rgba(249,115,22,.12)',border:'1px solid rgba(249,115,22,.2)',display:'grid',placeItems:'center',fontSize:16,flexShrink:0 }}>
-                {sportGuess}
-              </div>
-              <div style={{ flex:1,minWidth:0 }}>
-                <div style={{ fontWeight:600,fontSize:13,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{b.event_name}</div>
-                <div style={{ fontSize:11,color:'var(--muted)',marginTop:1 }}>
-                  {b.selection} @ {Number(b.odds_taken).toFixed(2)}
-                </div>
-              </div>
-              <div style={{ textAlign:'right',flexShrink:0 }}>
-                <div style={{ fontFamily:'var(--mono)',fontWeight:700,fontSize:14,color:'var(--green)' }}>
-                  +${Number(b.profit_aud).toFixed(0)}
-                </div>
-                <div style={{ fontSize:11,color:'var(--muted)',marginTop:1 }}>{timeAgo(b.placed_at)}</div>
-              </div>
-            </div>
-          );
-        })
-      )}
+      ))}
+      <div style={{ padding:'10px 16px' }}>
+        <Link href="/wins" style={{ fontSize:12,color:'var(--cyan)',fontWeight:700 }}>View all bets →</Link>
+      </div>
     </div>
   );
 }
 
-/* ─────────────────────── upgrade poller ─────────────────── */
+/* ─── top confidence panel ───────────────────────────────── */
+function TopConfidencePanel({ signals }: { signals: EVOpp[] }) {
+  const top = [...signals].sort((a,b) => Number(b.ev_percent)-Number(a.ev_percent)).slice(0,3);
+  return (
+    <div style={{ background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:14,padding:0,overflow:'hidden',marginTop:14 }}>
+      <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border)',fontWeight:700,fontSize:14 }}>Top Confidence Today</div>
+      {top.map((ev,i) => {
+        const score = confidenceFromEV(Number(ev.ev_percent));
+        const color = confColor(score);
+        return (
+          <div key={ev.id||i} style={{ padding:'11px 16px',borderBottom:i<2?'1px solid var(--border2)':'none' }}>
+            <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4 }}>
+              <div>
+                <div style={{ fontWeight:600,fontSize:12,marginBottom:2 }}>{ev.event_name}</div>
+                <div style={{ fontSize:11,color:'var(--muted)' }}>{ev.selection}</div>
+              </div>
+              <span style={{ fontFamily:'var(--mono)',fontWeight:800,fontSize:14,color,flexShrink:0,marginLeft:8 }}>{score}%</span>
+            </div>
+            <div style={{ height:3,background:'rgba(255,255,255,.06)',borderRadius:99,overflow:'hidden' }}>
+              <div style={{ height:'100%',width:`${score}%`,background:color,borderRadius:99 }} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── upgrade poller ─────────────────────────────────────── */
 function UpgradePoller({ onUpgrade }: { onUpgrade:(plan:string)=>void }) {
   const params = useSearchParams();
   useEffect(() => {
@@ -439,9 +327,7 @@ function UpgradePoller({ onUpgrade }: { onUpgrade:(plan:string)=>void }) {
     const t = setInterval(async () => {
       try {
         const r = await API.get('/payments/status');
-        if (r.data.plan && r.data.plan !== 'free') {
-          onUpgrade(r.data.plan); clearInterval(t);
-        }
+        if (r.data.plan && r.data.plan !== 'free') { onUpgrade(r.data.plan); clearInterval(t); }
       } catch { /* ignore */ }
       if (++n >= 12) clearInterval(t);
     }, 5000);
@@ -450,28 +336,26 @@ function UpgradePoller({ onUpgrade }: { onUpgrade:(plan:string)=>void }) {
   return null;
 }
 
-/* ─────────────────────── main dashboard ─────────────────── */
+/* ─── main dashboard ─────────────────────────────────────── */
 function DashboardInner() {
   const [user, setUser]         = useState<User|null>(null);
   const [evOpps, setEvOpps]     = useState<EVOpp[]>([]);
   const [bets, setBets]         = useState<Bet[]>([]);
   const [loading, setLoading]   = useState(true);
   const [upgraded, setUpgraded] = useState(false);
-  const [activeSport, setActiveSport] = useState('soccer_epl');
+  const [activeSport, setActiveSport] = useState('aussierules_afl');
 
   useEffect(() => {
     const u = getUser();
     if (!u) { window.location.href = '/login'; return; }
     setUser(u);
-
     const token = getToken();
     if (token) {
       const s = connectSocket(token);
       s.on('ev:update', (data: EVOpp[]) => setEvOpps(data));
     }
-
     Promise.all([
-      API.get('/ev', { params: { limit: 20 } }),
+      API.get('/ev', { params:{ limit:40 } }),
       API.get('/bets'),
     ]).then(([evRes, betRes]) => {
       setEvOpps(evRes.data.data || []);
@@ -481,8 +365,7 @@ function DashboardInner() {
   }, []);
 
   const handleUpgrade = useCallback((plan: string) => {
-    const token = getToken();
-    const u = getUser();
+    const token = getToken(); const u = getUser();
     if (u && token) { saveAuth(token, { ...u, plan: plan as User['plan'] }); setUser({ ...u, plan: plan as User['plan'] }); }
     setUpgraded(true);
   }, []);
@@ -498,102 +381,106 @@ function DashboardInner() {
     );
   }
 
+  /* signals for the active sport, fall back to demo data */
+  const filtered = evOpps.filter(e => e.sport_key === activeSport);
+  const signals  = filtered.length > 0 ? filtered : FALLBACK_SIGNALS.filter(e => e.sport_key === activeSport);
+  const allSignals = evOpps.length > 0 ? evOpps : FALLBACK_SIGNALS;
+  const displayBets = bets.length > 0 ? bets : FALLBACK_BETS;
+
+  /* stat card values */
+  const settled = displayBets.filter(b => b.result !== 'pending');
+  const wins    = settled.filter(b => b.result === 'win');
+  const profit  = settled.reduce((a,b) => a + Number(b.profit_aud||0), 0);
+  const clvWin  = settled.length ? Math.round((wins.length/settled.length)*100) : 0;
+
+  const sportName = SPORTS_NAV.find(s => s.key === activeSport)?.label || activeSport;
+
   return (
     <div className="app-shell">
-      <OperativePeek page="dashboard" side="right" width={240} bottom={24} fixed />
       <Sidebar user={user} activeSport={activeSport} setActiveSport={setActiveSport} />
 
       <div className="main-area">
-        <TopBar user={user} />
+        <div className="content" style={{ maxWidth:1400 }}>
 
-        <div className="content">
           {/* Upgrade banner */}
           {upgraded && (
-            <div className="alert-success fadein" style={{ marginBottom:16, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div className="alert-success fadein" style={{ marginBottom:16,display:'flex',justifyContent:'space-between',alignItems:'center' }}>
               <span>✅ Plan upgraded! Full access unlocked.</span>
               <button onClick={() => setUpgraded(false)} style={{ background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:18 }}>×</button>
             </div>
           )}
 
-          {/* Stat cards */}
-          <StatCards bets={bets} />
-
-          {/* Tool cards */}
-          <ToolCards />
-
-          {/* GET TODAY'S BEST PICK */}
-          <Link href="/markets">
-            <div style={{ 
-              position:'relative', overflow:'hidden',
-              background:'linear-gradient(135deg,#0a3d20,#053a2a)',border:'1px solid rgba(16,185,129,.5)',borderRadius:14,padding:'30px 28px',marginBottom:18,cursor:'pointer',textAlign:'center',transition:'filter .15s',
-              boxShadow:'0 10px 30px -10px rgba(16,185,129,0.3)'
-            }}
-              onMouseEnter={e=>(e.currentTarget as HTMLElement).style.filter='brightness(1.2)'}
-              onMouseLeave={e=>(e.currentTarget as HTMLElement).style.filter='brightness(1)'}
-            >
-              <div style={{
-                position:'absolute', top:0, left:0, right:0, bottom:0,
-                backgroundImage:'url(https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?auto=format&fit=crop&w=1200&q=80)',
-                backgroundSize:'cover', backgroundPosition:'center 30%', opacity:0.25, mixBlendMode:'overlay'
-              }} />
-              <div style={{ position:'relative', zIndex:1 }}>
-                <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:12,marginBottom:8 }}>
-                  <span style={{ fontSize:28, filter:'drop-shadow(0 0 10px rgba(250,204,21,0.8))' }}>⚡</span>
-                  <span style={{ fontWeight:900,fontSize:24,color:'#fff',letterSpacing:-.5,textShadow:'0 2px 10px rgba(0,0,0,0.8)' }}>GET TODAY'S BEST PICK</span>
-                </div>
-                <div style={{ fontSize:15,color:'rgba(255,255,255,.9)',fontWeight:600,textShadow:'0 1px 3px rgba(0,0,0,0.8)' }}>
-                  One-click green light from our algorithm
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Two column: wins + radar */}
-          <div className="dashboard-panels">
-            <RecentWins bets={bets} />
-            <LiveRadarPanel evOpps={evOpps} />
+          {/* Header */}
+          <div style={{ marginBottom:24 }}>
+            <h1 style={{ fontSize:28,fontWeight:900,letterSpacing:-0.5,marginBottom:4 }}>DASHBOARD</h1>
+            <p style={{ color:'var(--muted)',fontSize:14 }}>G&apos;day, {user?.name?.split(' ')[0] || 'Demo'}. Here&apos;s what the market is showing right now.</p>
           </div>
 
-          {/* Free user upgrade nudge */}
-          {user?.plan === 'free' && (
-            <div style={{ marginTop:16,padding:'14px 18px',background:'linear-gradient(90deg,rgba(41,121,255,.05),rgba(99,102,241,.05))',border:'1px solid rgba(41,121,255,.15)',borderRadius:12,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:12 }}>
-              <div>
-                <div style={{ fontWeight:700,fontSize:14,marginBottom:3 }}>Upgrade to Pro</div>
-                <div style={{ fontSize:13,color:'var(--muted)' }}>Unlock all live edges, arb finder, CLV tracker & alerts</div>
+          {/* 4 stat cards */}
+          <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:24 }}>
+            {[
+              { label:'ACTIVE SIGNALS', value:String(allSignals.length),      sub:'Right now',           color:'var(--cyan)'  },
+              { label:'TOTAL P&L',      value:`${profit>=0?'+':''}$${Math.abs(profit).toFixed(0)}`, sub:'All settled bets', color:profit>=0?'var(--green)':'var(--red)' },
+              { label:'CLV WIN RATE',   value:`${clvWin}%`,                   sub:'Beats closing line',  color:'var(--gold)'  },
+              { label:'BETS TRACKED',   value:String(displayBets.length),     sub:`${wins.length}W · ${settled.length-wins.length}L · ${displayBets.filter(b=>b.result==='pending').length} pending`, color:'var(--text)' },
+            ].map(c => (
+              <div key={c.label} className="stat-card">
+                <div className="label">{c.label}</div>
+                <div className="value" style={{ color:c.color,fontSize:28,marginTop:4 }}>{c.value}</div>
+                <div style={{ fontSize:11,color:'var(--muted)',marginTop:2 }}>{c.sub}</div>
               </div>
-              <Link href="/pricing">
-                <button className="btn btn-primary" style={{ fontSize:13 }}>Upgrade — $19.99/mo →</button>
-              </Link>
-            </div>
-          )}
+            ))}
+          </div>
 
-          {/* Admin Panel */}
+          {/* Two-column: signals + sidebar panels */}
+          <div className="dash-content-grid">
+
+            {/* LEFT: live signals */}
+            <div>
+              <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:16 }}>
+                <h2 style={{ fontSize:18,fontWeight:900,letterSpacing:-.3 }}>LIVE SIGNALS</h2>
+                <span style={{ fontSize:13,color:'var(--muted)' }}>· filtered by {sportName}</span>
+              </div>
+
+              {signals.length === 0 ? (
+                <div style={{ padding:'48px 24px',textAlign:'center',background:'var(--bg2)',borderRadius:14,border:'1px solid var(--border)',color:'var(--muted)' }}>
+                  No signals for {sportName} right now. Check back soon.
+                </div>
+              ) : (
+                <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(380px,1fr))',gap:14 }}>
+                  {signals.slice(0,6).map((ev,i) => <SignalCard key={ev.id||i} ev={ev} />)}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT: recent bets + top confidence */}
+            <div>
+              <RecentBetsPanel bets={displayBets} />
+              <TopConfidencePanel signals={allSignals} />
+            </div>
+          </div>
+
+          {/* Admin panel */}
           {(user as any)?.role === 'admin' && (
             <div style={{ marginTop:24,padding:'20px',background:'rgba(139,92,246,.05)',border:'1px solid rgba(139,92,246,.3)',borderRadius:12 }}>
               <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:12 }}>
                 <span style={{ fontSize:20 }}>👑</span>
                 <span style={{ fontWeight:800,fontSize:16,color:'var(--purple)' }}>Owner Control Panel</span>
               </div>
-              <p style={{ fontSize:13,color:'var(--muted)',marginBottom:16 }}>Grant free Elite access to your friends by entering their email below.</p>
-              
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 const fd = new FormData(e.currentTarget);
                 const email = fd.get('email') as string;
                 if (!email) return;
-                try {
-                  await API.post('/auth/admin/upgrade', { email, plan:'elite' });
-                  alert(`Successfully upgraded ${email} to Elite!`);
-                  (e.target as HTMLFormElement).reset();
-                } catch (err: any) {
-                  alert(`Failed to upgrade: ${err.response?.data?.error || err.message}`);
-                }
+                try { await API.post('/auth/admin/upgrade', { email, plan:'elite' }); alert(`Upgraded ${email} to Elite!`); (e.target as HTMLFormElement).reset(); }
+                catch (err: any) { alert(`Failed: ${err.response?.data?.error || err.message}`); }
               }} style={{ display:'flex',gap:10,maxWidth:400 }}>
-                <input name="email" type="email" placeholder="friend@example.com" required style={{ flex:1,padding:'8px 12px',borderRadius:8,border:'1px solid var(--border)',background:'var(--bg)',color:'var(--text)' }} />
-                <button type="submit" className="btn btn-primary" style={{ background:'var(--purple)',borderColor:'var(--purple)' }}>Upgrade to Elite</button>
+                <input name="email" type="email" placeholder="friend@example.com" required />
+                <button type="submit" className="btn btn-primary" style={{ background:'var(--purple)' }}>Upgrade to Elite</button>
               </form>
             </div>
           )}
+
         </div>
       </div>
     </div>
@@ -602,11 +489,7 @@ function DashboardInner() {
 
 export default function Dashboard() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight:'100vh',display:'grid',placeItems:'center',background:'#080d18' }}>
-        <div className="spinner" />
-      </div>
-    }>
+    <Suspense fallback={<div style={{ minHeight:'100vh',display:'grid',placeItems:'center',background:'#080d18' }}><div className="spinner" /></div>}>
       <UpgradePoller onUpgrade={() => {}} />
       <DashboardInner />
     </Suspense>

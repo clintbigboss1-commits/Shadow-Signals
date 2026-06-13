@@ -1,7 +1,6 @@
 'use strict';
 require('dotenv').config();
 const axios = require('axios');
-const WebSocket = require('ws');
 const {
   canCallAPI,
   recordAPICall,
@@ -10,11 +9,6 @@ const {
   getL2Odds,
   setL2Odds,
 } = require('./cacheManager');
-
-const ODDS_API_PROVIDER = process.env.ODDS_API_PROVIDER || 'boltodds';
-const BOLTODDS_KEY      = process.env.BOLTODDS_KEY || process.env.ODDS_API_KEY;
-const BOLTODDS_WS_URL   = process.env.BOLTODDS_WS_URL  || 'wss://spro.agency/api';
-const BOLTODDS_REST_URL = process.env.BOLTODDS_REST_URL || 'https://spro.agency/api';
 
 const SGO_API_KEY    = process.env.SPORT_GAME_ODDS || '';
 const SGO_BASE       = 'https://api.sportsgameodds.com/v2';
@@ -76,42 +70,31 @@ const SGO_LEAGUES = {
   'golf_pga':             'PGA',
 };
 
-const BOLTODDS_SPORTS = {
-  'EPL':                { key: 'soccer_epl',     name: 'EPL',           emoji: '⚽', priority: 1 },
-  'La Liga':            { key: 'soccer_la_liga', name: 'La Liga',       emoji: '⚽', priority: 1 },
-  'Bundesliga':         { key: 'soccer_bundesliga', name: 'Bundesliga', emoji: '⚽', priority: 1 },
-  'Serie A':            { key: 'soccer_serie_a', name: 'Serie A',       emoji: '⚽', priority: 1 },
-  'Champions League':   { key: 'soccer_ucl',     name: 'UCL',           emoji: '⚽', priority: 1 },
-  'Europa League':      { key: 'soccer_europa',  name: 'Europa League', emoji: '⚽', priority: 2 },
-  'Ligue 1':            { key: 'soccer_ligue_1', name: 'Ligue 1',       emoji: '⚽', priority: 2 },
-  'MLS':                { key: 'soccer_mls',     name: 'MLS',           emoji: '⚽', priority: 2 },
-  'Brazil Serie A':     { key: 'soccer_brazil',  name: 'Brazil Serie A',emoji: '⚽', priority: 2 },
-  'NBA':                { key: 'basketball_nba', name: 'NBA',           emoji: '🏀', priority: 1 },
-  'NFL':                { key: 'americanfootball_nfl', name: 'NFL',  emoji: '🏈', priority: 1 },
-  'MLB':                { key: 'baseball_mlb',   name: 'MLB',           emoji: '⚾', priority: 2 },
-  'NHL':                { key: 'icehockey_nhl',  name: 'NHL',           emoji: '🏒', priority: 2 },
-  'Australian NBL':     { key: 'basketball_nbl', name: 'NBL',           emoji: '🏀', priority: 2 },
-  'UFC':                { key: 'mma_ufc',        name: 'UFC',           emoji: '🥊', priority: 1 },
-  'Boxing':             { key: 'mma_boxing',     name: 'Boxing',        emoji: '🥊', priority: 2 },
-  'Tennis':             { key: 'tennis_atp',     name: 'Tennis',        emoji: '🎾', priority: 2 },
-  'Golf':               { key: 'golf_pga',       name: 'Golf',          emoji: '⛳', priority: 3 },
+const AU_SPORTS = {
+  'soccer_epl':           { name: 'EPL',           emoji: '⚽', priority: 1 },
+  'soccer_la_liga':       { name: 'La Liga',        emoji: '⚽', priority: 1 },
+  'soccer_bundesliga':    { name: 'Bundesliga',     emoji: '⚽', priority: 1 },
+  'soccer_serie_a':       { name: 'Serie A',        emoji: '⚽', priority: 1 },
+  'soccer_ucl':           { name: 'UCL',            emoji: '⚽', priority: 1 },
+  'soccer_europa':        { name: 'Europa League',  emoji: '⚽', priority: 2 },
+  'soccer_ligue_1':       { name: 'Ligue 1',        emoji: '⚽', priority: 2 },
+  'soccer_mls':           { name: 'MLS',            emoji: '⚽', priority: 2 },
+  'soccer_brazil':        { name: 'Brazil Serie A', emoji: '⚽', priority: 2 },
+  'basketball_nba':       { name: 'NBA',            emoji: '🏀', priority: 1 },
+  'americanfootball_nfl': { name: 'NFL',            emoji: '🏈', priority: 1 },
+  'baseball_mlb':         { name: 'MLB',            emoji: '⚾', priority: 2 },
+  'icehockey_nhl':        { name: 'NHL',            emoji: '🏒', priority: 2 },
+  'basketball_nbl':       { name: 'NBL',            emoji: '🏀', priority: 2 },
+  'mma_ufc':              { name: 'UFC',            emoji: '🥊', priority: 1 },
+  'mma_boxing':           { name: 'Boxing',         emoji: '🥊', priority: 2 },
+  'tennis_atp':           { name: 'Tennis',         emoji: '🎾', priority: 2 },
+  'golf_pga':             { name: 'Golf',           emoji: '⛳', priority: 3 },
+  'aussierules_afl':      { name: 'AFL',            emoji: '🏉', priority: 1 },
+  'rugbyleague_nrl':      { name: 'NRL',            emoji: '🏉', priority: 1 },
+  'cricket_big_bash':     { name: 'BBL',            emoji: '🏏', priority: 2 },
+  'cricket_t20':          { name: 'T20I',           emoji: '🏏', priority: 2 },
+  'cricket_odi':          { name: 'ODI',            emoji: '🏏', priority: 2 },
 };
-
-const INTERNAL_TO_BOLTODDS = {};
-for (const [bname, info] of Object.entries(BOLTODDS_SPORTS)) {
-  INTERNAL_TO_BOLTODDS[info.key] = bname;
-}
-
-const AU_SPORTS = {};
-for (const info of Object.values(BOLTODDS_SPORTS)) {
-  AU_SPORTS[info.key] = { name: info.name, emoji: info.emoji, priority: info.priority };
-}
-
-const DEFAULT_SPORTSBOOKS = [
-  'draftkings', 'fanduel', 'betmgm', 'caesars',
-  'espnbet', 'hardrock', 'betonline', 'bovada',
-];
-const DEFAULT_MARKETS = ['Moneyline', 'Spread', 'Total'];
 
 function americanToDecimal(american) {
   if (american === null || american === undefined || american === '') return null;
@@ -122,101 +105,7 @@ function americanToDecimal(american) {
   return null;
 }
 
-function parseOutcomeName(outcomeName) {
-  if (outcomeName.endsWith(' Moneyline')) {
-    return { market: 'h2h', selection: outcomeName.replace(/ Moneyline$/, '').trim() };
-  }
-  if (/^(Over|Under) /i.test(outcomeName)) {
-    return { market: 'totals', selection: outcomeName.trim() };
-  }
-  return { market: 'spreads', selection: outcomeName.trim() };
-}
-
-function fetchFromBoltOdds(boltSportName, opts = {}) {
-  return new Promise((resolve) => {
-    const sportsbooks = opts.sportsbooks || DEFAULT_SPORTSBOOKS;
-    const markets     = opts.markets     || DEFAULT_MARKETS;
-    const timeoutMs   = opts.timeoutMs   || 8000;
-    let settled = false;
-    const finish = (result) => { if (!settled) { settled = true; resolve(result); } };
-
-    const deadline = setTimeout(() => {
-      try { ws.terminate(); } catch (_) {}
-      finish({ events: [], source: 'timeout', callsUsed: 0 });
-    }, timeoutMs);
-
-    const byBook = {};
-    let socketConnected = false;
-    const ws = new WebSocket(`${BOLTODDS_WS_URL}?key=${BOLTODDS_KEY}`);
-
-    ws.on('message', (raw) => {
-      let parsed;
-      try { parsed = JSON.parse(raw.toString()); } catch { return; }
-      const msgs = Array.isArray(parsed) ? parsed : [parsed];
-      for (const msg of msgs) {
-        if (msg.action === 'socket_connected') {
-          socketConnected = true;
-          ws.send(JSON.stringify({
-            action: 'subscribe',
-            filters: { sports: [boltSportName], sportsbooks, markets },
-          }));
-        } else if (msg.action === 'initial_state' && msg.data) {
-          const d = msg.data;
-          const book = (d.sportsbook || 'unknown').toLowerCase();
-          if (!byBook[book]) byBook[book] = [];
-          byBook[book].push(d);
-        }
-      }
-    });
-
-    ws.on('error', (err) => {
-      clearTimeout(deadline);
-      finish({ events: [], source: 'ws-error', callsUsed: 0 });
-    });
-
-    ws.on('close', () => {
-      clearTimeout(deadline);
-      if (!socketConnected) { finish({ events: [], source: 'no-ack', callsUsed: 0 }); return; }
-      const gameMap = {};
-      const internalKey = Object.keys(INTERNAL_TO_BOLTODDS).find(k => INTERNAL_TO_BOLTODDS[k] === boltSportName)
-        || boltSportName.toLowerCase().replace(/\s+/g, '_');
-      for (const [book, payloads] of Object.entries(byBook)) {
-        for (const p of payloads) {
-          const gameKey = p.game || (p.home_team + '__' + p.away_team);
-          if (!gameMap[gameKey]) {
-            gameMap[gameKey] = {
-              id: gameKey,
-              sport_key: internalKey,
-              sport_title: boltSportName,
-              home_team: p.home_team,
-              away_team: p.away_team,
-              commence_time: p.info && p.info.when ? new Date(p.info.when).toISOString() : new Date().toISOString(),
-              bookmakers: {},
-            };
-          }
-          const ev = gameMap[gameKey];
-          if (!ev.bookmakers[book]) ev.bookmakers[book] = { key: book, title: book, markets: [] };
-          const marketMap = {};
-          for (const [outName, outData] of Object.entries(p.outcomes || {})) {
-            if (!outData) continue;
-            const decimalOdds = americanToDecimal(outData.odds);
-            if (decimalOdds === null) continue;
-            const parsed = parseOutcomeName(outName);
-            if (!marketMap[parsed.market]) marketMap[parsed.market] = { key: parsed.market, outcomes: [] };
-            marketMap[parsed.market].outcomes.push({ name: parsed.selection, price: decimalOdds });
-          }
-          for (const [mk, mv] of Object.entries(marketMap)) {
-            ev.bookmakers[book].markets.push(mv);
-          }
-        }
-      }
-      const events = Object.values(gameMap);
-      finish({ events, source: events.length ? 'boltodds-ws' : 'no-events', callsUsed: 1 });
-    });
-  });
-}
-
-// Demo odds — fallback when API plan doesn't include real odds (Trial plan).
+// Demo odds — fallback when no live API data is available.
 // The shape matches what the EV calculator + UI expect, so real odds slot in seamlessly.
 // TO REPLACE: upgrade BoltOdds to a paid plan, or integrate API-FOOTBALL.
 const DEMO_GAMES = {
@@ -308,7 +197,7 @@ function seededRandom(seed) {
 function generateDemoOdds(sportKey) {
   const games = DEMO_GAMES[sportKey] || [];
   const events = [];
-  const sportTitle = BOLTODDS_SPORTS[Object.keys(BOLTODDS_SPORTS).find(k => BOLTODDS_SPORTS[k].key === sportKey)]?.name || sportKey;
+  const sportTitle = AU_SPORTS[sportKey]?.name || sportKey;
 
   for (let i = 0; i < games.length; i++) {
     const g = games[i];
@@ -360,7 +249,7 @@ async function fetchFromTheOddsApi(sportKey) {
   const toaKey = TOA_SPORTS[sportKey];
   if (!toaKey) return { events: [], source: 'unsupported-league', callsUsed: 0 };
 
-  const sportTitle = BOLTODDS_SPORTS[Object.keys(BOLTODDS_SPORTS).find(k => BOLTODDS_SPORTS[k].key === sportKey)]?.name || sportKey;
+  const sportTitle = AU_SPORTS[sportKey]?.name || sportKey;
 
   try {
     const resp = await axios.get(`${TOA_BASE}/sports/${toaKey}/odds`, {
@@ -423,7 +312,7 @@ async function fetchFromSportsGameOdds(sportKey) {
   const leagueID = SGO_LEAGUES[sportKey];
   if (!leagueID) return { events: [], source: 'unsupported-league', callsUsed: 0 };
 
-  const sportTitle = BOLTODDS_SPORTS[Object.keys(BOLTODDS_SPORTS).find(k => BOLTODDS_SPORTS[k].key === sportKey)]?.name || sportKey;
+  const sportTitle = AU_SPORTS[sportKey]?.name || sportKey;
 
   try {
     const { data: resp } = await axios.get(`${SGO_BASE}/events`, {
@@ -544,7 +433,7 @@ async function fetchFromOddsAPI(sportKey) {
   }
 
   const ttl = parseInt(process.env.CACHE_ODDS_TTL || '45');
-  const sportTitle = BOLTODDS_SPORTS[Object.keys(BOLTODDS_SPORTS).find(k => BOLTODDS_SPORTS[k].key === sportKey)]?.name || sportKey;
+  const sportTitle = AU_SPORTS[sportKey]?.name || sportKey;
 
   // ── 0) The Odds API (primary paid source — 100k credits/month) ──────────
   if (TOA_API_KEY && TOA_SPORTS[sportKey] && canCallAPI('theoddsapi')) {
@@ -582,25 +471,7 @@ async function fetchFromOddsAPI(sportKey) {
     }
   }
 
-  // ── 2) BoltOdds WebSocket (fallback) ─────────────────────────────────────
-  const boltName = INTERNAL_TO_BOLTODDS[sportKey];
-  if (boltName && canCallAPI('boltodds')) {
-    console.log(`🌐 Trying BoltOdds WebSocket: ${boltName} (${sportKey})`);
-    try {
-      const result = await fetchFromBoltOdds(boltName);
-      if (result.events && result.events.length > 0) {
-        await recordAPICall('boltodds', 'ws:' + boltName);
-        setL1(l1Key, result.events, ttl);
-        await setL2Odds(sportKey, result.events, ttl * 6, 'boltodds');
-        console.log(`✅ BoltOdds: ${result.events.length} events for ${boltName}`);
-        return { events: result.events, source: 'boltodds', callsUsed: 1 };
-      }
-    } catch (err) {
-      console.warn(`⚠️  BoltOdds error for ${boltName}:`, err.message);
-    }
-  }
-
-  // ── 3) Demo data (last resort) ───────────────────────────────────────────
+  // ── 2) Demo data (last resort) ───────────────────────────────────────────
   const demoEvents = generateDemoOdds(sportKey);
   if (demoEvents.length > 0) {
     setL1(l1Key, demoEvents, ttl);
@@ -610,22 +481,6 @@ async function fetchFromOddsAPI(sportKey) {
   }
 
   return { events: [], source: 'no-data', callsUsed: 0 };
-}
-
-async function verifyBoltOddsKey() {
-  try {
-    const r = await axios.get(BOLTODDS_REST_URL + '/get_info', {
-      params: { key: BOLTODDS_KEY },
-      timeout: 8000,
-    });
-    return {
-      ok: true,
-      sports: r.data && r.data.sports ? r.data.sports : [],
-      sportsbooks: r.data && r.data.sportsbooks ? r.data.sportsbooks : [],
-    };
-  } catch (err) {
-    return { ok: false, error: (err.response && err.response.data && err.response.data.message) || err.message };
-  }
 }
 
 const ESPN_PATHS = {
@@ -689,7 +544,7 @@ async function getActiveSports() {
   const key = 'active-sports';
   const cached = getL1(key);
   if (cached) return cached;
-  const active = Object.keys(BOLTODDS_SPORTS).map(b => BOLTODDS_SPORTS[b].key);
+  const active = Object.keys(AU_SPORTS);
   setL1(key, active, 6 * 3600);
   return active;
 }
@@ -700,9 +555,7 @@ module.exports = {
   fetchSportsDB,
   fetchNBA,
   getActiveSports,
-  verifyBoltOddsKey,
   AU_SPORTS,
-  BOLTODDS_SPORTS,
   americanToDecimal,
   generateDemoOdds,
 };

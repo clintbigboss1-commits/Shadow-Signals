@@ -18,7 +18,6 @@ interface EVOpp {
   commence_time: string;
 }
 
-// AFL/NRL/Cricket/A-League removed — BoltOdds API does not carry these sports
 const SPORTS = [
   { key: 'all',                    label: 'All' },
   { key: 'soccer_epl',             label: 'EPL' },

@@ -8,7 +8,6 @@ const API_BUDGETS = {
   // 100k credits/month plan; each odds request costs ~6 credits (3 markets × 2 regions)
   'theoddsapi':     { free_limit: 16000, soft_limit: 15000, used: 0, month: new Date().getMonth() },
   'sportsgameodds': { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
-  'boltodds':       { free_limit: 10000, soft_limit: 9000, used: 0, month: new Date().getMonth() },
   'thesportsdb':    { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
   'balldontlie':    { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },
   'espn':           { free_limit: Infinity, soft_limit: Infinity, used: 0, month: new Date().getMonth() },

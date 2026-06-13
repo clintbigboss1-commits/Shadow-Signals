@@ -77,7 +77,7 @@ async function run() {
 
   check(ODDS_API_KEY && ODDS_API_KEY !== 'your_odds_api_key_here',
     'ODDS_API_KEY is set',
-    'ODDS_API_KEY missing — get from spro.agency (BoltOdds)');
+    'ODDS_API_KEY missing — get from the-odds-api.com');
 
   if (STRIPE_SK) {
     if (STRIPE_SK.startsWith('sk_live')) ok('STRIPE_SECRET_KEY set — LIVE mode ✅');
@@ -140,34 +140,23 @@ async function run() {
     warn('Skipping DB check — DATABASE_URL not set');
   }
 
-  // ── 3. Odds API ─────────────────────────────────────────────────────────
-  head('3. BoltOdds (spro.agency)');
-  if (ODDS_API_KEY && ODDS_API_KEY !== 'your_odds_api_key_here') {
+  // ── 3. The Odds API ──────────────────────────────────────────────────────
+  head('3. The Odds API (the-odds-api.com)');
+  if (process.env.THE_ODDS_API_KEY) {
     try {
       const axios = require('axios');
-      const r = await axios.get('https://spro.agency/api/get_info', {
-        params: { key: ODDS_API_KEY },
+      const r = await axios.get('https://api.the-odds-api.com/v4/sports', {
+        params: { apiKey: process.env.THE_ODDS_API_KEY },
         timeout: 8000,
       });
-      const sports = r.data?.sports || [];
-      const books  = r.data?.sportsbooks || [];
-      ok(`Connected — ${sports.length} sports, ${books.length} sportsbooks`);
-
-      const supported = ['EPL','NBA','NFL','MLB','UFC','Tennis','Golf','Australian NBL'];
-      const have = supported.filter(s => sports.includes(s));
-      if (have.length === 0) {
-        warn('None of our target sports are on your plan');
-      } else {
-        ok(`Supported sports available: ${have.join(', ')}`);
-      }
-
-      info('BoltOdds does not carry AFL or NRL data — these are hidden in the UI');
+      const sports = Array.isArray(r.data) ? r.data : [];
+      ok(`Connected — ${sports.length} sports available`);
     } catch (err) {
-      fail(`BoltOdds error: ${err.response?.data?.message || err.message}`);
+      fail(`The Odds API error: ${err.response?.data?.message || err.message}`);
       issues++;
     }
   } else {
-    warn('Skipping BoltOdds check — key not set');
+    warn('Skipping The Odds API check — THE_ODDS_API_KEY not set');
   }
 
   // ── 4. Stripe ───────────────────────────────────────────────────────────
