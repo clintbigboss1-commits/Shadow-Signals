@@ -41,24 +41,15 @@ const FEATURES = [
 ];
 
 const SPORTS = [
-  { key: 'aussierules_afl',      label: 'AFL',        sub: 'Australian Football League',
-    photo: 'https://images.unsplash.com/photo-1624880357913-a8539238245b?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'rugbyleague_nrl',      label: 'NRL',        sub: 'National Rugby League',
-    photo: 'https://images.unsplash.com/photo-1562614896-4f49dc2dd2e3?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'soccer_a_league',      label: 'Soccer',     sub: 'A-League · EPL · UCL',
-    photo: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'horse_racing_au',      label: 'Racing',     sub: 'Every AU meet',
-    photo: 'https://images.unsplash.com/photo-1565031491910-e57fac031c41?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'greyhound_racing_au',  label: 'Greyhounds', sub: 'Every track, every night',
-    photo: 'https://images.unsplash.com/photo-1477949954985-22be42cef915?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'mma_ufc',              label: 'UFC / MMA',  sub: 'Every PPV + Fight Night',
-    photo: 'https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'basketball_nba',       label: 'NBA',        sub: 'NBA · NBL',
-    photo: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'americanfootball_nfl', label: 'NFL',        sub: 'Regular + Playoffs',
-    photo: 'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'cricket_t20',          label: 'Cricket',    sub: 'BBL · Tests · ODI · T20',
-    photo: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1200&q=85' },
+  { key: 'aussierules_afl',      label: 'AFL',        sub: 'Australian Football League',  photo: '/sports/afl.jpg' },
+  { key: 'rugbyleague_nrl',      label: 'NRL',        sub: 'National Rugby League',       photo: '/sports/nrl.jpg' },
+  { key: 'soccer_a_league',      label: 'Soccer',     sub: 'A-League · EPL · UCL',        photo: '/sports/soccer.jpg' },
+  { key: 'horse_racing_au',      label: 'Racing',     sub: 'Every AU meet',               photo: '/sports/racing.jpg' },
+  { key: 'greyhound_racing_au',  label: 'Greyhounds', sub: 'Every track, every night',    photo: '/sports/greyhounds.jpg' },
+  { key: 'mma_ufc',              label: 'UFC / MMA',  sub: 'Every PPV + Fight Night',     photo: '/sports/ufc.jpg' },
+  { key: 'basketball_nba',       label: 'NBA',        sub: 'NBA · NBL',                   photo: '/sports/nba.jpg' },
+  { key: 'americanfootball_nfl', label: 'NFL',        sub: 'Regular + Playoffs',          photo: 'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=1200&q=85' },
+  { key: 'cricket_t20',          label: 'Cricket',    sub: 'BBL · Tests · ODI · T20',     photo: '/sports/cricket.jpg' },
 ];
 
 interface PublicStats {
