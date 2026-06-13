@@ -17,7 +17,7 @@ const SGO_BASE       = 'https://api.sportsgameodds.com/v2';
 const TOA_API_KEY  = process.env.ODDS_API_KEY || '';
 const TOA_BASE     = 'https://api.the-odds-api.com/v4';
 const TOA_REGIONS  = process.env.THE_ODDS_API_REGIONS || 'au,eu';
-const TOA_MARKETS  = 'h2h,spreads,totals';
+const TOA_MARKETS  = 'h2h';
 
 // Only sports where our internal key differs from The Odds API key
 const TOA_KEY_OVERRIDES = {
