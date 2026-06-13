@@ -131,6 +131,11 @@ const AU_SPORTS = {
   // Golf
   'golf_the_open_championship_winner':     { name: 'The Open',         emoji: '⛳', priority: 3 },
   'golf_us_open_winner':                   { name: 'US Open Golf',     emoji: '⛳', priority: 3 },
+  // Horse racing & greyhounds
+  'horse_racing_au':                       { name: 'Horse Racing',     emoji: '🏇', priority: 1 },
+  'horse_racing_us':                       { name: 'Horse Racing US',  emoji: '🏇', priority: 2 },
+  'horse_racing_greyhounds_au':            { name: 'Greyhounds AU',    emoji: '🐕', priority: 2 },
+  'horse_racing_greyhounds_us':            { name: 'Greyhounds US',    emoji: '🐕', priority: 3 },
   // Other
   'lacrosse_pll':                          { name: 'PLL',              emoji: '🥍', priority: 3 },
   'politics_us_presidential_election_winner': { name: 'US Election',   emoji: '🗳️', priority: 3 },

@@ -58,6 +58,10 @@ function monthIn(months) {
 // Off-season sports are skipped entirely (a 0-event poll still costs credits).
 // Cadence in minutes; game days (Thu-Sun) poll faster. AU winter codes lead.
 const SPORT_SCHEDULE = [
+  // ── Horse racing & greyhounds — runs year-round ─────────────────────────
+  { key: 'horse_racing_au',                  inSeason: () => true,                              gameDayMin: 10, offDayMin: 20 },
+  { key: 'horse_racing_us',                  inSeason: () => true,                              gameDayMin: 15, offDayMin: 30 },
+  { key: 'horse_racing_greyhounds_au',       inSeason: () => true,                              gameDayMin: 15, offDayMin: 30 },
   // ── AU codes — top priority ──────────────────────────────────────────────
   { key: 'aussierules_afl',                  inSeason: () => monthIn([3,4,5,6,7,8,9]),          gameDayMin: 7,  offDayMin: 20 },
   { key: 'rugbyleague_nrl',                  inSeason: () => monthIn([3,4,5,6,7,8,9,10]),        gameDayMin: 7,  offDayMin: 20 },

@@ -19,6 +19,8 @@ interface BetOption {
   kelly_percent: number;
   confidence: number;
   win_prob?: number;
+  tip_grade?: 'STRONG' | 'SOLID' | 'WEAK' | 'AVOID';
+  reasoning?: string;
 }
 
 interface MultiLeg {
@@ -102,12 +104,22 @@ function fmtTime(dt: string) {
   });
 }
 
-// Confidence colour gradient: red → amber → green → blue
+// Confidence colour: STRONG = gold, SOLID = green, WEAK = amber, AVOID = red
 function confColor(c: number) {
-  if (c >= 80) return '#2979ff';
+  if (c >= 80) return '#ffab00';
   if (c >= 60) return '#00c853';
-  if (c >= 40) return '#ffab00';
+  if (c >= 40) return '#94a3b8';
   return '#ef4444';
+}
+
+function gradeStyle(grade: string | undefined) {
+  switch (grade) {
+    case 'STRONG': return { color: '#030711', bg: '#ffab00', border: 'rgba(255,171,0,.0)' };
+    case 'SOLID':  return { color: '#030711', bg: '#00c853', border: 'rgba(0,200,83,.0)' };
+    case 'WEAK':   return { color: '#94a3b8', bg: 'rgba(148,163,184,.12)', border: 'rgba(148,163,184,.2)' };
+    case 'AVOID':  return { color: '#ef4444', bg: 'rgba(239,68,68,.1)', border: 'rgba(239,68,68,.25)' };
+    default:       return { color: '#64748b', bg: 'rgba(255,255,255,.06)', border: 'rgba(255,255,255,.08)' };
+  }
 }
 
 function bookieLabel(b: string) {
@@ -272,39 +284,83 @@ export default function MatchDetailPage() {
   const aColor = teamColor(event.away_team);
 
   /* ── one bet row, used by singles / props / other ── */
-  const betRow = (b: BetOption, i: number) => (
-    <div key={`${b.market || 'h2h'}-${b.selection}-${i}`} style={{
-      display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-      padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,.05)',
-    }}>
-      <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: '#e2e8f0' }}>{b.selection}</div>
-        <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize', marginTop: 2 }}>
-          {b.market && b.market !== 'h2h' ? `${b.market.replace(/_/g, ' ')} · ` : ''}best price at {bookieLabel(b.bookie)}
+  const betRow = (b: BetOption, i: number) => {
+    const gs = gradeStyle(b.tip_grade);
+    const shouldBack = b.tip_grade === 'STRONG' || b.tip_grade === 'SOLID';
+    return (
+      <div key={`${b.market || 'h2h'}-${b.selection}-${i}`} style={{
+        padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,.05)',
+        background: b.tip_grade === 'STRONG' ? 'rgba(255,171,0,.03)' : 'transparent',
+      }}>
+        {/* Top row: grade + selection + odds */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
+          {/* Grade badge */}
+          <div style={{
+            background: gs.bg, color: gs.color, border: `1px solid ${gs.border}`,
+            fontSize: 10, fontWeight: 900, letterSpacing: 1.2, padding: '3px 10px',
+            borderRadius: 6, flexShrink: 0, alignSelf: 'flex-start', marginTop: 2,
+          }}>
+            {b.tip_grade || '—'}
+          </div>
+
+          {/* Selection name + bookie */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 15, color: '#e2e8f0', marginBottom: 3 }}>{b.selection}</div>
+            <div style={{ fontSize: 11, color: '#475569', textTransform: 'capitalize' }}>
+              {b.market && b.market !== 'h2h' ? `${b.market.replace(/_/g, ' ')} · ` : ''}Best price at {bookieLabel(b.bookie)}
+            </div>
+          </div>
+
+          {/* Odds */}
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 20, color: shouldBack ? '#00e676' : '#94a3b8', lineHeight: 1 }}>
+              {b.odds.toFixed(2)}
+            </div>
+            {b.fair_odds && (
+              <div style={{ fontSize: 10, color: '#475569', marginTop: 2 }}>fair {b.fair_odds.toFixed(2)}</div>
+            )}
+          </div>
         </div>
-      </div>
-      <div style={{ textAlign: 'right', minWidth: 60 }}>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: '#00e676' }}>
-          {b.odds.toFixed(2)}
-        </div>
-        {b.fair_odds && (
-          <div style={{ fontSize: 11, color: '#64748b' }}>fair {b.fair_odds.toFixed(2)}</div>
+
+        {/* Reasoning */}
+        {b.reasoning && (
+          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 10, lineHeight: 1.5, paddingLeft: 2 }}>
+            {b.reasoning}
+          </div>
         )}
-      </div>
-      <div style={{ textAlign: 'right', minWidth: 64 }}>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: b.ev_percent > 0 ? '#00c853' : '#64748b' }}>
-          {b.ev_percent > 0 ? `+${b.ev_percent.toFixed(1)}%` : '—'}
+
+        {/* Metrics row: EV + win prob + stake + confidence + action */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: b.ev_percent > 0 ? '#00c853' : '#475569' }}>
+                {b.ev_percent > 0 ? `+${b.ev_percent.toFixed(1)}%` : '—'}
+              </div>
+              <div style={{ fontSize: 10, color: '#334155' }}>edge</div>
+            </div>
+            {b.win_prob !== undefined && (
+              <div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#94a3b8' }}>
+                  {b.win_prob.toFixed(0)}%
+                </div>
+                <div style={{ fontSize: 10, color: '#334155' }}>win prob</div>
+              </div>
+            )}
+            <div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#2979ff' }}>
+                ${stakeFor(b.kelly_percent).toFixed(0)}
+              </div>
+              <div style={{ fontSize: 10, color: '#334155' }}>suggested</div>
+            </div>
+          </div>
+          <div style={{ flex: 1, minWidth: 120 }}>
+            <ConfidenceBar value={b.confidence} />
+          </div>
+          <BackButton label={shouldBack ? 'Back this' : 'Log anyway'} onBack={() => logBet(b, event.event_name, event.commence_time, event.sport_key)} />
         </div>
-        <div style={{ fontSize: 10, color: '#475569' }}>edge</div>
       </div>
-      <div style={{ textAlign: 'right', minWidth: 70 }}>
-        <div style={{ fontWeight: 700, fontSize: 13, color: '#2979ff' }}>${stakeFor(b.kelly_percent).toFixed(0)}</div>
-        <div style={{ fontSize: 10, color: '#475569' }}>suggested</div>
-      </div>
-      <ConfidenceBar value={b.confidence} />
-      <BackButton label="Back" onBack={() => logBet(b, event.event_name, event.commence_time, event.sport_key)} />
-    </div>
-  );
+    );
+  };
 
   return (
     <ProtectedRoute>
@@ -332,15 +388,18 @@ export default function MatchDetailPage() {
               </span>
               <span style={{ color: '#334155' }}>·</span>
               <span style={{ fontSize: 13, color: '#94a3b8' }}>{fmtTime(event.commence_time)} AEST</span>
-              {our_pick && (
-                <span style={{
-                  background: 'rgba(0,230,118,.12)', border: '1px solid rgba(0,230,118,.35)',
-                  color: '#00e676', fontSize: 11, fontWeight: 800, letterSpacing: .8,
-                  padding: '4px 12px', borderRadius: 20,
-                }}>
-                  ✓ OUR PICK: {our_pick.selection} @ {our_pick.odds.toFixed(2)}
-                </span>
-              )}
+              {our_pick && (() => {
+                const gs = gradeStyle(our_pick.tip_grade);
+                return (
+                  <span style={{
+                    background: gs.bg, border: `1px solid ${gs.border}`,
+                    color: gs.color, fontSize: 11, fontWeight: 900, letterSpacing: .8,
+                    padding: '4px 14px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 6,
+                  }}>
+                    {our_pick.tip_grade === 'STRONG' ? '⚡' : '✓'} {our_pick.tip_grade || 'PICK'}: {our_pick.selection} @ {our_pick.odds.toFixed(2)}
+                  </span>
+                );
+              })()}
             </div>
           </div>
         </div>

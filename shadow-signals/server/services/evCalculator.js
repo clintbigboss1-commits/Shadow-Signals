@@ -33,8 +33,14 @@ const EV_MIN_PERCENT = 3.0;
 const EV_MAX_PERCENT = 20;
 // Price more than 2.2x market median = stale or error price, discard.
 const OUTLIER_RATIO = 2.2;
-// Need at least 4 books pricing a selection to estimate fair value reliably.
-const MIN_BOOKS_PER_SELECTION = 4;
+// Need at least N books pricing a selection to estimate fair value reliably.
+// Racing markets have many runners — use a lower floor so thin runners are
+// skipped individually rather than disqualifying the whole race.
+const MIN_BOOKS_DEFAULT = 4;
+const MIN_BOOKS_RACING  = 2;
+function minBooksForSport(sportKey) {
+  return (sportKey || '').startsWith('horse_racing') ? MIN_BOOKS_RACING : MIN_BOOKS_DEFAULT;
+}
 
 function median(values) {
   const s = [...values].sort((a, b) => a - b);
@@ -141,21 +147,34 @@ async function computeEVFromCache(sportKey = null) {
       )];
       if (selections.length < 2) continue;
 
-      // Per-selection market medians — used to spot stale outlier prices
+      // Per-selection market medians — used to spot stale outlier prices.
+      // For racing, thin runners are dropped individually; for team sports
+      // thin coverage on any outcome means we can't trust the fair-odds calc.
+      const minBooks = minBooksForSport(event.sport_key);
+      const isRacing = (event.sport_key || '').startsWith('horse_racing');
       const medians = {};
-      let thinMarket = false;
+      const thinSelections = new Set();
       for (const sel of selections) {
         const prices = Object.values(event.bookmakers).map(b => b[sel]).filter(Boolean);
-        if (prices.length < MIN_BOOKS_PER_SELECTION) { thinMarket = true; break; }
-        medians[sel] = median(prices);
+        if (prices.length < minBooks) {
+          if (isRacing) { thinSelections.add(sel); continue; }
+          else { medians[sel] = null; }
+        } else {
+          medians[sel] = median(prices);
+        }
       }
-      if (thinMarket) continue;
+      // For non-racing: skip event if any outcome is thin (can't model the full market)
+      if (!isRacing && Object.values(medians).some(v => v === null)) continue;
+      // For racing: need at least 2 well-priced runners to proceed
+      const goodSelections = selections.filter(s => !thinSelections.has(s) && medians[s]);
+      if (goodSelections.length < 2) continue;
 
-      // Proper no-vig over the FULL outcome set (handles 2-way and 3-way)
-      const sharpVector = selections.map(sel => {
+      // Proper no-vig over the well-covered outcome set only
+      const activeSelections = isRacing ? goodSelections : selections;
+      const sharpVector = activeSelections.map(sel => {
         const p = getSharpPrice(event.bookmakers, sel);
         // A "sharp" price that is itself an outlier is not sharp — fall back to median
-        if (p && p > medians[sel] * OUTLIER_RATIO) return medians[sel];
+        if (p && medians[sel] && p > medians[sel] * OUTLIER_RATIO) return medians[sel];
         return p;
       });
       if (sharpVector.some(p => !p)) continue;
@@ -165,8 +184,8 @@ async function computeEVFromCache(sportKey = null) {
       const modelData = modelPredByEvent.get(event.event_id);
 
       // Best +EV per (event, selection) — one card per real opportunity
-      for (let i = 0; i < selections.length; i++) {
-        const sel = selections[i];
+      for (let i = 0; i < activeSelections.length; i++) {
+        const sel = activeSelections[i];
         const consensusFairOdds = 1 / fairProbs[i];
 
         // Determine fair odds and signal source

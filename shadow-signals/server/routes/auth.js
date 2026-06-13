@@ -8,7 +8,10 @@ const { requireAuth } = require('../middleware/auth');
 const emails = require('../services/emails');
 const { createNotification } = require('../services/notifications');
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+const ADMIN_EMAILS = [
+  'clintbigboss1@gmail.com', // owner — always admin
+  ...(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
+];
 
 // Reset tokens live here, not on users — idempotent bootstrap on startup.
 // users.id is a UUID; drop any earlier table created with an integer column.

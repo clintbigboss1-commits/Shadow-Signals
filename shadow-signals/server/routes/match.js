@@ -13,6 +13,35 @@ function confidenceScore(winProb, evPercent = 0) {
   return Math.round(Math.min(96, Math.max(5, raw)));
 }
 
+// Tiered grade for display: anchored on win prob + EV combined confidence.
+// 80-96 = STRONG, 60-79 = SOLID, 40-59 = WEAK, <40 = AVOID
+function tipGrade(conf) {
+  if (conf >= 80) return 'STRONG';
+  if (conf >= 60) return 'SOLID';
+  if (conf >= 40) return 'WEAK';
+  return 'AVOID';
+}
+
+// Single-sentence reasoning punters can read in 2 seconds.
+function tipReasoning(winProb, evPct, conf, bookie, signalSource) {
+  const winPct = Math.round(winProb * 100);
+  const isSharp = signalSource && signalSource.startsWith('model_');
+  const bookName = (bookie || '').replace(/_/g, ' ').split(' ')[0];
+
+  if (conf >= 80) {
+    if (evPct >= 8) return `${winPct}% win probability — ${bookName} is pricing this ${evPct.toFixed(1)}% above fair value. ${isSharp ? 'Our model agrees.' : 'Strong consensus across books.'}`;
+    return `${winPct}% win probability with consistent pricing across bookmakers. ${isSharp ? 'Model-backed pick.' : 'High-confidence consensus.'}`;
+  }
+  if (conf >= 60) {
+    if (evPct >= 3) return `${winPct}% implied win chance. Mild price edge of +${evPct.toFixed(1)}% at ${bookName} — worth considering at reduced stake.`;
+    return `${winPct}% implied win chance. No price edge, but solid underlying probability.`;
+  }
+  if (conf >= 40) {
+    return `${winPct}% win probability — below the threshold for a confident recommendation. Marginal or no price edge.`;
+  }
+  return `${winPct}% implied win chance — market prices this as an underdog. No edge detected; avoid or pass.`;
+}
+
 const MULTI_NAMES = { 2: 'Power Double', 3: 'Treble', 4: '4-Leg Multi', 5: '5-Leg Multi' };
 
 // GET /api/match/:eventId — everything the match detail page needs
@@ -80,6 +109,19 @@ router.get('/:eventId', requireAuth, async (req, res) => {
       }
     }
 
+    // Resolve signal source for each selection (model vs consensus)
+    const signalSourceMap = {};
+    try {
+      const evRows = await db.query(
+        `SELECT DISTINCT ON (selection) selection, source
+         FROM ev_opportunities
+         WHERE event_id = $1 AND is_active = TRUE AND expires_at > NOW()
+         ORDER BY selection, ev_percent DESC`,
+        [eventId]
+      );
+      for (const r of evRows.rows) signalSourceMap[r.selection] = r.source;
+    } catch (_) {}
+
     // Singles: best price per selection, EV against fair
     const singles = selections.map(sel => {
       let best = null;
@@ -91,6 +133,8 @@ router.get('/:eventId', requireAuth, async (req, res) => {
       const fair = fairBySelection[sel] || null;
       const ev = fair ? calcEVPercent(best.odds, fair) : 0;
       const winProb = fair ? 1 / fair : 1 / best.odds;
+      const conf = confidenceScore(winProb, ev);
+      const src = signalSourceMap[sel] || 'consensus_v1';
       return {
         selection: sel,
         bookie: best.bookie,
@@ -98,8 +142,10 @@ router.get('/:eventId', requireAuth, async (req, res) => {
         fair_odds: fair ? parseFloat(fair.toFixed(3)) : null,
         ev_percent: parseFloat(ev.toFixed(2)),
         kelly_percent: fair ? kellyFraction(best.odds, fair) : 0,
-        confidence: confidenceScore(winProb, ev),
+        confidence: conf,
         win_prob: parseFloat((winProb * 100).toFixed(1)),
+        tip_grade: tipGrade(conf),
+        reasoning: tipReasoning(winProb, ev, conf, best.bookie, src),
       };
     }).filter(Boolean).sort((a, b) => b.ev_percent - a.ev_percent);
 
@@ -185,13 +231,17 @@ router.get('/:eventId', requireAuth, async (req, res) => {
         const fair = fairProbs ? 1 / fairProbs[i] : null;
         const ev = fair ? calcEVPercent(best.odds, fair) : 0;
         const winProb = fair ? 1 / fair : 1 / best.odds;
+        const conf = confidenceScore(winProb, ev);
         const bet = {
           market, selection: sel,
           bookie: best.bookie, odds: best.odds,
           fair_odds: fair ? parseFloat(fair.toFixed(3)) : null,
           ev_percent: parseFloat(ev.toFixed(2)),
           kelly_percent: fair ? kellyFraction(best.odds, fair) : 0,
-          confidence: confidenceScore(winProb, ev),
+          confidence: conf,
+          win_prob: parseFloat((winProb * 100).toFixed(1)),
+          tip_grade: tipGrade(conf),
+          reasoning: tipReasoning(winProb, ev, conf, best.bookie, null),
         };
         if (/player|anytime|scorer|disposal|goal_scorer|try/i.test(market)) playerProps.push(bet);
         else otherBets.push(bet);

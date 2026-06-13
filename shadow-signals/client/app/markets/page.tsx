@@ -102,8 +102,24 @@ function sportMeta(key: string): { emoji: string; label: string } {
     golf_pga:                              { emoji: '⛳', label: 'Golf' },
     lacrosse_pll:                          { emoji: '🥍', label: 'PLL' },
     politics_us_presidential_election_winner: { emoji: '🗳️', label: 'US Election' },
+    horse_racing_au:                       { emoji: '🏇', label: 'Horse Racing' },
+    horse_racing_us:                       { emoji: '🏇', label: 'Horse Racing US' },
+    horse_racing_greyhounds_au:            { emoji: '🐕', label: 'Greyhounds' },
+    horse_racing_greyhounds_us:            { emoji: '🐕', label: 'Greyhounds US' },
   };
   return m[key] || { emoji: '🏆', label: key.replace(/_/g, ' ').toUpperCase() };
+}
+
+// Derive confidence score (mirrors server logic) so grade is consistent everywhere
+function localConfidence(winProb: number, evPct: number) {
+  return Math.round(Math.min(96, Math.max(5, winProb * 100 + Math.min(Math.max(evPct, 0), 12) * 2)));
+}
+
+function localGrade(conf: number) {
+  if (conf >= 80) return 'STRONG';
+  if (conf >= 60) return 'SOLID';
+  if (conf >= 40) return 'WEAK';
+  return 'AVOID';
 }
 
 function teamColor(name: string) {
@@ -182,6 +198,10 @@ const SPORT_TABS = [
   // Tennis / Golf
   { key: 'tennis_wta_queens_club_champ',     label: 'Tennis',      emoji: '🎾' },
   { key: 'golf_us_open_winner',              label: 'Golf',        emoji: '⛳' },
+  // Horse racing
+  { key: 'horse_racing_au',                  label: 'Horse Racing',emoji: '🏇' },
+  { key: 'horse_racing_us',                  label: 'Racing US',   emoji: '🏇' },
+  { key: 'horse_racing_greyhounds_au',       label: 'Dogs',        emoji: '🐕' },
 ];
 
 /* ─── Bet Slip types ──────────────────────────────────────────────────── */
@@ -302,29 +322,41 @@ function GameCard({
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <SportIcon sportKey={game.sport_key} name={team} color={color} size={30} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                {/* Team name + win prob + EV badge */}
+                {/* Team name + win prob + grade badge */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: pick ? 5 : 0 }}>
-                  <span style={{ fontWeight: pick ? 800 : 600, fontSize: 13, color: pick ? '#fff' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130 }}>{team}</span>
+                  <span style={{ fontWeight: pick ? 800 : 600, fontSize: 13, color: pick ? '#fff' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 110 }}>{team}</span>
                   {winProb !== null && (
                     <span style={{ fontSize: 10, fontWeight: 700, color: '#334155', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.06)', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
-                      {winProb}% win
+                      {winProb}%
                     </span>
                   )}
-                  {pick && (
-                    <span style={{ fontSize: 10, fontWeight: 900, color: evPct >= 8 ? '#ffab00' : '#00e676', flexShrink: 0 }}>
-                      +{evPct.toFixed(1)}% EV
-                    </span>
-                  )}
+                  {pick && (() => {
+                    const wp = pick.fair_odds ? 1 / pick.fair_odds : 0.5;
+                    const conf = localConfidence(wp, evPct);
+                    const grade = localGrade(conf);
+                    const gradeColors: Record<string, [string, string]> = {
+                      STRONG: ['#ffab00', 'rgba(255,171,0,.15)'],
+                      SOLID:  ['#00c853', 'rgba(0,200,83,.12)'],
+                      WEAK:   ['#94a3b8', 'rgba(148,163,184,.1)'],
+                      AVOID:  ['#ef4444', 'rgba(239,68,68,.1)'],
+                    };
+                    const [fg, bg] = gradeColors[grade] || ['#64748b', 'rgba(255,255,255,.06)'];
+                    return (
+                      <span style={{ fontSize: 9, fontWeight: 900, color: fg, background: bg, padding: '1px 6px', borderRadius: 4, letterSpacing: .8, flexShrink: 0 }}>
+                        {grade}
+                      </span>
+                    );
+                  })()}
                 </div>
 
-                {/* Confidence bar + bookie name */}
+                {/* EV bar + bookie name */}
                 {pick && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${Math.min(evPct / 12 * 100, 100)}%`, background: barColor, borderRadius: 2 }} />
                     </div>
-                    <span style={{ fontSize: 9, color: '#334155', flexShrink: 0, textTransform: 'capitalize' }}>
-                      {pick.bookie?.replace(/_/g, ' ').replace('betfair ex au', 'betfair').split(' ')[0]}
+                    <span style={{ fontSize: 9, color: '#334155', flexShrink: 0 }}>
+                      +{evPct.toFixed(1)}% · {pick.bookie?.replace(/_/g, ' ').split(' ')[0]}
                     </span>
                   </div>
                 )}
@@ -400,6 +432,201 @@ function GameCard({
         <span style={{ fontSize: 11, color: '#1e3a5f' }}>{fmtTime(game.commence_time)} AEST</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 11, color: '#1e3a5f' }}>{game.bookmaker_count} books</span>
+          {picks.length > 0 && (
+            <span style={{ fontSize: 10, fontWeight: 800, color: isShadowPick ? '#ffab00' : '#00e676', background: isShadowPick ? 'rgba(255,171,0,.1)' : 'rgba(0,230,118,.1)', padding: '1px 7px', borderRadius: 4 }}>
+              {picks.length} signal{picks.length > 1 ? 's' : ''}
+            </span>
+          )}
+          <span style={{ fontSize: 11, color: '#2979ff', fontWeight: 700 }}>Analyse →</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Racing helpers ─────────────────────────────────────────────── */
+
+function isRacingSport(key: string) {
+  return key.startsWith('horse_racing') || key.includes('greyhound');
+}
+
+/* ─── Race Card — multi-runner layout for horse racing / greyhounds ── */
+function RaceCard({
+  game, onOpen, onAddToSlip, inSlip,
+}: {
+  game: Game;
+  onOpen: () => void;
+  onAddToSlip: (item: SlipItem) => void;
+  inSlip: (sel: string) => boolean;
+}) {
+  const meta = sportMeta(game.sport_key);
+  const picks = game.ev_picks || [];
+  const ms = msUntil(game.commence_time);
+  const isLive = ms < 0;
+  const isSoon = ms > 0 && ms < 3600000;
+  const hasEdge = picks.length > 0;
+  const isShadowPick = picks.some(p => p.ev_percent >= 8);
+
+  const raceName = game.home_team && game.away_team && game.home_team !== game.away_team
+    ? game.home_team
+    : (game.home_team || 'Race');
+
+  // Compute approximate normalised win probabilities from best_odds
+  const allRunners = game.best_odds;
+  const sumInv = allRunners.reduce((acc, r) => acc + 1 / r.odds, 0);
+
+  const runnersWithData = allRunners.map(r => {
+    const pick = picks.find(p => p.selection === r.selection);
+    const rawProb = (1 / r.odds) / sumInv;
+    const winProb = pick
+      ? Math.round((1 / pick.fair_odds) * 100)
+      : Math.round(rawProb * 100);
+    return { ...r, pick, winProb };
+  }).sort((a, b) => {
+    if (a.pick && !b.pick) return -1;
+    if (!a.pick && b.pick) return 1;
+    return b.winProb - a.winProb;
+  });
+
+  const MAX_SHOW = 6;
+  const displayed = runnersWithData.slice(0, MAX_SHOW);
+  const hiddenCount = runnersWithData.length - MAX_SHOW;
+
+  const accentColor = isShadowPick ? '#ffab00' : hasEdge ? '#00e676' : '#2979ff';
+  const accentLeft = `3px solid ${isShadowPick ? '#ffab00' : hasEdge ? '#00e676' : 'transparent'}`;
+  const cardBorder = isShadowPick ? '1px solid rgba(255,171,0,.3)' : hasEdge ? '1px solid rgba(0,230,118,.2)' : '1px solid rgba(255,255,255,.07)';
+
+  return (
+    <div
+      onClick={onOpen}
+      style={{
+        background: '#0d1829',
+        border: cardBorder,
+        borderLeft: accentLeft,
+        borderRadius: 14,
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'transform .15s, box-shadow .15s',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 40px rgba(0,0,0,.5)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.transform = '';
+        (e.currentTarget as HTMLElement).style.boxShadow = '';
+      }}
+    >
+      {/* Shadow pick banner */}
+      {isShadowPick && (
+        <div style={{ background: 'linear-gradient(90deg,rgba(255,171,0,.18),rgba(255,171,0,.04))', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,171,0,.2)' }}>
+          <span style={{ fontSize: 11, fontWeight: 900, color: '#ffab00', letterSpacing: 1 }}>⚡ SHADOW PICK</span>
+          <span style={{ fontSize: 10, color: 'rgba(255,171,0,.55)' }}>Signals aligned · high confidence</span>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ padding: '9px 14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 13 }}>{meta.emoji}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>{meta.label}</span>
+          {isLive  && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4 }}>LIVE</span>}
+          {isSoon && !isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ffab00', background: 'rgba(255,171,0,.1)', border: '1px solid rgba(255,171,0,.25)', padding: '1px 7px', borderRadius: 4 }}>SOON</span>}
+        </div>
+        <span style={{ fontSize: 11, color: '#2d3f5c', fontWeight: 600 }}>{countdown(game.commence_time)}</span>
+      </div>
+
+      {/* Race name */}
+      <div style={{ padding: '8px 14px 6px', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{raceName}</div>
+        <div style={{ fontSize: 10, color: '#334155', marginTop: 2 }}>{allRunners.length} runners · {game.bookmaker_count} books</div>
+      </div>
+
+      {/* Runner rows */}
+      <div style={{ padding: '6px 0' }}>
+        {displayed.map((runner, idx) => {
+          const isTop = idx === 0;
+          const pick = runner.pick;
+          const evPct = pick?.ev_percent ?? 0;
+          const barColor = evPct >= 8 ? '#ffab00' : '#00e676';
+          const isInSlip = inSlip(runner.selection);
+
+          return (
+            <div
+              key={runner.selection}
+              style={{ padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 10, background: pick ? 'rgba(0,230,118,.025)' : isTop ? 'rgba(41,121,255,.03)' : 'transparent', borderBottom: idx < displayed.length - 1 ? '1px solid rgba(255,255,255,.03)' : 'none' }}
+            >
+              {/* Position badge */}
+              <div style={{ width: 20, height: 20, borderRadius: 4, background: isTop ? 'rgba(41,121,255,.15)' : 'rgba(255,255,255,.04)', display: 'grid', placeItems: 'center', fontSize: 9, fontWeight: 800, color: isTop ? accentColor : '#334155', flexShrink: 0 }}>
+                {isTop ? '★' : idx + 1}
+              </div>
+
+              {/* Runner name + win prob */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: pick ? 4 : 0 }}>
+                  <span style={{ fontSize: 12, fontWeight: pick ? 800 : 600, color: pick ? '#fff' : isTop ? '#cbd5e1' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
+                    {runner.selection}
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#334155', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.06)', padding: '1px 5px', borderRadius: 3, flexShrink: 0 }}>
+                    {runner.winProb}%
+                  </span>
+                  {pick && (
+                    <span style={{ fontSize: 10, fontWeight: 900, color: evPct >= 8 ? '#ffab00' : '#00e676', flexShrink: 0 }}>
+                      +{evPct.toFixed(1)}% EV
+                    </span>
+                  )}
+                </div>
+                {pick && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(evPct / 12 * 100, 100)}%`, background: barColor, borderRadius: 2 }} />
+                    </div>
+                    <span style={{ fontSize: 9, color: '#334155', flexShrink: 0 }}>{pick.bookie?.replace(/_/g, ' ').split(' ')[0]}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Odds button */}
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  onAddToSlip({
+                    event_id: game.event_id, event_name: raceName,
+                    sport_key: game.sport_key, selection: runner.selection,
+                    bookie: runner.bookmaker, odds: runner.odds,
+                    fair_odds: pick?.fair_odds,
+                    ev_percent: pick?.ev_percent,
+                    kelly_percent: pick?.kelly_percent,
+                    commence_time: game.commence_time,
+                  });
+                }}
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14,
+                  color: isInSlip ? '#2979ff' : pick ? (evPct >= 8 ? '#ffab00' : '#00e676') : '#64748b',
+                  background: isInSlip ? 'rgba(41,121,255,.12)' : pick ? `rgba(${evPct >= 8 ? '255,171,0' : '0,230,118'},.1)` : 'rgba(255,255,255,.05)',
+                  border: `1px solid ${isInSlip ? 'rgba(41,121,255,.3)' : pick ? `rgba(${evPct >= 8 ? '255,171,0' : '0,230,118'},.25)` : 'rgba(255,255,255,.08)'}`,
+                  borderRadius: 8, padding: '5px 10px', cursor: 'pointer', minWidth: 58, textAlign: 'center', flexShrink: 0,
+                }}
+              >
+                {runner.odds.toFixed(2)}
+              </button>
+            </div>
+          );
+        })}
+
+        {hiddenCount > 0 && (
+          <div style={{ padding: '6px 14px', fontSize: 11, color: '#334155', textAlign: 'center' }}>
+            +{hiddenCount} more runners — click to view all
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.2)' }}>
+        <span style={{ fontSize: 11, color: '#1e3a5f' }}>{fmtTime(game.commence_time)} AEST</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {picks.length > 0 && (
             <span style={{ fontSize: 10, fontWeight: 800, color: isShadowPick ? '#ffab00' : '#00e676', background: isShadowPick ? 'rgba(255,171,0,.1)' : 'rgba(0,230,118,.1)', padding: '1px 7px', borderRadius: 4 }}>
               {picks.length} signal{picks.length > 1 ? 's' : ''}
@@ -820,13 +1047,23 @@ export default function MarketsPage() {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: 14 }}>
                   {games.map(game => (
-                    <GameCard
-                      key={game.event_id}
-                      game={game}
-                      onOpen={() => router.push(`/match/${encodeURIComponent(game.event_id)}`)}
-                      onAddToSlip={addToSlip}
-                      inSlip={sel => inSlip(game.event_id, sel)}
-                    />
+                    isRacingSport(game.sport_key) ? (
+                      <RaceCard
+                        key={game.event_id}
+                        game={game}
+                        onOpen={() => router.push(`/match/${encodeURIComponent(game.event_id)}`)}
+                        onAddToSlip={addToSlip}
+                        inSlip={sel => inSlip(game.event_id, sel)}
+                      />
+                    ) : (
+                      <GameCard
+                        key={game.event_id}
+                        game={game}
+                        onOpen={() => router.push(`/match/${encodeURIComponent(game.event_id)}`)}
+                        onAddToSlip={addToSlip}
+                        inSlip={sel => inSlip(game.event_id, sel)}
+                      />
+                    )
                   ))}
                 </div>
               </div>

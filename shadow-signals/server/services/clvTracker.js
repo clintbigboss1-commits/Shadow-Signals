@@ -1,6 +1,9 @@
 'use strict';
 const { db } = require('../db');
-const { getSharpPrice, removeVig, median } = require('./evCalculator');
+
+// Lazy require breaks the evCalculator ↔ clvTracker circular dependency.
+// Both modules are fully initialised by the time any function here is called.
+function ev() { return require('./evCalculator'); }
 
 const SHARP_BOOKS = ['betfair_ex_au', 'pinnacle'];
 const OUTLIER_RATIO = 2.2;
@@ -73,12 +76,12 @@ async function captureClosingLines() {
     for (const sel of selections) {
       const prices = Object.values(bookmakerMap).map(b => b[sel]).filter(Boolean);
       if (prices.length < 2) { thin = true; break; }
-      medians[sel] = median(prices);
+      medians[sel] = ev().median(prices);
     }
     if (thin) continue;
 
     // Get sharp closing price for the specific selection
-    const closingRaw = getSharpPrice(bookmakerMap, row.selection);
+    const closingRaw = ev().getSharpPrice(bookmakerMap, row.selection);
     if (!closingRaw) continue;
     const closingOdds = (closingRaw > medians[row.selection] * OUTLIER_RATIO)
       ? medians[row.selection]
@@ -86,11 +89,11 @@ async function captureClosingLines() {
 
     // Compute closing fair odds via de-vig over all selections
     const sharpVector = selections.map(sel => {
-      const p = getSharpPrice(bookmakerMap, sel);
+      const p = ev().getSharpPrice(bookmakerMap, sel);
       if (!p) return medians[sel];
       return p > medians[sel] * OUTLIER_RATIO ? medians[sel] : p;
     });
-    const fairProbs = removeVig(sharpVector);
+    const fairProbs = ev().removeVig(sharpVector);
     const selIdx = selections.indexOf(row.selection);
     if (selIdx === -1 || !fairProbs[selIdx]) continue;
 
