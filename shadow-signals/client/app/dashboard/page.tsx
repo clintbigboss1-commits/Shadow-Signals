@@ -26,14 +26,15 @@ interface Bet {
 
 /* ─── constants ──────────────────────────────────────────── */
 const SPORTS_NAV = [
-  { key:'aussierules_afl',     label:'AFL',        icon:'🏈', grad:'linear-gradient(135deg,#003087 0%,#FFD700 100%)', accent:'#FFD700',   bg:'rgba(0,48,135,.25)',   svg:'afl'  },
-  { key:'rugbyleague_nrl',     label:'NRL',        icon:'🏉', grad:'linear-gradient(135deg,#00843D 0%,#00B140 100%)', accent:'#00e676',   bg:'rgba(0,132,61,.25)',   svg:'nrl'  },
-  { key:'soccer_a_league',     label:'A-League',   icon:'⚽', grad:'linear-gradient(135deg,#1a1a2e 0%,#e94560 100%)', accent:'#e94560',   bg:'rgba(233,69,96,.2)',   svg:'soccer'},
-  { key:'horse_racing_au',     label:'Racing',     icon:'🐎', grad:'linear-gradient(135deg,#1a0a00 0%,#c0392b 100%)', accent:'#ff6b35',   bg:'rgba(192,57,43,.2)',   svg:'racing'},
-  { key:'greyhound_racing_au', label:'Greyhounds', icon:'🐕', grad:'linear-gradient(135deg,#0d0d0d 0%,#6c63ff 100%)', accent:'#6c63ff',   bg:'rgba(108,99,255,.2)',  svg:'dogs' },
-  { key:'mma_ufc',             label:'UFC',        icon:'🥊', grad:'linear-gradient(135deg,#0d0d0d 0%,#d4001a 100%)', accent:'#ff1744',   bg:'rgba(212,0,26,.2)',    svg:'ufc'  },
-  { key:'basketball_nba',      label:'NBA',        icon:'🏀', grad:'linear-gradient(135deg,#17408b 0%,#f26522 100%)', accent:'#f26522',   bg:'rgba(242,101,34,.2)',  svg:'nba'  },
-  { key:'cricket_t20',         label:'Cricket',    icon:'🏏', grad:'linear-gradient(135deg,#1a2a1a 0%,#2ecc71 100%)', accent:'#2ecc71',   bg:'rgba(46,204,113,.2)',  svg:'cricket'},
+  { key:'aussierules_afl',     label:'AFL',        icon:'🏈', grad:'linear-gradient(135deg,#003087 0%,#FFD700 100%)', accent:'#FFD700',  bg:'rgba(0,48,135,.25)',  img:'/sports/afl.jpg'        },
+  { key:'rugbyleague_nrl',     label:'NRL',        icon:'🏉', grad:'linear-gradient(135deg,#00843D 0%,#00B140 100%)', accent:'#00e676',  bg:'rgba(0,132,61,.25)',  img:'/sports/nrl.jpg'        },
+  { key:'soccer_a_league',     label:'A-League',   icon:'⚽', grad:'linear-gradient(135deg,#1a1a2e 0%,#e94560 100%)', accent:'#e94560',  bg:'rgba(233,69,96,.2)',  img:'/sports/soccer.jpg'     },
+  { key:'horse_racing_au',     label:'Racing',     icon:'🐎', grad:'linear-gradient(135deg,#1a0a00 0%,#c0392b 100%)', accent:'#ff6b35',  bg:'rgba(192,57,43,.2)',  img:'/sports/racing.jpg'     },
+  { key:'greyhound_racing_au', label:'Greyhounds', icon:'🐕', grad:'linear-gradient(135deg,#0d0d0d 0%,#6c63ff 100%)', accent:'#6c63ff',  bg:'rgba(108,99,255,.2)', img:'/sports/greyhounds.jpg' },
+  { key:'mma_ufc',             label:'UFC',        icon:'🥊', grad:'linear-gradient(135deg,#0d0d0d 0%,#d4001a 100%)', accent:'#ff1744',  bg:'rgba(212,0,26,.2)',   img:'/sports/ufc.jpg'        },
+  { key:'basketball_nba',      label:'NBA',        icon:'🏀', grad:'linear-gradient(135deg,#17408b 0%,#f26522 100%)', accent:'#f26522',  bg:'rgba(242,101,34,.2)', img:'/sports/nba.jpg'        },
+  { key:'cricket_t20',         label:'Cricket',    icon:'🏏', grad:'linear-gradient(135deg,#1a2a1a 0%,#2ecc71 100%)', accent:'#2ecc71',  bg:'rgba(46,204,113,.2)', img:'/sports/cricket.jpg'    },
+  { key:'surfing',             label:'Surfing',    icon:'🏄', grad:'linear-gradient(135deg,#0077b6 0%,#00b4d8 100%)', accent:'#00b4d8',  bg:'rgba(0,180,216,.2)',  img:'/sports/surfing.jpg'    },
 ];
 
 const SPORT_LABEL: Record<string, string> = {
@@ -377,11 +378,13 @@ function DashboardInner() {
                     return (
                     <div key={sport.key}>
                       {/* Sport banner header */}
-                      <div style={{ position:'relative', borderRadius:16, overflow:'hidden', marginBottom:14, background:sport.bg, border:`1px solid ${sport.accent}30` }}>
-                        {/* Gradient sweep */}
-                        <div style={{ position:'absolute',inset:0, background:sport.grad, opacity:.18 }} />
+                      <div style={{ position:'relative', borderRadius:16, overflow:'hidden', marginBottom:14, border:`1px solid ${sport.accent}30` }}>
+                        {/* Real sport photo */}
+                        <div style={{ position:'absolute',inset:0, backgroundImage:`url(${sport.img})`, backgroundSize:'cover', backgroundPosition:'center', filter:'brightness(0.35) saturate(1.2)' }} />
+                        {/* Gradient overlay */}
+                        <div style={{ position:'absolute',inset:0, background:`linear-gradient(90deg, rgba(5,13,24,.95) 0%, rgba(5,13,24,.6) 60%, transparent 100%)` }} />
                         {/* Animated shimmer */}
-                        <div style={{ position:'absolute',inset:0, background:'linear-gradient(105deg,transparent 40%,rgba(255,255,255,.04) 50%,transparent 60%)', backgroundSize:'200% 100%', animation:'shimmer 3s infinite linear' }} />
+                        <div style={{ position:'absolute',inset:0, background:'linear-gradient(105deg,transparent 40%,rgba(255,255,255,.03) 50%,transparent 60%)', backgroundSize:'200% 100%', animation:'shimmer 3s infinite linear' }} />
                         {/* Content */}
                         <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px' }}>
                           <div style={{ display:'flex', alignItems:'center', gap:14 }}>
