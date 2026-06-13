@@ -1,7 +1,7 @@
 'use strict';
 const cron = require('node-cron');
-const { fetchFromOddsAPI, fetchESPN } = require('./oddsService');
-const { computeEVFromCache } = require('./evCalculator');
+const { fetchFromOddsAPI, fetchESPN, fetchPropsForUpcomingEvents } = require('./oddsService');
+const { computeEVFromCache, computePropsEVFromCache } = require('./evCalculator');
 const { findArbs } = require('./arbFinder');
 const { db } = require('../db');
 const { API_BUDGETS } = require('./cacheManager');
@@ -129,20 +129,22 @@ async function fetchDueSports() {
 // Recompute EV + Arb from cache — ZERO API calls
 async function recomputeAll() {
   try {
-    const [evOpps, arbOpps] = await Promise.all([
+    const [evOpps, arbOpps, propOpps] = await Promise.all([
       computeEVFromCache(),
       findArbs(),
+      computePropsEVFromCache(),
     ]);
+    const allOpps = [...evOpps, ...propOpps].sort((a, b) => b.ev_percent - a.ev_percent);
 
     if (_io) {
-      _io.emit('ev:update', evOpps.slice(0, 50));
+      _io.emit('ev:update', allOpps.slice(0, 50));
       if (arbOpps.length > 0) _io.emit('arb:update', arbOpps.slice(0, 20));
-      const hot = evOpps.filter(e => e.ev_percent >= 8);
+      const hot = allOpps.filter(e => e.ev_percent >= 8);
       if (hot.length > 0) _io.emit('ev:hot', hot.slice(0, 5));
     }
 
     // Send edge alert emails + notifications to Pro/Elite users for new Grade S+ opportunities
-    const unalertedHot = evOpps.filter(e => e.ev_percent >= 8 && !e.alert_sent);
+    const unalertedHot = allOpps.filter(e => e.ev_percent >= 8 && !e.alert_sent);
     if (unalertedHot.length > 0) {
       await sendHotEdgeAlerts(unalertedHot.slice(0, 3));
     }
@@ -276,6 +278,33 @@ function initScheduler() {
     }
   });
 
+  // Props odds fetch — every 3 hours, only for events within 48h (per-event endpoint)
+  // Cost: ~1-3 credits per event × markets. Skips if soft limit reached.
+  cron.schedule('0 */3 * * *', async () => {
+    try {
+      const credits = await fetchPropsForUpcomingEvents(48);
+      if (credits > 0) {
+        const propOpps = await computePropsEVFromCache();
+        if (_io && propOpps.length > 0) _io.emit('ev:update', propOpps.slice(0, 20));
+      }
+    } catch (e) {
+      console.error('Props fetch/EV error:', e.message);
+    }
+  });
+
+  // NBA player stats ingestion — daily at 11:00 UTC (9pm AEST)
+  // Runs after balldontlie has today's completed game stats available
+  cron.schedule('0 11 * * *', async () => {
+    try {
+      const nbaProps = require('./models/nba_props');
+      const players = await nbaProps.ingestPlayers();
+      const stats   = await nbaProps.ingestPlayerStats();
+      console.log(`📊 NBA props: synced ${players} players, ${stats} stat rows`);
+    } catch (e) {
+      console.error('NBA player stats ingest error:', e.message);
+    }
+  });
+
   // CLV closing line capture — every 5 minutes, captures sharp prices for games about to start
   cron.schedule('*/5 * * * *', async () => {
     try { await captureClosingLines(); } catch (e) {
@@ -283,8 +312,9 @@ function initScheduler() {
     }
   });
 
-  // First-boot: if no model data exists, run full ingest + compute for each active model
+  // First-boot: ingest game-outcome models + NBA player stats + props odds
   setTimeout(async () => {
+    // Game-outcome models (AFL Elo, NBA Elo)
     for (const m of activeModels()) {
       try {
         await logModelRun(m.sportKey, 'ingest',    () => m.ingestData());
@@ -294,7 +324,23 @@ function initScheduler() {
         console.error(`Boot init ${m.sportKey} failed:`, e.message);
       }
     }
-    console.log('🤖 Boot model init complete');
+    // NBA player props — sync roster + recent stats
+    try {
+      const nbaProps = require('./models/nba_props');
+      const players = await nbaProps.ingestPlayers();
+      const stats   = await nbaProps.ingestPlayerStats();
+      console.log(`📊 Boot: NBA props synced ${players} players, ${stats} stat rows`);
+    } catch (e) {
+      console.error('Boot NBA props ingest failed:', e.message);
+    }
+    // Props odds fetch
+    try {
+      await fetchPropsForUpcomingEvents(48);
+      await computePropsEVFromCache();
+    } catch (e) {
+      console.error('Boot props fetch failed:', e.message);
+    }
+    console.log('🤖 Boot init complete');
   }, 5000);
 
   const active = SPORT_SCHEDULE.filter(s => s.inSeason()).length;

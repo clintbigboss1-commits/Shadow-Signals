@@ -586,12 +586,152 @@ async function getActiveSports() {
   return active;
 }
 
+// ── Prop market keys by sport ────────────────────────────────────────────────
+// Per-event endpoint: /v4/sports/{sport}/events/{id}/odds
+// Cost: 1 credit per market key per region.
+const PROP_MARKETS = {
+  'basketball_nba':    ['player_points', 'player_rebounds', 'player_assists', 'player_threes'],
+  'aussierules_afl':   ['player_disposals', 'player_goal_scorer_anytime', 'player_marks'],
+  'rugbyleague_nrl':   ['player_try_scorer_anytime', 'player_try_scorer_first'],
+  'soccer_epl':        ['player_goal_scorer_anytime', 'player_shots_on_target'],
+  'americanfootball_nfl': ['player_pass_tds', 'player_pass_yds', 'player_rush_yds', 'player_receptions'],
+};
+
+// Fetch the FREE /events endpoint to discover upcoming games (no credit cost).
+async function fetchUpcomingEventIds(sportKey) {
+  if (!TOA_API_KEY) return [];
+  try {
+    const resp = await axios.get(`${TOA_BASE}/sports/${toaKey(sportKey)}/events`, {
+      params: { apiKey: TOA_API_KEY, dateFormat: 'iso' },
+      timeout: 10000,
+    });
+    const now = Date.now();
+    return (Array.isArray(resp.data) ? resp.data : [])
+      .filter(e => e.commence_time && new Date(e.commence_time).getTime() > now)
+      .map(e => ({ id: e.id, commence_time: e.commence_time }));
+  } catch (err) {
+    console.warn(`Events fetch error ${sportKey}:`, err.response?.status || err.message);
+    return [];
+  }
+}
+
+// Fetch player props for a single event (per-event endpoint).
+// markets: array of market keys e.g. ['player_points', 'player_rebounds']
+async function fetchPropsForEvent(sportKey, eventId, markets) {
+  if (!TOA_API_KEY) return null;
+  try {
+    const resp = await axios.get(
+      `${TOA_BASE}/sports/${toaKey(sportKey)}/events/${eventId}/odds`,
+      {
+        params: {
+          apiKey: TOA_API_KEY,
+          regions: 'au,eu',
+          markets: markets.join(','),
+          oddsFormat: 'decimal',
+          dateFormat: 'iso',
+        },
+        timeout: 15000,
+      }
+    );
+    const remaining = resp.headers['x-requests-remaining'];
+    if (remaining !== undefined && Number(remaining) < 500) {
+      console.warn(`⚠️  The Odds API: only ${remaining} credits left this month!`);
+    }
+    return { event: resp.data, callsUsed: markets.length, remaining };
+  } catch (err) {
+    if (err.response?.status !== 404) {
+      console.warn(`Props fetch error ${sportKey}/${eventId}:`, err.response?.status || err.message);
+    }
+    return null;
+  }
+}
+
+// Orchestrator: for each prop-eligible sport, find events within `hoursOut` and
+// fetch all prop markets. Stores into odds_cache using marketsFilter so h2h data
+// is never expired. Returns total credits used.
+async function fetchPropsForUpcomingEvents(hoursOut = 48) {
+  if (!TOA_API_KEY) return 0;
+
+  const { db } = require('../db');
+  const { setL2Odds, recordAPICall, canCallAPI } = require('./cacheManager');
+
+  let totalCredits = 0;
+  const sports = Object.keys(PROP_MARKETS).filter(k => AU_SPORTS[k]);
+
+  for (const sportKey of sports) {
+    if (!canCallAPI('theoddsapi')) {
+      console.warn('⚠️  Props fetch aborted — credit soft limit reached');
+      break;
+    }
+
+    const markets = PROP_MARKETS[sportKey];
+
+    // Find upcoming events from DB cache first (free), fall back to API
+    const { rows: dbEvents } = await db.query(`
+      SELECT DISTINCT event_id, commence_time
+      FROM odds_cache
+      WHERE sport_key = $1
+        AND commence_time BETWEEN NOW() AND NOW() + ($2 * INTERVAL '1 hour')
+        AND expires_at > NOW()
+    `, [sportKey, hoursOut]);
+
+    let eventIds = dbEvents.map(r => ({ id: r.event_id, commence_time: r.commence_time }));
+
+    // If DB has no upcoming events, try the free events endpoint
+    if (eventIds.length === 0) {
+      eventIds = await fetchUpcomingEventIds(sportKey);
+      eventIds = eventIds.filter(e =>
+        new Date(e.commence_time).getTime() < Date.now() + hoursOut * 3600 * 1000
+      );
+    }
+
+    if (eventIds.length === 0) continue;
+
+    console.log(`🎯 Fetching props for ${eventIds.length} ${AU_SPORTS[sportKey]?.name || sportKey} events`);
+
+    for (const { id: eventId, commence_time } of eventIds) {
+      const result = await fetchPropsForEvent(sportKey, eventId, markets);
+      if (!result || !result.event) continue;
+
+      const ev = result.event;
+      if (!ev.bookmakers || ev.bookmakers.length === 0) continue;
+
+      // Store props without expiring h2h data (marketsFilter)
+      await setL2Odds(
+        sportKey,
+        [{
+          id: ev.id || eventId,
+          sport_key: sportKey,
+          home_team: ev.home_team || '',
+          away_team: ev.away_team || '',
+          commence_time: ev.commence_time || commence_time,
+          bookmakers: ev.bookmakers,
+        }],
+        3 * 3600, // 3h TTL for props
+        'theoddsapi',
+        markets
+      );
+
+      await recordAPICall('theoddsapi', `props/${sportKey}/${eventId}`, result.remaining ?? null);
+      totalCredits += result.callsUsed;
+
+      await new Promise(r => setTimeout(r, 400)); // avoid bursting the API
+    }
+  }
+
+  if (totalCredits > 0) console.log(`✅ Props fetch: ${totalCredits} credits used`);
+  return totalCredits;
+}
+
 module.exports = {
   fetchFromOddsAPI,
   fetchESPN,
   fetchSportsDB,
   fetchNBA,
   getActiveSports,
+  fetchPropsForUpcomingEvents,
+  fetchUpcomingEventIds,
+  PROP_MARKETS,
   AU_SPORTS,
   americanToDecimal,
   generateDemoOdds,

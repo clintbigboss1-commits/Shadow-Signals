@@ -231,14 +231,15 @@ async function computeEVFromCache(sportKey = null) {
 
         await client.query(
           `INSERT INTO ev_opportunities
-           (sport_key, event_id, event_name, market, selection, bookie,
+           (sport_key, event_id, event_name, market, selection, point, bookie,
             bookie_odds, fair_odds, ev_percent, kelly_percent,
             commence_time, expires_at, is_active, source, model_confidence)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,TRUE,$13,$14)
+           VALUES ($1,$2,$3,$4,$5,NULL,$6,$7,$8,$9,$10,$11,$12,TRUE,$13,$14)
            ON CONFLICT (event_id, market, selection)
            DO UPDATE SET
              sport_key        = EXCLUDED.sport_key,
              event_name       = EXCLUDED.event_name,
+             point            = EXCLUDED.point,
              bookie           = EXCLUDED.bookie,
              bookie_odds      = EXCLUDED.bookie_odds,
              fair_odds        = EXCLUDED.fair_odds,
@@ -273,4 +274,204 @@ async function computeEVFromCache(sportKey = null) {
   return opportunities.sort((a, b) => b.ev_percent - a.ev_percent);
 }
 
-module.exports = { computeEVFromCache, calcEVPercent, kellyFraction, removeVig, getSharpPrice, median };
+// ── Props EV — player O/U markets ────────────────────────────────────────────
+// Separate from computeEVFromCache: different market structure, different model.
+const PROP_MARKET_KEYS = [
+  'player_points', 'player_rebounds', 'player_assists', 'player_threes',
+  'player_disposals', 'player_marks', 'player_goal_scorer_anytime',
+  'player_try_scorer_anytime', 'player_try_scorer_first',
+  'player_pass_tds', 'player_pass_yds', 'player_rush_yds', 'player_receptions',
+  'player_shots_on_target',
+];
+
+// Map from market key → stat type string for nba_props model
+const NBA_PROPS_STAT = {
+  player_points: 'pts',
+  player_rebounds: 'reb',
+  player_assists: 'ast',
+};
+
+async function computePropsEVFromCache() {
+  const t = Date.now();
+  const raw = await db.query(`
+    SELECT DISTINCT ON (event_id, market, selection, bookmaker)
+      sport_key, event_id, home_team, away_team, commence_time,
+      bookmaker, market, selection, odds, point
+    FROM odds_cache
+    WHERE expires_at > NOW() AND market = ANY($1)
+    ORDER BY event_id, market, selection, bookmaker, fetched_at DESC
+  `, [PROP_MARKET_KEYS]);
+
+  if (raw.rows.length === 0) return [];
+
+  // Build: event → market → playerBase → { point, bookmakers: { bookie: {Over,Under} } }
+  const events = {};
+  for (const row of raw.rows) {
+    if (!events[row.event_id]) {
+      events[row.event_id] = {
+        sport_key: row.sport_key, event_id: row.event_id,
+        home_team: row.home_team, away_team: row.away_team,
+        commence_time: row.commence_time, markets: {},
+      };
+    }
+    const mKey = row.market;
+    if (!events[row.event_id].markets[mKey]) events[row.event_id].markets[mKey] = {};
+
+    // "LeBron James Over" → base="LeBron James", dir="Over"
+    const dirMatch = row.selection.match(/\s+(Over|Under)$/i);
+    if (!dirMatch) continue;
+    const dir = dirMatch[1];
+    const base = row.selection.slice(0, row.selection.length - dir.length - 1).trim();
+
+    const em = events[row.event_id].markets[mKey];
+    if (!em[base]) em[base] = { point: null, bookmakers: {} };
+    if (row.point != null) em[base].point = parseFloat(row.point);
+    if (!em[base].bookmakers[row.bookmaker]) em[base].bookmakers[row.bookmaker] = {};
+    em[base].bookmakers[row.bookmaker][dir] = parseFloat(row.odds);
+  }
+
+  const opportunities = [];
+  const client = await db.getClient();
+
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      'UPDATE ev_opportunities SET is_active = FALSE WHERE market = ANY($1)',
+      [PROP_MARKET_KEYS]
+    );
+
+    for (const event of Object.values(events)) {
+      if (event.commence_time && new Date(event.commence_time) < new Date()) continue;
+
+      for (const [marketKey, players] of Object.entries(event.markets)) {
+        for (const [playerBase, data] of Object.entries(players)) {
+          const { point: line, bookmakers } = data;
+
+          // Need ≥3 books with both sides to estimate fair value
+          const complete = Object.entries(bookmakers)
+            .filter(([, p]) => p.Over && p.Under && p.Over > 1.01 && p.Under > 1.01);
+          if (complete.length < 3) continue;
+
+          // Sharp anchor: Betfair → Pinnacle → bet365 → median
+          const SHARPS = ['betfair_ex_au', 'pinnacle', 'bet365_au', 'bet365'];
+          let anchorOver = null, anchorUnder = null;
+          for (const sharp of SHARPS) {
+            if (bookmakers[sharp]?.Over && bookmakers[sharp]?.Under) {
+              anchorOver  = bookmakers[sharp].Over;
+              anchorUnder = bookmakers[sharp].Under;
+              break;
+            }
+          }
+          if (!anchorOver) {
+            const overs  = complete.map(([, p]) => p.Over).sort((a, b) => a - b);
+            const unders = complete.map(([, p]) => p.Under).sort((a, b) => a - b);
+            anchorOver  = overs[Math.floor(overs.length / 2)];
+            anchorUnder = unders[Math.floor(unders.length / 2)];
+          }
+
+          // De-vig the O/U pair
+          const rawO = 1 / anchorOver, rawU = 1 / anchorUnder;
+          const tot = rawO + rawU;
+          const fairProbOver  = rawO / tot;
+          const fairProbUnder = rawU / tot;
+
+          // NBA model override for pts/reb/ast
+          let modelProbOver = null;
+          const statType = NBA_PROPS_STAT[marketKey];
+          if (statType && event.sport_key === 'basketball_nba' && line != null) {
+            try {
+              const nbaProps = require('./models/nba_props');
+              const pred = await nbaProps.predictProp(playerBase, line, statType);
+              if (pred && pred.prob_over > 0.05 && pred.prob_over < 0.95) {
+                modelProbOver = pred.prob_over;
+              }
+            } catch (_) {}
+          }
+
+          for (const dir of ['Over', 'Under']) {
+            const isOver    = dir === 'Over';
+            const fairProb  = modelProbOver != null
+              ? (isOver ? modelProbOver : 1 - modelProbOver)
+              : (isOver ? fairProbOver  : fairProbUnder);
+            const fairOdds  = 1 / fairProb;
+            const signalSrc = modelProbOver != null
+              ? `model_${event.sport_key}_props_v1` : 'consensus_v1';
+            const modelConf = modelProbOver != null
+              ? parseFloat((isOver ? modelProbOver : 1 - modelProbOver).toFixed(4)) : null;
+            const evMin = modelConf != null ? 5.0 : EV_MIN_PERCENT;
+
+            let best = null;
+            for (const [bookie, prices] of Object.entries(bookmakers)) {
+              if (['betfair_ex_au', 'pinnacle'].includes(bookie)) continue;
+              const bookedOdds = prices[dir];
+              if (!bookedOdds || bookedOdds <= 1.01) continue;
+              const ev = calcEVPercent(bookedOdds, fairOdds);
+              if (ev < evMin || ev > EV_MAX_PERCENT) continue;
+              if (!best || ev > best.ev) best = { bookie, bookedOdds, ev };
+            }
+            if (!best) continue;
+
+            const kelly   = kellyFraction(best.bookedOdds, fairOdds);
+            const expires = new Date(Date.now() + 2 * 3600 * 1000);
+            const selStr  = `${playerBase} ${dir}`;
+
+            const opp = {
+              sport_key: event.sport_key, event_id: event.event_id,
+              event_name: `${event.home_team} v ${event.away_team}`,
+              market: marketKey, selection: selStr, point: line,
+              bookie: best.bookie, bookie_odds: best.bookedOdds,
+              fair_odds: parseFloat(fairOdds.toFixed(3)),
+              ev_percent: parseFloat(best.ev.toFixed(2)),
+              kelly_percent: kelly, commence_time: event.commence_time,
+              expires_at: expires, source: signalSrc, model_confidence: modelConf,
+            };
+            opportunities.push(opp);
+            recordSignal(opp);
+
+            await client.query(
+              `INSERT INTO ev_opportunities
+               (sport_key, event_id, event_name, market, selection, point, bookie,
+                bookie_odds, fair_odds, ev_percent, kelly_percent,
+                commence_time, expires_at, is_active, source, model_confidence)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,TRUE,$14,$15)
+               ON CONFLICT (event_id, market, selection)
+               DO UPDATE SET
+                 sport_key = EXCLUDED.sport_key, event_name = EXCLUDED.event_name,
+                 point = EXCLUDED.point, bookie = EXCLUDED.bookie,
+                 bookie_odds = EXCLUDED.bookie_odds, fair_odds = EXCLUDED.fair_odds,
+                 ev_percent = EXCLUDED.ev_percent, kelly_percent = EXCLUDED.kelly_percent,
+                 commence_time = EXCLUDED.commence_time, expires_at = EXCLUDED.expires_at,
+                 found_at = NOW(), is_active = TRUE,
+                 source = EXCLUDED.source, model_confidence = EXCLUDED.model_confidence`,
+              [
+                opp.sport_key, opp.event_id, opp.event_name,
+                opp.market, opp.selection, opp.point, opp.bookie,
+                opp.bookie_odds, opp.fair_odds, opp.ev_percent,
+                opp.kelly_percent, opp.commence_time, opp.expires_at,
+                opp.source, opp.model_confidence,
+              ]
+            );
+          }
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Props EV compute error:', err.message);
+  } finally {
+    client.release();
+  }
+
+  if (opportunities.length > 0) {
+    console.log(`✅ Props EV: ${opportunities.length} opportunities in ${Date.now() - t}ms`);
+  }
+  return opportunities.sort((a, b) => b.ev_percent - a.ev_percent);
+}
+
+module.exports = {
+  computeEVFromCache,
+  computePropsEVFromCache,
+  calcEVPercent, kellyFraction, removeVig, getSharpPrice, median,
+};

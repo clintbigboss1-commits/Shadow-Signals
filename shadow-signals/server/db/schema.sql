@@ -292,3 +292,49 @@ CREATE TABLE IF NOT EXISTS model_runs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS model_runs_recent ON model_runs(created_at DESC);
+
+-- ── Player mapping — canonical ID for every name variant ─────────────────────
+CREATE TABLE IF NOT EXISTS player_mapping (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  canonical_id VARCHAR(100) NOT NULL,
+  sport_key VARCHAR(50) NOT NULL,
+  alias TEXT NOT NULL,
+  source VARCHAR(50) NOT NULL DEFAULT 'auto',
+  UNIQUE(sport_key, alias)
+);
+CREATE INDEX IF NOT EXISTS idx_player_mapping_lookup ON player_mapping(sport_key, lower(alias));
+
+-- ── NBA player roster ─────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS nba_players (
+  id INTEGER PRIMARY KEY,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  position TEXT,
+  team_id INTEGER REFERENCES nba_teams(id),
+  active BOOLEAN DEFAULT TRUE,
+  last_synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS nba_players_team ON nba_players(team_id);
+CREATE INDEX IF NOT EXISTS nba_players_name ON nba_players(lower(first_name || ' ' || last_name));
+
+-- ── NBA player game-level stats (props model input) ───────────────────────────
+CREATE TABLE IF NOT EXISTS nba_player_stats (
+  id INTEGER PRIMARY KEY,
+  player_id INTEGER NOT NULL REFERENCES nba_players(id),
+  game_id INTEGER NOT NULL,
+  game_date DATE NOT NULL,
+  team_id INTEGER,
+  opponent_team_id INTEGER,
+  home_away CHAR(1),
+  minutes DECIMAL(5,2),
+  pts INTEGER,
+  reb INTEGER,
+  ast INTEGER,
+  fg3m INTEGER,
+  stl INTEGER,
+  blk INTEGER,
+  turnover INTEGER,
+  UNIQUE(player_id, game_id)
+);
+CREATE INDEX IF NOT EXISTS nba_player_stats_player ON nba_player_stats(player_id, game_date DESC);
+CREATE INDEX IF NOT EXISTS nba_player_stats_game ON nba_player_stats(game_id);
