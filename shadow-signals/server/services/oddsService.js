@@ -14,36 +14,28 @@ const SGO_API_KEY    = process.env.SPORT_GAME_ODDS || '';
 const SGO_BASE       = 'https://api.sportsgameodds.com/v2';
 
 // The Odds API (the-odds-api.com) — primary paid source (100k credits/month)
-const TOA_API_KEY  = process.env.THE_ODDS_API_KEY || '';
+const TOA_API_KEY  = process.env.ODDS_API_KEY || '';
 const TOA_BASE     = 'https://api.the-odds-api.com/v4';
 const TOA_REGIONS  = process.env.THE_ODDS_API_REGIONS || 'au,eu';
 const TOA_MARKETS  = 'h2h,spreads,totals';
 
-// internal sportKey → The Odds API sport key
-const TOA_SPORTS = {
-  'soccer_epl':           'soccer_epl',
-  'soccer_ucl':           'soccer_uefa_champs_league',
-  'soccer_la_liga':       'soccer_spain_la_liga',
-  'soccer_bundesliga':    'soccer_germany_bundesliga',
-  'soccer_serie_a':       'soccer_italy_serie_a',
-  'soccer_europa':        'soccer_uefa_europa_league',
-  'soccer_ligue_1':       'soccer_france_ligue_one',
-  'soccer_mls':           'soccer_usa_mls',
-  'soccer_brazil':        'soccer_brazil_campeonato',
-  'soccer_a_league':      'soccer_australia_aleague',
-  'basketball_nba':       'basketball_nba',
-  'basketball_nbl':       'basketball_nbl',
-  'americanfootball_nfl': 'americanfootball_nfl',
-  'baseball_mlb':         'baseball_mlb',
-  'icehockey_nhl':        'icehockey_nhl',
-  'mma_ufc':              'mma_mixed_martial_arts',
-  'mma_mixed_martial_arts': 'mma_mixed_martial_arts',
-  'aussierules_afl':      'aussierules_afl',
-  'rugbyleague_nrl':      'rugbyleague_nrl',
-  'cricket_big_bash':     'cricket_big_bash',
-  'cricket_t20':          'cricket_international_t20',
-  'cricket_odi':          'cricket_odi',
+// Only sports where our internal key differs from The Odds API key
+const TOA_KEY_OVERRIDES = {
+  'soccer_ucl':      'soccer_uefa_champs_league',
+  'soccer_la_liga':  'soccer_spain_la_liga',
+  'soccer_bundesliga': 'soccer_germany_bundesliga',
+  'soccer_serie_a':  'soccer_italy_serie_a',
+  'soccer_europa':   'soccer_uefa_europa_league',
+  'soccer_ligue_1':  'soccer_france_ligue_one',
+  'soccer_mls':      'soccer_usa_mls',
+  'soccer_brazil':   'soccer_brazil_campeonato',
+  'soccer_a_league': 'soccer_australia_aleague',
 };
+
+// Resolve internal sportKey → The Odds API key
+function toaKey(sportKey) {
+  return TOA_KEY_OVERRIDES[sportKey] || sportKey;
+}
 
 const ESPN_BASE     = 'https://site.api.espn.com/apis/site/v2/sports';
 const SPORTSDB_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
@@ -51,49 +43,95 @@ const BDL_BASE      = 'https://api.balldontlie.io/v1';
 
 // ── SportGameOdds leagueID mapping ──────────────────────────────────────────
 const SGO_LEAGUES = {
-  'soccer_epl':           'EPL',
-  'soccer_ucl':           'UEFA_CHAMPIONS_LEAGUE',
-  'soccer_la_liga':       'LA_LIGA',
-  'soccer_bundesliga':    'BUNDESLIGA',
-  'soccer_serie_a':       'SERIE_A',
-  'soccer_europa':        'UEFA_EUROPA_LEAGUE',
-  'soccer_ligue_1':       'LIGUE_1',
-  'soccer_mls':           'MLS',
-  'soccer_brazil':        'BRASILEIRAO',
-  'basketball_nba':       'NBA',
-  'basketball_nbl':       'NBL',
-  'americanfootball_nfl': 'NFL',
-  'baseball_mlb':         'MLB',
-  'icehockey_nhl':        'NHL',
-  'mma_ufc':              'UFC',
-  'tennis_atp':           'ATP',
-  'golf_pga':             'PGA',
+  'soccer_epl':                  'EPL',
+  'soccer_ucl':                  'UEFA_CHAMPIONS_LEAGUE',
+  'soccer_la_liga':              'LA_LIGA',
+  'soccer_bundesliga':           'BUNDESLIGA',
+  'soccer_serie_a':              'SERIE_A',
+  'soccer_europa':               'UEFA_EUROPA_LEAGUE',
+  'soccer_ligue_1':              'LIGUE_1',
+  'soccer_mls':                  'MLS',
+  'soccer_brazil':               'BRASILEIRAO',
+  'basketball_nba':              'NBA',
+  'basketball_nbl':              'NBL',
+  'americanfootball_nfl':        'NFL',
+  'baseball_mlb':                'MLB',
+  'icehockey_nhl':               'NHL',
+  'mma_mixed_martial_arts':      'UFC',
+  'aussierules_afl':             'AFL',
+  'rugbyleague_nrl':             'NRL',
 };
 
 const AU_SPORTS = {
-  'soccer_epl':           { name: 'EPL',           emoji: '⚽', priority: 1 },
-  'soccer_la_liga':       { name: 'La Liga',        emoji: '⚽', priority: 1 },
-  'soccer_bundesliga':    { name: 'Bundesliga',     emoji: '⚽', priority: 1 },
-  'soccer_serie_a':       { name: 'Serie A',        emoji: '⚽', priority: 1 },
-  'soccer_ucl':           { name: 'UCL',            emoji: '⚽', priority: 1 },
-  'soccer_europa':        { name: 'Europa League',  emoji: '⚽', priority: 2 },
-  'soccer_ligue_1':       { name: 'Ligue 1',        emoji: '⚽', priority: 2 },
-  'soccer_mls':           { name: 'MLS',            emoji: '⚽', priority: 2 },
-  'soccer_brazil':        { name: 'Brazil Serie A', emoji: '⚽', priority: 2 },
-  'basketball_nba':       { name: 'NBA',            emoji: '🏀', priority: 1 },
-  'americanfootball_nfl': { name: 'NFL',            emoji: '🏈', priority: 1 },
-  'baseball_mlb':         { name: 'MLB',            emoji: '⚾', priority: 2 },
-  'icehockey_nhl':        { name: 'NHL',            emoji: '🏒', priority: 2 },
-  'basketball_nbl':       { name: 'NBL',            emoji: '🏀', priority: 2 },
-  'mma_ufc':              { name: 'UFC',            emoji: '🥊', priority: 1 },
-  'mma_boxing':           { name: 'Boxing',         emoji: '🥊', priority: 2 },
-  'tennis_atp':           { name: 'Tennis',         emoji: '🎾', priority: 2 },
-  'golf_pga':             { name: 'Golf',           emoji: '⛳', priority: 3 },
-  'aussierules_afl':      { name: 'AFL',            emoji: '🏉', priority: 1 },
-  'rugbyleague_nrl':      { name: 'NRL',            emoji: '🏉', priority: 1 },
-  'cricket_big_bash':     { name: 'BBL',            emoji: '🏏', priority: 2 },
-  'cricket_t20':          { name: 'T20I',           emoji: '🏏', priority: 2 },
-  'cricket_odi':          { name: 'ODI',            emoji: '🏏', priority: 2 },
+  // AU — top priority
+  'aussierules_afl':                       { name: 'AFL',              emoji: '🏉', priority: 1 },
+  'rugbyleague_nrl':                       { name: 'NRL',              emoji: '🏉', priority: 1 },
+  'rugbyleague_nrl_state_of_origin':       { name: 'State of Origin',  emoji: '🏉', priority: 1 },
+  // Cricket
+  'cricket_international_t20':             { name: 'T20I',             emoji: '🏏', priority: 2 },
+  'cricket_odi':                           { name: 'ODI',              emoji: '🏏', priority: 2 },
+  'cricket_test_match':                    { name: 'Test Cricket',     emoji: '🏏', priority: 2 },
+  // American Football
+  'americanfootball_nfl':                  { name: 'NFL',              emoji: '🏈', priority: 1 },
+  'americanfootball_nfl_preseason':        { name: 'NFL Preseason',    emoji: '🏈', priority: 3 },
+  'americanfootball_nfl_super_bowl_winner':{ name: 'Super Bowl',       emoji: '🏈', priority: 3 },
+  'americanfootball_ncaaf':                { name: 'NCAAF',            emoji: '🏈', priority: 2 },
+  'americanfootball_ncaaf_championship_winner': { name: 'NCAAF Title', emoji: '🏈', priority: 3 },
+  'americanfootball_cfl':                  { name: 'CFL',              emoji: '🏈', priority: 3 },
+  'americanfootball_ufl':                  { name: 'UFL',              emoji: '🏈', priority: 3 },
+  // Basketball
+  'basketball_nba':                        { name: 'NBA',              emoji: '🏀', priority: 1 },
+  'basketball_nba_championship_winner':    { name: 'NBA Title',        emoji: '🏀', priority: 3 },
+  'basketball_nbl':                        { name: 'NBL',              emoji: '🏀', priority: 2 },
+  'basketball_wnba':                       { name: 'WNBA',             emoji: '🏀', priority: 2 },
+  // Baseball
+  'baseball_mlb':                          { name: 'MLB',              emoji: '⚾', priority: 2 },
+  'baseball_mlb_world_series_winner':      { name: 'World Series',     emoji: '⚾', priority: 3 },
+  'baseball_milb':                         { name: 'MiLB',             emoji: '⚾', priority: 3 },
+  'baseball_ncaa':                         { name: 'NCAA Baseball',    emoji: '⚾', priority: 3 },
+  'baseball_kbo':                          { name: 'KBO',              emoji: '⚾', priority: 3 },
+  'baseball_npb':                          { name: 'NPB',              emoji: '⚾', priority: 3 },
+  // Ice Hockey
+  'icehockey_nhl':                         { name: 'NHL',              emoji: '🏒', priority: 2 },
+  'icehockey_nhl_championship_winner':     { name: 'Stanley Cup',      emoji: '🏒', priority: 3 },
+  'icehockey_ahl':                         { name: 'AHL',              emoji: '🏒', priority: 3 },
+  // Combat
+  'mma_mixed_martial_arts':                { name: 'MMA',              emoji: '🥊', priority: 1 },
+  'boxing_boxing':                         { name: 'Boxing',           emoji: '🥊', priority: 2 },
+  // Soccer — active now
+  'soccer_fifa_world_cup':                 { name: 'World Cup',        emoji: '⚽', priority: 1 },
+  'soccer_fifa_world_cup_winner':          { name: 'World Cup Winner', emoji: '⚽', priority: 2 },
+  'soccer_conmebol_copa_libertadores':     { name: 'Copa Lib',         emoji: '⚽', priority: 2 },
+  'soccer_conmebol_copa_sudamericana':     { name: 'Copa Sud',         emoji: '⚽', priority: 2 },
+  'soccer_germany_dfb_pokal':              { name: 'DFB-Pokal',        emoji: '⚽', priority: 2 },
+  'soccer_brazil_serie_b':                 { name: 'Brazil Série B',   emoji: '⚽', priority: 3 },
+  'soccer_chile_campeonato':               { name: 'Chile Liga',       emoji: '⚽', priority: 3 },
+  'soccer_china_superleague':              { name: 'China SL',         emoji: '⚽', priority: 3 },
+  'soccer_norway_eliteserien':             { name: 'Eliteserien',      emoji: '⚽', priority: 3 },
+  'soccer_sweden_allsvenskan':             { name: 'Allsvenskan',      emoji: '⚽', priority: 3 },
+  'soccer_sweden_superettan':              { name: 'Superettan',       emoji: '⚽', priority: 3 },
+  'soccer_finland_veikkausliiga':          { name: 'Finland Liga',     emoji: '⚽', priority: 3 },
+  'soccer_spain_segunda_division':         { name: 'La Liga 2',        emoji: '⚽', priority: 3 },
+  'soccer_league_of_ireland':              { name: 'Ireland League',   emoji: '⚽', priority: 3 },
+  // Soccer — seasonal (back Aug/Sep)
+  'soccer_epl':                            { name: 'EPL',              emoji: '⚽', priority: 1 },
+  'soccer_ucl':                            { name: 'UCL',              emoji: '⚽', priority: 1 },
+  'soccer_la_liga':                        { name: 'La Liga',          emoji: '⚽', priority: 1 },
+  'soccer_bundesliga':                     { name: 'Bundesliga',       emoji: '⚽', priority: 1 },
+  'soccer_serie_a':                        { name: 'Serie A',          emoji: '⚽', priority: 1 },
+  'soccer_europa':                         { name: 'Europa League',    emoji: '⚽', priority: 2 },
+  'soccer_ligue_1':                        { name: 'Ligue 1',          emoji: '⚽', priority: 2 },
+  'soccer_mls':                            { name: 'MLS',              emoji: '⚽', priority: 2 },
+  'soccer_brazil':                         { name: 'Brazil Série A',   emoji: '⚽', priority: 2 },
+  'soccer_a_league':                       { name: 'A-League',         emoji: '⚽', priority: 1 },
+  // Tennis
+  'tennis_wta_queens_club_champ':          { name: "WTA Queen's",      emoji: '🎾', priority: 3 },
+  // Golf
+  'golf_the_open_championship_winner':     { name: 'The Open',         emoji: '⛳', priority: 3 },
+  'golf_us_open_winner':                   { name: 'US Open Golf',     emoji: '⛳', priority: 3 },
+  // Other
+  'lacrosse_pll':                          { name: 'PLL',              emoji: '🥍', priority: 3 },
+  'politics_us_presidential_election_winner': { name: 'US Election',   emoji: '🗳️', priority: 3 },
 };
 
 function americanToDecimal(american) {
@@ -246,13 +284,12 @@ function generateDemoOdds(sportKey) {
 async function fetchFromTheOddsApi(sportKey) {
   if (!TOA_API_KEY) return { events: [], source: 'no-key', callsUsed: 0 };
 
-  const toaKey = TOA_SPORTS[sportKey];
-  if (!toaKey) return { events: [], source: 'unsupported-league', callsUsed: 0 };
+  if (!AU_SPORTS[sportKey]) return { events: [], source: 'unsupported-league', callsUsed: 0 };
 
   const sportTitle = AU_SPORTS[sportKey]?.name || sportKey;
 
   try {
-    const resp = await axios.get(`${TOA_BASE}/sports/${toaKey}/odds`, {
+    const resp = await axios.get(`${TOA_BASE}/sports/${toaKey(sportKey)}/odds`, {
       params: {
         apiKey: TOA_API_KEY,
         regions: TOA_REGIONS,
@@ -436,7 +473,7 @@ async function fetchFromOddsAPI(sportKey) {
   const sportTitle = AU_SPORTS[sportKey]?.name || sportKey;
 
   // ── 0) The Odds API (primary paid source — 100k credits/month) ──────────
-  if (TOA_API_KEY && TOA_SPORTS[sportKey] && canCallAPI('theoddsapi')) {
+  if (TOA_API_KEY && AU_SPORTS[sportKey] && canCallAPI('theoddsapi')) {
     console.log(`🌐 Fetching The Odds API: ${sportTitle} (${sportKey})`);
     try {
       const result = await fetchFromTheOddsApi(sportKey);

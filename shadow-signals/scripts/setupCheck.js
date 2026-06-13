@@ -142,11 +142,11 @@ async function run() {
 
   // ── 3. The Odds API ──────────────────────────────────────────────────────
   head('3. The Odds API (the-odds-api.com)');
-  if (process.env.THE_ODDS_API_KEY) {
+  if (process.env.ODDS_API_KEY) {
     try {
       const axios = require('axios');
       const r = await axios.get('https://api.the-odds-api.com/v4/sports', {
-        params: { apiKey: process.env.THE_ODDS_API_KEY },
+        params: { apiKey: process.env.ODDS_API_KEY },
         timeout: 8000,
       });
       const sports = Array.isArray(r.data) ? r.data : [];
@@ -156,7 +156,7 @@ async function run() {
       issues++;
     }
   } else {
-    warn('Skipping The Odds API check — THE_ODDS_API_KEY not set');
+    warn('Skipping The Odds API check — ODDS_API_KEY not set');
   }
 
   // ── 4. Stripe ───────────────────────────────────────────────────────────
