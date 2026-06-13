@@ -190,4 +190,118 @@ router.get('/wins', async (req, res) => {
   }
 });
 
+// ── Multi-bet (parlay) endpoints ──────────────────────────────────────────
+
+// POST /api/bets/multi-odds — calculate combined odds + EV for a multi
+router.post('/multi-odds', requireAuth, async (req, res) => {
+  try {
+    const { legs } = req.body;
+    if (!legs || legs.length < 2) {
+      return res.status(400).json({ error: 'Need at least 2 legs' });
+    }
+
+    // Combined odds = product of all leg odds (parlay multiplication)
+    const combinedOdds = legs.reduce((p, l) => p * l.odds, 1);
+
+    // Combined EV: if all legs have fair_odds, compute
+    // If independent, P(all win) = product of (1/fair_odds)
+    // EV = (combined_odds / combined_fair_odds - 1) * 100
+    let combinedEV = null;
+    let combinedFairOdds = null;
+    if (legs.every(l => l.fair_odds)) {
+      combinedFairOdds = legs.reduce((p, l) => p * l.fair_odds, 1);
+      combinedEV = (combinedOdds / combinedFairOdds - 1) * 100;
+    }
+
+    // Correlation detection: same game, same sport, overlapping selections
+    let correlationScore = 0;
+    const sameGame = legs.filter(l =>
+      legs.some(o => o !== l && o.event_id === l.event_id && o.selection !== l.selection)
+    );
+    const sameSport = legs.filter(l =>
+      legs.some(o => o !== l && o.sport_key === l.sport_key && o.event_id !== l.event_id)
+    );
+    const sameSelection = legs.filter(l =>
+      legs.some(o => o !== l && o.selection === l.selection && o.event_id !== l.event_id)
+    );
+
+    if (sameGame.length > 0) correlationScore = 0.12;
+    if (sameSelection.length > 0) correlationScore = Math.max(correlationScore, 0.08);
+    if (sameSport.length > 0) correlationScore = Math.max(correlationScore, 0.03);
+
+    res.json({
+      combined_odds: Number(combinedOdds.toFixed(4)),
+      combined_fair_odds: combinedFairOdds ? Number(combinedFairOdds.toFixed(4)) : null,
+      combined_ev_percent: combinedEV !== null ? Number(combinedEV.toFixed(2)) : null,
+      num_legs: legs.length,
+      correlation_score: correlationScore,
+      correlation_warning: correlationScore > 0.05
+        ? `⚠️ Same-${sameGame.length > 0 ? 'game' : sameSelection.length > 0 ? 'selection' : 'sport'} correlation detected — true odds may be lower`
+        : null,
+      implied_probability: Number((1 / combinedOdds * 100).toFixed(2)),
+      payout_multiplier: Number(combinedOdds.toFixed(4)),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/bets/multi — log a multi-bet
+router.post('/multi', requireAuth, async (req, res) => {
+  try {
+    const { legs, total_stake, combined_ev } = req.body;
+    if (!legs || legs.length < 2) {
+      return res.status(400).json({ error: 'Need at least 2 legs' });
+    }
+
+    const combinedOdds = legs.reduce((p, l) => p * l.odds, 1);
+    const kellyFraction = combined_ev != null
+      ? Math.min((combined_ev / 100) / (combinedOdds - 1) * 0.25, 0.25)
+      : null;
+
+    const multi = await db.query(
+      `INSERT INTO multi_bets
+         (user_id, combined_odds, combined_ev, total_stake, num_legs, kelly_fraction)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING *`,
+      [req.user.userId, combinedOdds, combined_ev || null, total_stake, legs.length, kellyFraction]
+    );
+
+    for (const leg of legs) {
+      await db.query(
+        `INSERT INTO multi_legs
+           (multi_id, event_id, event_name, sport_key, selection, bookie, odds_taken, fair_odds, ev_percent)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [multi.rows[0].id, leg.event_id, leg.event_name, leg.sport_key,
+         leg.selection, leg.bookie, leg.odds, leg.fair_odds || null, leg.ev_percent || null]
+      );
+    }
+
+    res.status(201).json(multi.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/bets/multi — user's multi-bet history
+router.get('/multi', requireAuth, async (req, res) => {
+  try {
+    const multis = await db.query(
+      `SELECT * FROM multi_bets WHERE user_id = $1 ORDER BY placed_at DESC LIMIT 50`,
+      [req.user.userId]
+    );
+    const result = [];
+    for (const m of multis.rows) {
+      const legs = await db.query(
+        `SELECT * FROM multi_legs WHERE multi_id = $1 ORDER BY odds_taken DESC`,
+        [m.id]
+      );
+      result.push({ ...m, legs: legs.rows });
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

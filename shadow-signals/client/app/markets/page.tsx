@@ -198,6 +198,17 @@ interface SlipItem {
   commence_time: string;
 }
 
+interface MultiOddsResult {
+  combined_odds: number;
+  combined_fair_odds: number | null;
+  combined_ev_percent: number | null;
+  num_legs: number;
+  correlation_score: number;
+  correlation_warning: string | null;
+  implied_probability: number;
+  payout_multiplier: number;
+}
+
 /* ─── Game Card ───────────────────────────────────────────────────────── */
 function GameCard({
   game, onOpen, onAddToSlip, inSlip,
@@ -401,92 +412,263 @@ function GameCard({
   );
 }
 
-/* ─── Bet Slip ────────────────────────────────────────────────────────── */
+/* ─── Bet Slip — Singles + Multi mode ──────────────────────────────── */
 function BetSlip({ items, onRemove, onClear }: { items: SlipItem[]; onRemove: (key: string) => void; onClear: () => void }) {
-  const [stake, setStake]     = useState(50);
-  const [logging, setLogging] = useState(false);
-  const [logged, setLogged]   = useState(false);
+  const [stake, setStake]        = useState(50);
+  const [logging, setLogging]    = useState(false);
+  const [logged, setLogged]      = useState(false);
+  const [multiMode, setMultiMode] = useState<'singles' | 'multi'>('singles');
+  const [multiResult, setMultiResult] = useState<MultiOddsResult | null>(null);
+  const [computingMulti, setComputingMulti] = useState(false);
+
+  const canMulti = items.length >= 2;
+
+  // Compute multi odds when mode switches or items change
+  useEffect(() => {
+    if (multiMode === 'multi' && canMulti) {
+      setComputingMulti(true);
+      API.post('/bets/multi-odds', {
+        legs: items.map(i => ({
+          event_id: i.event_id,
+          event_name: i.event_name,
+          sport_key: i.sport_key,
+          selection: i.selection,
+          bookie: i.bookie,
+          odds: i.odds,
+          fair_odds: i.fair_odds,
+          ev_percent: i.ev_percent,
+        }))
+      })
+        .then(r => setMultiResult(r.data))
+        .catch(() => setMultiResult(null))
+        .finally(() => setComputingMulti(false));
+    } else {
+      setMultiResult(null);
+    }
+  }, [multiMode, items.length, canMulti]);
+
+  // Switch to singles when items drop below 2 while in multi mode
+  useEffect(() => {
+    if (multiMode === 'multi' && !canMulti) setMultiMode('singles');
+  }, [items.length, multiMode, canMulti]);
 
   if (items.length === 0) return null;
 
-  const avgKelly = items.filter(i => i.kelly_percent).reduce((a, i) => a + (i.kelly_percent || 0), 0) / (items.filter(i => i.kelly_percent).length || 1);
+  const avgKelly = items.filter(i => i.kelly_percent)
+    .reduce((a, i) => a + (i.kelly_percent || 0), 0)
+    / (items.filter(i => i.kelly_percent).length || 1);
+
+  const isMulti = multiMode === 'multi' && canMulti;
 
   async function logBets() {
     setLogging(true);
     try {
-      await Promise.all(items.map(item =>
-        API.post('/bets', {
-          event_name:     item.event_name,
-          sport:          item.sport_key,
-          market:         'h2h',
-          selection:      item.selection,
-          bookie:         item.bookie,
-          odds_taken:     item.odds,
-          fair_odds:      item.fair_odds,
-          ev_percent:     item.ev_percent,
-          kelly_fraction: item.kelly_percent ? item.kelly_percent / 100 : null,
-          stake_aud:      stake,
-          event_time:     item.commence_time,
-        })
-      ));
+      if (isMulti && multiResult) {
+        // Log as a multi-bet
+        await API.post('/bets/multi', {
+          legs: items.map(i => ({
+            event_id: i.event_id,
+            event_name: i.event_name,
+            sport_key: i.sport_key,
+            selection: i.selection,
+            bookie: i.bookie,
+            odds: i.odds,
+            fair_odds: i.fair_odds,
+            ev_percent: i.ev_percent,
+          })),
+          total_stake: stake,
+          combined_ev: multiResult.combined_ev_percent,
+        });
+      } else {
+        // Log individual singles
+        await Promise.all(items.map(item =>
+          API.post('/bets', {
+            event_name:     item.event_name,
+            sport:          item.sport_key,
+            market:         'h2h',
+            selection:      item.selection,
+            bookie:         item.bookie,
+            odds_taken:     item.odds,
+            fair_odds:      item.fair_odds,
+            ev_percent:     item.ev_percent,
+            kelly_fraction: item.kelly_percent ? item.kelly_percent / 100 : null,
+            stake_aud:      stake,
+            event_time:     item.commence_time,
+          })
+        ));
+      }
       setLogged(true);
-      setTimeout(() => { onClear(); setLogged(false); }, 1500);
-    } catch { /* silently fail */ } finally { setLogging(false); }
+      setTimeout(() => { onClear(); setLogged(false); setMultiResult(null); }, 1500);
+    } catch (e) { console.error('Log failed', e); }
+    finally { setLogging(false); }
   }
 
   return (
     <div style={{
       position: 'fixed', bottom: 24, right: 24, zIndex: 200,
-      width: 330, background: '#0d1526',
-      border: '1px solid rgba(41,121,255,.3)',
+      width: 360, background: '#0d1526',
+      border: `1px solid ${isMulti ? 'rgba(255,171,0,.3)' : 'rgba(41,121,255,.3)'}`,
       borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,.7)',
       overflow: 'hidden',
     }}>
-      <div style={{ padding: '13px 16px', background: 'rgba(41,121,255,.07)', borderBottom: '1px solid rgba(41,121,255,.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 800, fontSize: 14, color: '#2979ff' }}>⚡ Bet Slip ({items.length})</span>
+      {/* Header with mode toggle */}
+      <div style={{ padding: '11px 16px', background: isMulti ? 'rgba(255,171,0,.07)' : 'rgba(41,121,255,.07)', borderBottom: `1px solid ${isMulti ? 'rgba(255,171,0,.15)' : 'rgba(41,121,255,.15)'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 800, fontSize: 14, color: isMulti ? '#ffab00' : '#2979ff' }}>
+            {isMulti ? '📊 Multi Picker' : '⚡ Bet Slip'} ({items.length})
+          </span>
+          {canMulti && (
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,.06)', borderRadius: 6, padding: 2 }}>
+              <button
+                onClick={() => setMultiMode('singles')}
+                style={{
+                  background: multiMode === 'singles' ? '#2979ff' : 'transparent',
+                  border: 'none', color: multiMode === 'singles' ? '#fff' : '#64748b',
+                  fontWeight: 700, fontSize: 10, padding: '3px 8px', borderRadius: 5, cursor: 'pointer',
+                }}
+              >
+                1×
+              </button>
+              <button
+                onClick={() => setMultiMode('multi')}
+                style={{
+                  background: multiMode === 'multi' ? '#ffab00' : 'transparent',
+                  border: 'none',
+                  color: multiMode === 'multi' ? '#030711' : '#64748b',
+                  fontWeight: 700, fontSize: 10, padding: '3px 8px', borderRadius: 5, cursor: 'pointer',
+                }}
+              >
+                Multi
+              </button>
+            </div>
+          )}
+        </div>
         <button onClick={onClear} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13 }}>Clear</button>
       </div>
 
-      <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+      {/* Legs list */}
+      <div style={{ maxHeight: isMulti ? 200 : 240, overflowY: 'auto' }}>
         {items.map(item => {
           const key = `${item.event_id}:${item.selection}`;
           return (
-            <div key={key} style={{ padding: '9px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>{item.event_name}</div>
-                <div style={{ fontSize: 11, color: '#64748b', textTransform: 'capitalize' }}>{item.selection} · {item.bookie?.replace(/_/g, ' ')}</div>
+            <div key={key} style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#e2e8f0', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.event_name}</div>
+                <div style={{ fontSize: 10, color: '#64748b', textTransform: 'capitalize' }}>
+                  {item.selection} · {item.bookie?.replace(/_/g, ' ')}
+                </div>
               </div>
-              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 10 }}>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: item.ev_percent ? '#00c853' : '#fff', fontSize: 14 }}>
+              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 8, minWidth: 60 }}>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: item.ev_percent ? '#00c853' : '#fff', fontSize: 13, lineHeight: 1.2 }}>
                   ${item.odds.toFixed(2)}
                 </div>
-                <button onClick={() => onRemove(key)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 11 }}>✕</button>
+                <button onClick={() => onRemove(key)} style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', fontSize: 10, padding: 0, lineHeight: 1 }}>✕</button>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div style={{ padding: 14, borderTop: '1px solid rgba(255,255,255,.05)' }}>
+      {/* Multi: combined odds display */}
+      {isMulti && (
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,.05)', background: 'rgba(255,171,0,.03)' }}>
+          {computingMulti ? (
+            <div style={{ textAlign: 'center', color: '#64748b', fontSize: 11 }}>Computing multi odds...</div>
+          ) : multiResult ? (
+            <>
+              {/* Combined odds row */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>Combined odds</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 20, color: '#ffab00' }}>
+                  ${multiResult.combined_odds.toFixed(2)}
+                </span>
+              </div>
+              {/* Payout & probability */}
+              <div style={{ display: 'flex', gap: 10, fontSize: 10, color: '#64748b', marginBottom: 6 }}>
+                <span>Pays ${(stake * multiResult.combined_odds).toFixed(2)}</span>
+                <span>·</span>
+                <span>{multiResult.implied_probability.toFixed(1)}% implied</span>
+                {multiResult.combined_ev_percent !== null && multiResult.combined_ev_percent >= 0 && (
+                  <>
+                    <span>·</span>
+                    <span style={{ color: '#00c853', fontWeight: 700 }}>+{multiResult.combined_ev_percent.toFixed(1)}% EV</span>
+                  </>
+                )}
+              </div>
+              {/* Correlation warning */}
+              {multiResult.correlation_warning && (
+                <div style={{ fontSize: 10, color: '#ffab00', padding: '5px 8px', background: 'rgba(255,171,0,.08)', borderRadius: 6, marginTop: 2 }}>
+                  {multiResult.correlation_warning}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', color: '#ff1744', fontSize: 11 }}>Could not compute multi odds</div>
+          )}
+        </div>
+      )}
+
+      {/* Singles: per-leg Kelly */}
+      {!isMulti && avgKelly > 0 && (
+        <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 11, color: '#64748b', display: 'flex', justifyContent: 'space-between' }}>
+          <span>Avg Kelly: {avgKelly.toFixed(1)}% of bankroll</span>
+          <span>Total: ${(stake * items.length).toFixed(0)}</span>
+        </div>
+      )}
+
+      {/* Bottom: stake + log button */}
+      <div style={{ padding: 12, borderTop: '1px solid rgba(255,255,255,.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <label style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>Stake per bet</label>
+          <label style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+            {isMulti ? 'Multi stake' : 'Stake per bet'}
+          </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ color: '#64748b' }}>$</span>
-            <input type="number" value={stake} onChange={e => setStake(Number(e.target.value))} style={{ width: 70, fontSize: 14, padding: '4px 8px', textAlign: 'right' }} />
+            <span style={{ color: '#64748b', fontSize: 13 }}>$</span>
+            <input
+              type="number"
+              min={1}
+              max={10000}
+              value={stake}
+              onChange={e => setStake(Math.max(1, Number(e.target.value)))}
+              style={{
+                width: 72, fontSize: 14, padding: '4px 8px', textAlign: 'right',
+                background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)',
+                borderRadius: 6, color: '#fff', fontFamily: 'JetBrains Mono, monospace',
+                outline: 'none',
+              }}
+            />
           </div>
         </div>
-        {avgKelly > 0 && (
-          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 10, display: 'flex', justifyContent: 'space-between' }}>
-            <span>Avg suggested stake: {avgKelly.toFixed(1)}% of bankroll</span>
-            <span>Total: ${(stake * items.length).toFixed(0)}</span>
+        {isMulti && multiResult && (
+          <div style={{ fontSize: 10, color: '#475569', marginBottom: 8, textAlign: 'center' }}>
+            Payout if all legs win: <strong style={{ color: '#ffab00' }}>${(stake * multiResult.combined_odds).toFixed(2)}</strong>
           </div>
         )}
         <button
           onClick={logBets}
-          disabled={logging || logged}
-          style={{ width: '100%', padding: '11px', borderRadius: 10, background: logged ? '#00c853' : 'linear-gradient(135deg,#2979ff,#1e63d9)', border: 'none', color: logged ? '#030711' : '#fff', fontWeight: 800, fontSize: 14, cursor: logging ? 'wait' : 'pointer', fontFamily: 'Inter, sans-serif' }}
+          disabled={logging || logged || (isMulti && !multiResult)}
+          style={{
+            width: '100%', padding: '11px', borderRadius: 10,
+            background: logged ? '#00c853'
+              : isMulti
+                ? 'linear-gradient(135deg,#ffab00,#e69900)'
+                : 'linear-gradient(135deg,#2979ff,#1e63d9)',
+            border: 'none',
+            color: logged ? '#030711' : isMulti ? '#030711' : '#fff',
+            fontWeight: 800, fontSize: 14,
+            cursor: (logging || (isMulti && !multiResult)) ? 'wait' : 'pointer',
+            fontFamily: 'Inter, sans-serif',
+            opacity: (isMulti && !multiResult && !computingMulti) ? 0.5 : 1,
+          }}
         >
-          {logged ? '✓ Logged to CLV Tracker' : logging ? 'Logging...' : `Log ${items.length} Bet${items.length > 1 ? 's' : ''} →`}
+          {logged
+            ? '✓ Logged'
+            : logging
+              ? 'Logging...'
+              : isMulti
+                ? `Log Multi (${items.length} legs) →`
+                : `Log ${items.length} Bet${items.length > 1 ? 's' : ''} →`
+          }
         </button>
       </div>
     </div>

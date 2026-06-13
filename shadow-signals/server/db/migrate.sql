@@ -23,6 +23,54 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- ── 8. Multi-bet / Parlay tables ─────────────────────────────────────────────
+
+DO $$ BEGIN
+  CREATE TABLE IF NOT EXISTS multi_bets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    combined_odds DECIMAL(10,4) NOT NULL,
+    combined_ev DECIMAL(8,3),
+    total_stake DECIMAL(12,2) NOT NULL DEFAULT 0,
+    num_legs INTEGER NOT NULL DEFAULT 2,
+    max_correlation_score DECIMAL(5,4) DEFAULT 0,
+    kelly_fraction DECIMAL(8,4),
+    result VARCHAR(10) DEFAULT 'pending' CHECK (result IN ('pending','win','loss','void','cashout')),
+    profit_aud DECIMAL(12,2),
+    placed_at TIMESTAMPTZ DEFAULT NOW(),
+    settled_at TIMESTAMPTZ
+  );
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TABLE IF NOT EXISTS multi_legs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    multi_id UUID REFERENCES multi_bets(id) ON DELETE CASCADE,
+    event_id VARCHAR(255) NOT NULL,
+    event_name VARCHAR(500),
+    sport_key VARCHAR(100),
+    selection VARCHAR(255) NOT NULL,
+    bookie VARCHAR(100),
+    odds_taken DECIMAL(10,4) NOT NULL,
+    fair_odds DECIMAL(10,4),
+    ev_percent DECIMAL(8,3),
+    result VARCHAR(10) DEFAULT 'pending' CHECK (result IN ('pending','win','loss','void')),
+    UNIQUE(multi_id, event_id, selection)
+  );
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS idx_multi_bets_user ON multi_bets(user_id, placed_at DESC);
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS idx_multi_legs_multi ON multi_legs(multi_id);
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
+
 -- ── 2. Missing FK indexes ────────────────────────────────────────────────────
 --
 -- bets.user_id is already indexed (idx_bets_user). notifications.user_id is
