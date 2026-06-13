@@ -3,9 +3,6 @@ import ExitPopup from '../components/ExitPopup';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import OperativePeek from '../components/OperativePeek';
-import TeamLogo from '../components/TeamLogo';
-import ConfidenceBar from '../components/ConfidenceBar';
-import { LogoMark } from '../components/Logo';
 
 const BOOKIES = ['Sportsbet','TAB','Bet365 AU','Ladbrokes','Neds','PointsBet','BlueBet','Betfair Exchange'];
 
@@ -75,58 +72,60 @@ export default function Home() {
       <ExitPopup />
 
       {/* RG bar */}
-      <div style={{ background: '#060e1a', borderBottom: '1px solid rgba(255,255,255,.06)', padding: '8px 24px', textAlign: 'center', fontSize: 12, color: '#5e7390' }}>
-        <strong style={{ color: '#ffab00' }}>18+ Only.</strong>{' '}Think about your choices. Call{' '}
-        <a href="tel:1800858858" style={{ color: '#2979ff', fontWeight: 700 }}>1800 858 858</a>
-        {' '}• gamblinghelponline.org.au
+      <div style={{ background: 'rgba(255,171,0,.08)', borderBottom: '1px solid rgba(255,171,0,.15)', padding: '8px 24px', textAlign: 'center', fontSize: 12, color: '#ffab00' }}>
+        <strong>18+ Only.</strong>{' '}Think about your choices. Call{' '}
+        <a href="tel:1800858858" style={{ color: '#ffab00', fontWeight: 700 }}>1800 858 858</a>
+        {' '}· gamblinghelponline.org.au
       </div>
 
       <Navbar />
 
       {/* ── Hero ──────────────────────────────────────────── */}
-      <section style={{ position: 'relative', padding: '100px 24px 80px', overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 0,
-          backgroundImage: 'url(https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1920&q=80)',
-          backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.08,
-        }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #0a1929 0%, transparent 40%, #0a1929 100%)', zIndex: 0 }} />
-        {/* Cyan glow orb */}
-        <div style={{ position: 'absolute', top: -200, right: '10%', width: 600, height: 600, background: 'radial-gradient(ellipse, rgba(41,121,255,.07) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
+      <section style={{ position: 'relative', padding: 'clamp(60px,8vh,100px) 24px clamp(60px,8vh,100px)', overflow: 'hidden' }}>
+        {/* Background orbs */}
+        <div style={{ position: 'absolute', top: -300, left: '-5%', width: 700, height: 700, background: 'radial-gradient(ellipse, rgba(41,121,255,.06) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -100, right: '5%', width: 500, height: 500, background: 'radial-gradient(ellipse, rgba(41,121,255,.08) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', gap: '64px', alignItems: 'center' }}>
+        <div className="landing-hero-grid" style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 1, gridTemplateColumns: '2fr 3fr' }}>
 
-          {/* Left */}
-          <div style={{ flex: '1 1 500px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
-              <LogoMark size={52} />
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 99, border: '1px solid rgba(41,121,255,.3)', background: 'rgba(41,121,255,.06)', color: '#2979ff', fontSize: 11, fontWeight: 800, letterSpacing: 1.2 }}>
-                <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#2979ff', boxShadow: '0 0 10px #2979ff' }} />
-                #1 BETTING INTELLIGENCE IN AUSTRALIA
-              </div>
+          {/* ── LEFT: headline + CTAs */}
+          <div>
+            {/* Eyebrow */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 99, border: '1px solid rgba(41,121,255,.3)', background: 'rgba(41,121,255,.06)', color: '#2979ff', fontSize: 11, fontWeight: 800, letterSpacing: 1.2, marginBottom: 28 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#2979ff', boxShadow: '0 0 10px #2979ff', display: 'inline-block', flexShrink: 0 }} />
+              #1 BETTING INTELLIGENCE IN AUSTRALIA
             </div>
 
-            <h1 style={{ fontSize: 'clamp(48px,6.5vw,80px)', fontWeight: 900, lineHeight: 0.95, letterSpacing: -3, marginBottom: 22, textTransform: 'uppercase' }}>
-              STOP GUESSING,<br />
-              <span style={{ background: 'linear-gradient(135deg,#2979ff 0%,#00e676 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>START WINNING</span>
+            {/* Headline */}
+            <h1 style={{ margin: '0 0 16px', padding: 0 }}>
+              <span style={{ display: 'block', fontSize: 'clamp(80px,10vw,140px)', fontWeight: 900, color: '#fff', textTransform: 'uppercase', lineHeight: 0.9, letterSpacing: '-3px' }}>SHADOW</span>
+              <span style={{ display: 'block', fontSize: 'clamp(80px,10vw,140px)', fontWeight: 900, textTransform: 'uppercase', lineHeight: 0.9, letterSpacing: '-3px', background: 'linear-gradient(135deg,#2979ff 0%,#5b8cff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>SIGNALS</span>
             </h1>
-            <p style={{ fontSize: 16, color: '#9eb1c8', lineHeight: 1.65, maxWidth: 520, marginBottom: 36 }}>
-              We scan 12+ Aussie bookies and Betfair Exchange around the clock and tell you
-              exactly which side to back — with a <strong style={{ color: '#fff' }}>confidence score</strong> on
-              every signal, delivered in real time.
+
+            {/* Sub-headline */}
+            <p style={{ fontSize: 16, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: '#9eb1c8', margin: '0 0 20px' }}>
+              STOP GUESSING. START <span style={{ color: '#2979ff' }}>WINNING.</span>
             </p>
 
-            <div style={{ display: 'flex', gap: 14, marginBottom: 40, flexWrap: 'wrap' }}>
-              <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 32px', borderRadius: 12, fontSize: 16, fontWeight: 800, color: '#0a1929', background: 'linear-gradient(135deg,#2979ff,#0099cc)', boxShadow: '0 10px 30px -5px rgba(41,121,255,.4)' }}>
+            {/* Paragraph */}
+            <p style={{ fontSize: 16, color: '#9eb1c8', lineHeight: 1.65, maxWidth: 500, margin: '0 0 36px' }}>
+              We scan 12+ Aussie bookies and Betfair Exchange to find the mathematical edge. Get{' '}
+              <strong style={{ color: '#fff' }}>high-confidence signals</strong> and{' '}
+              <strong style={{ color: '#fff' }}>+EV bets</strong> delivered to your dashboard in real time.
+            </p>
+
+            {/* CTAs */}
+            <div style={{ display: 'flex', gap: 14, marginBottom: 32, flexWrap: 'wrap' }}>
+              <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, fontSize: 16, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', boxShadow: '0 10px 30px -5px rgba(41,121,255,.45)' }}>
                 ⚡ Start 7-Day Free Trial
               </Link>
-              <Link href="/markets" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 32px', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.04)' }}>
+              <Link href="/markets" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', border: '1px solid rgba(255,255,255,.12)', background: 'transparent' }}>
                 View Live Signals →
               </Link>
             </div>
 
             {/* Social proof */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 14, padding: '13px 18px', background: 'rgba(18,41,68,.6)', borderRadius: 14, border: '1px solid rgba(255,255,255,.08)', backdropFilter: 'blur(8px)' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 14 }}>
               <div style={{ display: 'flex' }}>
                 {[
                   'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=80&h=80&fit=crop&crop=face',
@@ -137,7 +136,7 @@ export default function Home() {
                 ))}
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>7,410 Aussie sharps signed up</div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>7,416+ Aussie sharps signed up</div>
                 <div style={{ fontSize: 12, color: '#9eb1c8', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ color: '#ffab00' }}>★★★★★</span> 4.9 / 5 rating
                 </div>
@@ -145,83 +144,67 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right — Phone mockup: live NRL signal */}
-          <div style={{ flex: '1 1 380px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          {/* ── RIGHT: glass signal card + operative */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minHeight: 520 }}>
+            {/* Signal card */}
             <div style={{
-              width: 320, borderRadius: 42, padding: 12,
-              background: 'linear-gradient(160deg, #1a2940, #060e1a)',
-              border: '1px solid rgba(255,255,255,.12)',
-              boxShadow: '0 50px 100px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.1)',
+              background: 'rgba(12,28,49,.85)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(41,121,255,.18)',
+              borderRadius: 24,
+              padding: 28,
+              width: 420,
+              maxWidth: '100%',
+              boxShadow: '0 30px 80px rgba(0,0,0,.5), inset 0 0 0 1px rgba(41,121,255,.1)',
               position: 'relative',
+              zIndex: 3,
+              flexShrink: 0,
             }}>
-              {/* notch */}
-              <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', width: 110, height: 24, borderRadius: 14, background: '#060e1a', zIndex: 3 }} />
+              {/* TODAY'S TOP SIGNAL pill */}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'linear-gradient(135deg,#ffd24a,#ffab00)', color: '#1a1500', fontSize: 11, fontWeight: 800, letterSpacing: 1.5, padding: '5px 14px', borderRadius: 99, marginBottom: 20 }}>
+                ⭐ TODAY&apos;S TOP SIGNAL
+              </div>
 
-              <div style={{ borderRadius: 32, overflow: 'hidden', background: '#0a1929', border: '1px solid rgba(255,255,255,.06)', paddingTop: 44, paddingBottom: 22 }}>
-                {/* app header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px 14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <LogoMark size={22} />
-                    <span style={{ fontWeight: 900, fontSize: 12, letterSpacing: 1.5 }}>SHADOW SIGNALS</span>
-                  </div>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 9, fontWeight: 800, color: '#00e676' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00e676', boxShadow: '0 0 8px #00e676', display: 'inline-block' }} />
-                    LIVE SIGNAL
-                  </span>
-                </div>
-
-                {/* match card */}
-                <div style={{ margin: '0 14px', borderRadius: 16, background: 'rgba(18,41,68,.6)', border: '1px solid rgba(41,121,255,.18)', overflow: 'hidden' }}>
-                  <div style={{ padding: '9px 14px', background: 'linear-gradient(135deg,#0c1a45,#1e3a8a)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(255,255,255,.75)', letterSpacing: 1 }}>🏉 NRL · ROUND 14</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.5)' }}>Sat 7:35 PM</span>
-                  </div>
-
-                  {/* OUR PICK side */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', background: 'rgba(0,230,118,.07)', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
-                    <TeamLogo name="Gold Coast Titans" color="#00bcd4" size={34} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 900, fontSize: 14, color: '#fff' }}>Titans</div>
-                      <div style={{ fontSize: 10, color: '#9eb1c8' }}>Gold Coast</div>
-                    </div>
-                    <span style={{ fontSize: 9, fontWeight: 900, color: '#030711', background: '#00e676', padding: '3px 9px', borderRadius: 10, letterSpacing: .5, boxShadow: '0 0 14px rgba(0,230,118,.5)' }}>
-                      OUR PICK
-                    </span>
-                  </div>
-
-                  {/* PASS side */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', opacity: .45 }}>
-                    <TeamLogo name="Penrith Panthers" color="#475569" size={34} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, color: '#94a3b8' }}>Panthers</div>
-                      <div style={{ fontSize: 10, color: '#5e7390' }}>Penrith</div>
-                    </div>
-                    <span style={{ fontSize: 9, fontWeight: 800, color: '#64748b', border: '1px solid rgba(255,255,255,.15)', padding: '3px 9px', borderRadius: 10, letterSpacing: .5 }}>
-                      PASS
-                    </span>
-                  </div>
-
-                  {/* confidence + stake */}
-                  <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,.05)' }}>
-                    <ConfidenceBar score={87} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 11 }}>
-                      <span style={{ color: '#5e7390' }}>Suggested stake</span>
-                      <span style={{ color: '#fff', fontWeight: 800, fontFamily: 'JetBrains Mono, monospace' }}>0.8% of bankroll</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 11 }}>
-                      <span style={{ color: '#5e7390' }}>Your edge</span>
-                      <span style={{ color: '#00e676', fontWeight: 800, fontFamily: 'JetBrains Mono, monospace' }}>+6.2%</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'center', marginTop: 14, fontSize: 10, color: '#5e7390', fontWeight: 600 }}>
-                  This is what every signal looks like.
+              {/* Event row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '14px 16px', background: 'rgba(7,17,32,.4)', borderRadius: 14, border: '1px solid rgba(255,255,255,.06)' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(41,121,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>🏀</div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>LA Lakers @ Boston Celtics</div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 3 }}>NBA · Today, 10:30 AM AEST</div>
                 </div>
               </div>
+
+              {/* Recommended bet caption */}
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Recommended Bet</div>
+
+              {/* Bet row */}
+              <div style={{ background: 'rgba(7,17,32,.6)', borderRadius: 12, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, border: '1px solid rgba(255,255,255,.06)' }}>
+                <span style={{ fontSize: 18, fontWeight: 600, color: '#fff' }}>Lakers Moneyline</span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 800, color: '#2979ff' }}>1.95</span>
+              </div>
+
+              {/* Win Prob / Math Edge grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                <div style={{ background: 'rgba(0,230,118,.06)', border: '1px solid rgba(0,230,118,.2)', borderRadius: 14, padding: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#00e676', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>Est. Win Prob</div>
+                  <div style={{ fontFamily: 'Bebas Neue, var(--display)', fontSize: 28, color: '#00e676', lineHeight: 1 }}>58.2%</div>
+                </div>
+                <div style={{ background: 'rgba(41,121,255,.08)', border: '1px solid rgba(41,121,255,.25)', borderRadius: 14, padding: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#5b8cff', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>Math Edge</div>
+                  <div style={{ fontFamily: 'Bebas Neue, var(--display)', fontSize: 28, color: '#5b8cff', lineHeight: 1 }}>+13.4%</div>
+                </div>
+              </div>
+
+              {/* Grade pill */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ background: 'rgba(41,121,255,.15)', color: '#5b8cff', fontWeight: 800, fontSize: 12, padding: '4px 12px', borderRadius: 99 }}>GRADE S+</span>
+                <span style={{ fontSize: 12, color: '#64748b' }}>Highest confidence tier</span>
+              </div>
             </div>
-            {/* Operative peeking at the mockup — drops in when the asset lands in /public/operatives/ */}
-            <OperativePeek page="landing" side="right" width={360} bottom={-40} />
+
+            {/* Operative — overlaps behind right edge of the card */}
+            <OperativePeek page="landing" leftOffset={340} width={360} bottom={-40} />
           </div>
         </div>
       </section>
