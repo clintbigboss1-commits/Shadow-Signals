@@ -53,6 +53,33 @@ setNotifIO(io);
 initPulse(io);
 
 app.set('trust proxy', 1);
+
+// ── Healthcheck FIRST — before all middleware so Railway never times out ──────
+app.get('/api/health', (req, res) => {
+  const sk = process.env.STRIPE_SECRET_KEY || '';
+  res.json({
+    status:   'ok',
+    time:     new Date().toISOString(),
+    stripe: {
+      mode:           sk.startsWith('sk_live') ? 'LIVE OK' : sk.startsWith('sk_test') ? 'TEST' : 'NOT SET',
+      secret_key:     sk ? 'set OK' : 'NOT SET',
+      webhook_secret: process.env.STRIPE_WEBHOOK_SECRET ? 'set OK' : 'NOT SET',
+      price_starter:  process.env.STRIPE_PRICE_STARTER_MONTH || 'NOT SET',
+      price_pro:      process.env.STRIPE_PRICE_PRO_MONTH     || 'NOT SET',
+      price_elite:    process.env.STRIPE_PRICE_ELITE_MONTH   || 'NOT SET',
+    },
+    database:  process.env.DATABASE_URL   ? 'set OK' : 'NOT SET',
+    odds_api: (process.env.THE_ODDS_API_KEY || process.env.ODDS_API_KEY) ? 'set OK' : 'NOT SET',
+    email:     process.env.RESEND_API_KEY ? 'set OK' : 'not set',
+    ghost: {
+      facebook:  (process.env.META_PAGE_ID && process.env.META_PAGE_ACCESS_TOKEN) ? 'set OK' : 'NOT SET',
+      instagram: (process.env.META_IG_USER_ID && process.env.GHOST_IMAGE_URL) ? 'set OK' : 'not set',
+      mode:      process.env.GHOST_TEST_MODE === 'true' ? 'TEST' : 'LIVE',
+    },
+    jwt: process.env.JWT_SECRET ? 'set OK' : 'NOT SET',
+  });
+});
+
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(helmet({ contentSecurityPolicy: false }));
 
@@ -97,34 +124,6 @@ app.use('/api/admin',         adminRoutes);
 app.use('/api/users',         usersRoutes);
 app.use('/api/stats',         statsRoutes);
 
-// ── /api/health — diagnose your config instantly ──────────────────────────
-app.get('/api/health', (req, res) => {
-  const sk = process.env.STRIPE_SECRET_KEY || '';
-  const checks = {
-    status:   'ok',
-    time:     new Date().toISOString(),
-    stripe: {
-      mode:           sk.startsWith('sk_live') ? 'LIVE OK' : sk.startsWith('sk_test') ? 'TEST (payments wont charge real cards)' : 'NOT SET',
-      secret_key:     sk ? 'set OK' : 'NOT SET',
-      webhook_secret: process.env.STRIPE_WEBHOOK_SECRET ? 'set OK' : 'NOT SET - this is why plans dont update after payment',
-      price_starter:  process.env.STRIPE_PRICE_STARTER_MONTH || 'NOT SET',
-      price_pro:      process.env.STRIPE_PRICE_PRO_MONTH     || 'NOT SET',
-      price_elite:    process.env.STRIPE_PRICE_ELITE_MONTH   || 'NOT SET',
-    },
-    database:  process.env.DATABASE_URL   ? 'set OK' : 'NOT SET',
-    odds_api: (process.env.THE_ODDS_API_KEY || process.env.ODDS_API_KEY) ? 'set OK' : 'NOT SET — add THE_ODDS_API_KEY or ODDS_API_KEY',
-    email:     process.env.RESEND_API_KEY ? 'set OK' : 'not set (emails wont send)',
-    ghost: {
-      facebook:  (process.env.META_PAGE_ID && process.env.META_PAGE_ACCESS_TOKEN) ? 'set OK' : 'NOT SET (GHOST in dry-run)',
-      instagram: (process.env.META_IG_USER_ID && process.env.GHOST_IMAGE_URL) ? 'set OK' : 'not set (FB only)',
-      mode:      process.env.GHOST_TEST_MODE === 'true' ? 'TEST - hourly' : 'steady - 12/day peak-weighted',
-    },
-    frontend:  FRONTEND,
-    jwt:       process.env.JWT_SECRET     ? 'set OK' : 'NOT SET',
-  };
-  const hasErrors = Object.values(checks.stripe).some(v => String(v).includes('NOT SET'));
-  res.status(hasErrors ? 200 : 200).json(checks);
-});
 
 app.use('/api/', (req, res) => res.status(404).json({ error: 'Route not found' }));
 app.use((err, req, res, _next) => {
