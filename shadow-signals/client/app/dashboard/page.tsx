@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import API from '../../lib/api';
-import { getUser, getToken, saveAuth, type User } from '../../lib/auth';
+import { getUser, getToken, type User } from '../../lib/auth';
 import { connectSocket } from '../../lib/socket';
 import { confidenceFromEV } from '../../lib/confidence';
 import AppShell from '../../components/AppShell';
@@ -49,13 +49,6 @@ const BOOKIE_LABEL: Record<string, string> = {
 
 
 /* ─── helpers ────────────────────────────────────────────── */
-function timeAgo(dt: string) {
-  const diff = Date.now() - new Date(dt).getTime();
-  const h = Math.floor(diff / 3600000);
-  if (h < 1) return `${Math.floor(diff/60000)}m ago`;
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h/24)}d ago`;
-}
 function fmtKickoff(dt: string) {
   return new Date(dt).toLocaleString('en-AU', {
     timeZone:'Australia/Sydney', weekday:'short', hour:'2-digit', minute:'2-digit',
@@ -76,70 +69,6 @@ function confColor(score: number) {
 }
 
 /* ─── sidebar ────────────────────────────────────────────── */
-function Sidebar({ user, activeSport, setActiveSport }: {
-  user: User|null; activeSport: string; setActiveSport: (s:string)=>void;
-}) {
-  const planCol = user?.plan === 'elite' ? '#8b5cf6' : '#2979ff';
-
-  return (
-    <aside className="sidebar">
-      {/* Logo */}
-      <div style={{ padding:'18px 16px 14px', borderBottom:'1px solid var(--border)' }}>
-        <Link href="/" style={{ display:'flex', alignItems:'center', gap:9 }}>
-          <div style={{ width:32,height:32,borderRadius:9,background:'linear-gradient(135deg,#2979ff,#1e63d9)',display:'grid',placeItems:'center',fontSize:16,flexShrink:0 }}>⚡</div>
-          <div style={{ lineHeight:1.1 }}>
-            <div style={{ fontWeight:900,fontSize:13,letterSpacing:.5 }}>SHADOW</div>
-            <div style={{ fontWeight:900,fontSize:13,letterSpacing:.5,color:'#2979ff' }}>SIGNALS</div>
-          </div>
-        </Link>
-      </div>
-
-      {/* User */}
-      <div style={{ padding:'12px 16px 12px', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'center', gap:10 }}>
-        <div style={{ width:36,height:36,borderRadius:'50%',background:`${planCol}22`,border:`2px solid ${planCol}`,display:'grid',placeItems:'center',fontWeight:800,fontSize:15,color:planCol,flexShrink:0 }}>
-          {user?.name?.charAt(0) || user?.email?.charAt(0) || 'D'}
-        </div>
-        <div>
-          <div style={{ fontWeight:700,fontSize:13 }}>{user?.name || user?.email?.split('@')[0] || 'Demo User'}</div>
-          <div style={{ fontSize:10,fontWeight:800,color:planCol,textTransform:'uppercase',letterSpacing:1 }}>{user?.plan || 'Starter'}</div>
-        </div>
-      </div>
-
-      {/* Main nav */}
-      <div style={{ padding:'8px 0', flex:1, overflowY:'auto' }}>
-        <Link href="/dashboard"><button className="nav-item active"><span>⊞</span> Dashboard</button></Link>
-        <Link href="/markets"><button className="nav-item"><span>~</span> Markets</button></Link>
-        <Link href="/ghost"><button className="nav-item"><span>◎</span> Signals</button></Link>
-        <Link href="/wins"><button className="nav-item"><span>↗</span> My Wins</button></Link>
-        <Link href="/settings"><button className="nav-item"><span>⚙</span> Settings</button></Link>
-
-        <div style={{ padding:'14px 16px 6px', fontSize:10, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:1.2 }}>Sports</div>
-        {SPORTS_NAV.map(s => (
-          <button key={s.key} className={`nav-item ${activeSport===s.key?'active':''}`} onClick={() => setActiveSport(s.key)} style={{ justifyContent:'space-between' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:9 }}>
-              <span style={{ fontSize:14 }}>{s.icon}</span>
-              <span>{s.label}</span>
-            </div>
-            {activeSport===s.key && <span style={{ width:7,height:7,borderRadius:'50%',background:'var(--cyan)',boxShadow:'0 0 8px var(--cyan)',display:'inline-block' }} />}
-          </button>
-        ))}
-      </div>
-
-      {/* Bottom */}
-      <div style={{ padding:'12px 12px 16px', borderTop:'1px solid var(--border)', display:'flex', flexDirection:'column', gap:8 }}>
-        <Link href="/pricing">
-          <button style={{ width:'100%', padding:'10px 0', borderRadius:9, background:'linear-gradient(135deg,#2979ff,#1e63d9)', border:'none', color:'#fff', fontWeight:800, fontSize:13, cursor:'pointer' }}>
-            Unlock all signals →
-          </button>
-        </Link>
-        <button onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ background:'none',border:'none',color:'var(--muted)',fontSize:13,cursor:'pointer',padding:'4px 0' }}>
-          Sign out
-        </button>
-      </div>
-    </aside>
-  );
-}
-
 /* ─── signal card ────────────────────────────────────────── */
 function SignalCard({ ev }: { ev: EVOpp }) {
   const [expanded, setExpanded] = useState(false);
@@ -364,12 +293,6 @@ function DashboardInner() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleUpgrade = useCallback((plan: string) => {
-    const token = getToken(); const u = getUser();
-    if (u && token) { saveAuth(token, { ...u, plan: plan as User['plan'] }); setUser({ ...u, plan: plan as User['plan'] }); }
-    setUpgraded(true);
-  }, []);
-
   if (loading) {
     return (
       <div style={{ minHeight:'100vh',display:'grid',placeItems:'center',background:'var(--bg)' }}>
@@ -386,14 +309,11 @@ function DashboardInner() {
   const signalsBySport = SPORTS_NAV
     .map(s => ({ sport: s, signals: evOpps.filter(e => e.sport_key === s.key).sort((a,b) => Number(b.ev_percent) - Number(a.ev_percent)) }))
     .filter(g => g.signals.length > 0);
-  const signals = evOpps.filter(e => e.sport_key === activeSport);
   /* stat card values */
   const settled = bets.filter(b => b.result !== 'pending');
   const wins    = settled.filter(b => b.result === 'win');
   const profit  = settled.reduce((a,b) => a + Number(b.profit_aud||0), 0);
   const clvWin  = settled.length ? Math.round((wins.length/settled.length)*100) : 0;
-
-  const sportName = SPORTS_NAV.find(s => s.key === activeSport)?.label || activeSport;
 
   return (
     <>
@@ -448,7 +368,7 @@ function DashboardInner() {
                 <div style={{ padding:'48px 24px',textAlign:'center',background:'var(--bg2)',borderRadius:14,border:'1px solid var(--border)',color:'var(--muted)' }}>
                   <div style={{ fontSize:32,marginBottom:12 }}>📡</div>
                   <div style={{ fontWeight:700,marginBottom:6 }}>Scanner is warming up</div>
-                  <div style={{ fontSize:13 }}>Signals appear here as soon as the scanner finds value. Runs every 45 min.</div>
+                  <div style={{ fontSize:13 }}>Signals appear here as soon as the scanner finds value. AFL &amp; NRL scan every 7 min on game days.</div>
                 </div>
               ) : (
                 <div style={{ display:'flex',flexDirection:'column',gap:24 }}>
