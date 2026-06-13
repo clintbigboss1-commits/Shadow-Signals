@@ -381,9 +381,12 @@ function DashboardInner() {
     );
   }
 
-  /* signals for the active sport — B2: activeSport actually filters content now */
-  const signals    = evOpps.filter(e => e.sport_key === activeSport);
+  /* group all signals by sport, sorted by EV descending within each sport */
   const allSignals = evOpps;
+  const signalsBySport = SPORTS_NAV
+    .map(s => ({ sport: s, signals: evOpps.filter(e => e.sport_key === s.key).sort((a,b) => b.ev_percent - a.ev_percent) }))
+    .filter(g => g.signals.length > 0);
+  const signals = evOpps.filter(e => e.sport_key === activeSport);
   /* stat card values */
   const settled = bets.filter(b => b.result !== 'pending');
   const wins    = settled.filter(b => b.result === 'win');
@@ -434,22 +437,33 @@ function DashboardInner() {
           {/* Two-column: signals + right panels */}
           <div className="dash-content-grid">
 
-            {/* LEFT: live signals — B2: filtered by activeSport */}
+            {/* LEFT: live signals — all sports grouped */}
             <div>
               <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:16 }}>
                 <h2 style={{ fontSize:18,fontWeight:900,letterSpacing:-.3 }}>LIVE SIGNALS</h2>
-                <span style={{ fontSize:13,color:'var(--muted)' }}>· {sportName}</span>
+                <span style={{ fontSize:13,color:'var(--muted)' }}>· {allSignals.length} across all sports</span>
               </div>
 
-              {signals.length === 0 ? (
+              {allSignals.length === 0 ? (
                 <div style={{ padding:'48px 24px',textAlign:'center',background:'var(--bg2)',borderRadius:14,border:'1px solid var(--border)',color:'var(--muted)' }}>
                   <div style={{ fontSize:32,marginBottom:12 }}>📡</div>
-                  <div style={{ fontWeight:700,marginBottom:6 }}>No {sportName} signals right now</div>
-                  <div style={{ fontSize:13 }}>Scanner runs every 45 min — or select another sport in the sidebar.</div>
+                  <div style={{ fontWeight:700,marginBottom:6 }}>Scanner is warming up</div>
+                  <div style={{ fontSize:13 }}>Signals appear here as soon as the scanner finds value. Runs every 45 min.</div>
                 </div>
               ) : (
-                <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(380px,1fr))',gap:14 }}>
-                  {signals.slice(0,6).map((ev,i) => <SignalCard key={ev.id||i} ev={ev} />)}
+                <div style={{ display:'flex',flexDirection:'column',gap:24 }}>
+                  {signalsBySport.map(({ sport, signals: sportSignals }) => (
+                    <div key={sport.key}>
+                      <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:10 }}>
+                        <span style={{ fontSize:16 }}>{sport.icon}</span>
+                        <span style={{ fontWeight:800,fontSize:14,letterSpacing:.5,textTransform:'uppercase' }}>{sport.label}</span>
+                        <span style={{ fontSize:11,color:'var(--cyan)',fontWeight:700,background:'rgba(0,230,246,.1)',border:'1px solid rgba(0,230,246,.2)',borderRadius:6,padding:'2px 7px' }}>{sportSignals.length} signal{sportSignals.length!==1?'s':''}</span>
+                      </div>
+                      <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:12 }}>
+                        {sportSignals.slice(0,6).map((ev,i) => <SignalCard key={ev.id||i} ev={ev} />)}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
