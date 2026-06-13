@@ -9,9 +9,29 @@ const emails = require('./emails');
 const { createNotification } = require('./notifications');
 const { fetchAllScores, backfillHistoricalOdds } = require('./historicalFetcher');
 const { runBacktest } = require('./backtester');
+const { activeModels } = require('./models');
 
 let _io = null;
 function setIO(io) { _io = io; }
+
+async function logModelRun(sportKey, action, fn) {
+  const start = Date.now();
+  try {
+    const details = await fn();
+    await db.query(
+      `INSERT INTO model_runs (sport_key, action, status, duration_ms, details)
+       VALUES ($1,$2,'success',$3,$4)`,
+      [sportKey, action, Date.now() - start, details ? JSON.stringify(details) : null]
+    );
+  } catch (e) {
+    await db.query(
+      `INSERT INTO model_runs (sport_key, action, status, duration_ms, error)
+       VALUES ($1,$2,'error',$3,$4)`,
+      [sportKey, action, Date.now() - start, e.message]
+    ).catch(() => {});
+    console.error(`Model ${sportKey} ${action} failed:`, e.message);
+  }
+}
 
 function getAUHour() {
   return parseInt(
@@ -227,17 +247,47 @@ function initScheduler() {
   });
 
   // Weekly historical odds backfill — Sunday 3am AEST (5pm UTC Sat)
-  // One call per unique (sport, timestamp) = 10 credits each
   cron.schedule('0 17 * * 6', async () => {
     try {
       await backfillHistoricalOdds();
-      // Run backtest immediately after fresh history arrives
       const summary = await runBacktest();
       console.log(`📈 Backtest: ${summary.signals} signals, ${summary.winRate}% hit rate, ${summary.roi}% ROI`);
     } catch (err) {
       console.error('Backfill/backtest error:', err.message);
     }
   });
+
+  // Daily 23:00 UTC (= 09:00 AEST): ingest results + recompute ratings + generate predictions
+  cron.schedule('0 23 * * *', async () => {
+    for (const m of activeModels()) {
+      await logModelRun(m.sportKey, 'ingest',    () => m.ingestData());
+      await logModelRun(m.sportKey, 'recompute', () => m.recomputeRatings());
+      await logModelRun(m.sportKey, 'backfill',  () => m.backfillOutcomes());
+      await logModelRun(m.sportKey, 'predict',   () => m.generatePredictions());
+    }
+    console.log('🤖 Daily model cycle complete');
+  });
+
+  // Every 4 hours: refresh predictions only (ratings unchanged between daily runs)
+  cron.schedule('0 */4 * * *', async () => {
+    for (const m of activeModels()) {
+      await logModelRun(m.sportKey, 'predict', () => m.generatePredictions());
+    }
+  });
+
+  // First-boot: if no model data exists, run full ingest + compute for each active model
+  setTimeout(async () => {
+    for (const m of activeModels()) {
+      try {
+        await logModelRun(m.sportKey, 'ingest',    () => m.ingestData());
+        await logModelRun(m.sportKey, 'recompute', () => m.recomputeRatings());
+        await logModelRun(m.sportKey, 'predict',   () => m.generatePredictions());
+      } catch (e) {
+        console.error(`Boot init ${m.sportKey} failed:`, e.message);
+      }
+    }
+    console.log('🤖 Boot model init complete');
+  }, 5000);
 
   const active = SPORT_SCHEDULE.filter(s => s.inSeason()).length;
   console.log(`✅ Scheduler running — ${active}/${SPORT_SCHEDULE.length} sports in season`);

@@ -163,3 +163,103 @@ CREATE INDEX IF NOT EXISTS idx_game_results_sport ON game_results(sport_key, com
 CREATE INDEX IF NOT EXISTS idx_game_results_time ON game_results(commence_time DESC);
 CREATE INDEX IF NOT EXISTS idx_hist_odds_event ON historical_odds(event_id);
 CREATE INDEX IF NOT EXISTS idx_hist_odds_sport_snap ON historical_odds(sport_key, snapshot_time DESC);
+
+-- ── Multi-sport model engine ─────────────────────────────────────────────────
+
+-- AFL
+CREATE TABLE IF NOT EXISTS afl_teams (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE,
+  abbrev TEXT NOT NULL UNIQUE, home_venue TEXT
+);
+CREATE TABLE IF NOT EXISTS afl_results (
+  id INTEGER PRIMARY KEY, year INTEGER NOT NULL, round INTEGER NOT NULL,
+  date TIMESTAMPTZ NOT NULL, venue TEXT,
+  home_team_id INTEGER NOT NULL REFERENCES afl_teams(id),
+  away_team_id INTEGER NOT NULL REFERENCES afl_teams(id),
+  home_score INTEGER NOT NULL, away_score INTEGER NOT NULL,
+  margin INTEGER NOT NULL, winner_team_id INTEGER REFERENCES afl_teams(id),
+  is_final BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS afl_results_year_round ON afl_results(year, round);
+CREATE TABLE IF NOT EXISTS afl_fixtures (
+  id INTEGER PRIMARY KEY, year INTEGER NOT NULL, round INTEGER NOT NULL,
+  date TIMESTAMPTZ NOT NULL, venue TEXT,
+  home_team_id INTEGER NOT NULL REFERENCES afl_teams(id),
+  away_team_id INTEGER NOT NULL REFERENCES afl_teams(id),
+  last_synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS afl_fixtures_date ON afl_fixtures(date);
+CREATE TABLE IF NOT EXISTS afl_power_ratings (
+  team_id INTEGER PRIMARY KEY REFERENCES afl_teams(id),
+  elo NUMERIC(7,2) NOT NULL DEFAULT 1500,
+  form_adjustment NUMERIC(7,2) NOT NULL DEFAULT 0,
+  games_played INTEGER NOT NULL DEFAULT 0,
+  last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS afl_predictions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  fixture_id INTEGER NOT NULL REFERENCES afl_fixtures(id) ON DELETE CASCADE,
+  home_win_prob NUMERIC(5,4) NOT NULL, away_win_prob NUMERIC(5,4) NOT NULL,
+  predicted_margin NUMERIC(5,2) NOT NULL,
+  home_elo NUMERIC(7,2), away_elo NUMERIC(7,2),
+  home_form NUMERIC(7,2), away_form NUMERIC(7,2),
+  generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  actual_winner_id INTEGER REFERENCES afl_teams(id),
+  actual_margin INTEGER, settled_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS afl_predictions_fixture ON afl_predictions(fixture_id);
+CREATE INDEX IF NOT EXISTS afl_predictions_unsettled ON afl_predictions(settled_at) WHERE settled_at IS NULL;
+
+-- NBA
+CREATE TABLE IF NOT EXISTS nba_teams (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL,
+  abbrev TEXT NOT NULL UNIQUE, conference TEXT, division TEXT, city TEXT
+);
+CREATE TABLE IF NOT EXISTS nba_results (
+  id INTEGER PRIMARY KEY, season INTEGER NOT NULL,
+  date TIMESTAMPTZ NOT NULL,
+  home_team_id INTEGER NOT NULL REFERENCES nba_teams(id),
+  away_team_id INTEGER NOT NULL REFERENCES nba_teams(id),
+  home_score INTEGER NOT NULL, away_score INTEGER NOT NULL,
+  margin INTEGER NOT NULL, winner_team_id INTEGER REFERENCES nba_teams(id),
+  is_postseason BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX IF NOT EXISTS nba_results_season ON nba_results(season);
+CREATE TABLE IF NOT EXISTS nba_fixtures (
+  id INTEGER PRIMARY KEY, season INTEGER NOT NULL, date TIMESTAMPTZ NOT NULL,
+  home_team_id INTEGER NOT NULL REFERENCES nba_teams(id),
+  away_team_id INTEGER NOT NULL REFERENCES nba_teams(id),
+  last_synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS nba_fixtures_date ON nba_fixtures(date);
+CREATE TABLE IF NOT EXISTS nba_power_ratings (
+  team_id INTEGER PRIMARY KEY REFERENCES nba_teams(id),
+  elo NUMERIC(7,2) NOT NULL DEFAULT 1500,
+  pace NUMERIC(5,2), off_rating NUMERIC(5,2), def_rating NUMERIC(5,2),
+  games_played INTEGER NOT NULL DEFAULT 0,
+  last_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS nba_predictions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  fixture_id INTEGER NOT NULL REFERENCES nba_fixtures(id) ON DELETE CASCADE,
+  home_win_prob NUMERIC(5,4) NOT NULL, away_win_prob NUMERIC(5,4) NOT NULL,
+  predicted_margin NUMERIC(5,2) NOT NULL, predicted_total NUMERIC(6,2),
+  home_elo NUMERIC(7,2), away_elo NUMERIC(7,2),
+  generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  actual_winner_id INTEGER REFERENCES nba_teams(id),
+  actual_margin INTEGER, actual_total INTEGER, settled_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS nba_predictions_fixture ON nba_predictions(fixture_id);
+
+-- Model run log
+CREATE TABLE IF NOT EXISTS model_runs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sport_key TEXT NOT NULL,
+  action TEXT NOT NULL,
+  status TEXT NOT NULL,
+  duration_ms INTEGER,
+  details JSONB,
+  error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS model_runs_recent ON model_runs(created_at DESC);

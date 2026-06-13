@@ -110,5 +110,24 @@ CREATE INDEX IF NOT EXISTS idx_hist_odds_sport_snap ON historical_odds(sport_key
 ALTER TABLE game_results DISABLE ROW LEVEL SECURITY;
 ALTER TABLE historical_odds DISABLE ROW LEVEL SECURITY;
 
+-- ── 8. Model engine columns + RLS ───────────────────────────────────────────
+
+ALTER TABLE ev_opportunities
+  ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'consensus_v1';
+ALTER TABLE ev_opportunities
+  ADD COLUMN IF NOT EXISTS model_confidence NUMERIC(5,4);
+
+DO $$ BEGIN ALTER TABLE afl_teams DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE afl_results DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE afl_fixtures DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE afl_power_ratings DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE afl_predictions DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE nba_teams DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE nba_results DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE nba_fixtures DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE nba_power_ratings DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE nba_predictions DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE model_runs DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
+
 -- Done.
 SELECT 'Migration complete' AS status;

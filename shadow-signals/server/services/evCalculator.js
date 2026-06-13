@@ -1,5 +1,7 @@
 'use strict';
 const { db } = require('../db');
+const { getModel } = require('./models');
+const { norm } = require('./models/shared/normalise');
 
 // Remove bookmaker margin — return array of fair probabilities
 function removeVig(oddsArray) {
@@ -96,6 +98,21 @@ async function computeEVFromCache(sportKey = null) {
     e.bookmakers[row.bookmaker][row.selection] = parseFloat(row.odds);
   }
 
+  // Pre-resolve model predictions per event (uses module-level caches — 1 DB call/30 min per sport)
+  const modelPredByEvent = new Map();
+  for (const event of Object.values(events)) {
+    const model = getModel(event.sport_key);
+    if (!model || !model.isImplemented) continue;
+    try {
+      const homeId = await model.resolveTeamFromOddsName(event.home_team);
+      const awayId = await model.resolveTeamFromOddsName(event.away_team);
+      if (homeId && awayId) {
+        const pred = await model.predict(homeId, awayId);
+        if (pred) modelPredByEvent.set(event.event_id, { pred, homeId });
+      }
+    } catch (_) {}
+  }
+
   const opportunities = [];
   const client = await db.getClient();
 
@@ -142,76 +159,101 @@ async function computeEVFromCache(sportKey = null) {
       if (sharpVector.some(p => !p)) continue;
       const fairProbs = removeVig(sharpVector);
 
-      // Best +EV per (event, selection) — one card per real opportunity,
-      // not one per bookmaker
+      // Model override: if we have a prediction for this event, use model prob as fair value
+      const modelData = modelPredByEvent.get(event.event_id);
+
+      // Best +EV per (event, selection) — one card per real opportunity
       for (let i = 0; i < selections.length; i++) {
         const sel = selections[i];
-        const fairOdds = 1 / fairProbs[i];
-        let best = null;
+        const consensusFairOdds = 1 / fairProbs[i];
 
+        // Determine fair odds and signal source
+        let effectiveFairOdds = consensusFairOdds;
+        let signalSource = 'consensus_v1';
+        let modelConfidence = null;
+
+        if (modelData) {
+          const { pred, homeId } = modelData;
+          const selN = norm(sel);
+          const homeN = norm(event.home_team);
+          const awayN = norm(event.away_team);
+          const isHome = selN === homeN || homeN.includes(selN) || selN.includes(homeN)
+            || (selN.length > 3 && homeN.length > 3 && (selN.startsWith(homeN.slice(0, 4)) || homeN.startsWith(selN.slice(0, 4))));
+          const isAway = !isHome && (selN === awayN || awayN.includes(selN) || selN.includes(awayN));
+          const modelProb = isHome ? pred.home_win_prob : (isAway ? pred.away_win_prob : null);
+          if (modelProb && modelProb > 0.05 && modelProb < 0.95) {
+            effectiveFairOdds = 1 / modelProb;
+            signalSource = `model_${event.sport_key}_v1`;
+            modelConfidence = modelProb;
+          }
+        }
+
+        // Model signals require ≥5% EV (higher bar); consensus stays at 3%
+        const evMin = modelConfidence !== null ? 5.0 : EV_MIN_PERCENT;
+
+        let best = null;
         for (const [bookie, prices] of Object.entries(event.bookmakers)) {
           if (['betfair_ex_au', 'pinnacle'].includes(bookie)) continue;
           const bookedOdds = prices[sel];
           if (!bookedOdds) continue;
-
-          // Stale/error price guard — a book miles off the market is not an edge
           if (bookedOdds > medians[sel] * OUTLIER_RATIO) continue;
-
-          const ev = calcEVPercent(bookedOdds, fairOdds);
-          if (ev < EV_MIN_PERCENT) continue;  // Minimum 3% threshold — cut noise
-          if (ev > EV_MAX_PERCENT) continue; // Data error, never display
-
+          const ev = calcEVPercent(bookedOdds, effectiveFairOdds);
+          if (ev < evMin) continue;
+          if (ev > EV_MAX_PERCENT) continue;
           if (!best || ev > best.ev) best = { bookie, bookedOdds, ev };
         }
 
         if (!best) continue;
 
-        const kelly = kellyFraction(best.bookedOdds, fairOdds);
+        const kelly = kellyFraction(best.bookedOdds, effectiveFairOdds);
         const expires = new Date(Date.now() + 2 * 3600 * 1000);
 
         const opp = {
-          sport_key: event.sport_key,
-          event_id: event.event_id,
-          event_name: event.event_name,
-          market: 'h2h',
-          selection: sel,
-          bookie: best.bookie,
-          bookie_odds: best.bookedOdds,
-          fair_odds: parseFloat(fairOdds.toFixed(3)),
-          ev_percent: parseFloat(best.ev.toFixed(2)),
-          kelly_percent: kelly,
-          commence_time: event.commence_time,
-          expires_at: expires,
+          sport_key:       event.sport_key,
+          event_id:        event.event_id,
+          event_name:      event.event_name,
+          market:          'h2h',
+          selection:       sel,
+          bookie:          best.bookie,
+          bookie_odds:     best.bookedOdds,
+          fair_odds:       parseFloat(effectiveFairOdds.toFixed(3)),
+          ev_percent:      parseFloat(best.ev.toFixed(2)),
+          kelly_percent:   kelly,
+          commence_time:   event.commence_time,
+          expires_at:      expires,
+          source:          signalSource,
+          model_confidence: modelConfidence,
         };
 
         opportunities.push(opp);
 
-        // UPSERT to enforce single card per (event_id, market, selection)
-        // (ev_opportunities now has UNIQUE(event_id, market, selection))
         await client.query(
           `INSERT INTO ev_opportunities
            (sport_key, event_id, event_name, market, selection, bookie,
             bookie_odds, fair_odds, ev_percent, kelly_percent,
-            commence_time, expires_at, is_active)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,TRUE)
+            commence_time, expires_at, is_active, source, model_confidence)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,TRUE,$13,$14)
            ON CONFLICT (event_id, market, selection)
            DO UPDATE SET
-             sport_key = EXCLUDED.sport_key,
-             event_name = EXCLUDED.event_name,
-             bookie = EXCLUDED.bookie,
-             bookie_odds = EXCLUDED.bookie_odds,
-             fair_odds = EXCLUDED.fair_odds,
-             ev_percent = EXCLUDED.ev_percent,
-             kelly_percent = EXCLUDED.kelly_percent,
-             commence_time = EXCLUDED.commence_time,
-             expires_at = EXCLUDED.expires_at,
-             found_at = NOW(),
-             is_active = TRUE`,
+             sport_key        = EXCLUDED.sport_key,
+             event_name       = EXCLUDED.event_name,
+             bookie           = EXCLUDED.bookie,
+             bookie_odds      = EXCLUDED.bookie_odds,
+             fair_odds        = EXCLUDED.fair_odds,
+             ev_percent       = EXCLUDED.ev_percent,
+             kelly_percent    = EXCLUDED.kelly_percent,
+             commence_time    = EXCLUDED.commence_time,
+             expires_at       = EXCLUDED.expires_at,
+             found_at         = NOW(),
+             is_active        = TRUE,
+             source           = EXCLUDED.source,
+             model_confidence = EXCLUDED.model_confidence`,
           [
             opp.sport_key, opp.event_id, opp.event_name,
             opp.market, opp.selection, opp.bookie,
             opp.bookie_odds, opp.fair_odds, opp.ev_percent,
             opp.kelly_percent, opp.commence_time, opp.expires_at,
+            opp.source, opp.model_confidence,
           ]
         );
       }

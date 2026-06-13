@@ -23,6 +23,7 @@ const paymentsRoutes      = require('./routes/payments');
 const notificationsRoutes = require('./routes/notifications');
 const ghostRoutes         = require('./routes/ghost');
 const backtestRoutes      = require('./routes/backtest');
+const adminRoutes         = require('./routes/admin');
 const { webhookHandler }  = require('./routes/payments');
 const { initGhost }       = require('./services/ghostPoster');
 
@@ -88,6 +89,7 @@ app.use('/api/payments',      paymentsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/ghost',         ghostRoutes);
 app.use('/api/backtest',      backtestRoutes);
+app.use('/api/admin',         adminRoutes);
 
 // ── /api/health — diagnose your config instantly ──────────────────────────
 app.get('/api/health', (req, res) => {
