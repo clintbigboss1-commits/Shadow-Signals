@@ -26,14 +26,14 @@ interface Bet {
 
 /* ─── constants ──────────────────────────────────────────── */
 const SPORTS_NAV = [
-  { key:'aussierules_afl',     label:'AFL',        icon:'🏈' },
-  { key:'rugbyleague_nrl',     label:'NRL',        icon:'🏉' },
-  { key:'soccer_a_league',     label:'Soccer',     icon:'⚽' },
-  { key:'horse_racing_au',     label:'Racing',     icon:'🐎' },
-  { key:'greyhound_racing_au', label:'Greyhounds', icon:'🐕' },
-  { key:'mma_ufc',             label:'UFC',        icon:'🥊' },
-  { key:'basketball_nba',      label:'NBA',        icon:'🏀' },
-  { key:'cricket_t20',         label:'Cricket',    icon:'🏏' },
+  { key:'aussierules_afl',     label:'AFL',        icon:'🏈', grad:'linear-gradient(135deg,#003087 0%,#FFD700 100%)', accent:'#FFD700',   bg:'rgba(0,48,135,.25)',   svg:'afl'  },
+  { key:'rugbyleague_nrl',     label:'NRL',        icon:'🏉', grad:'linear-gradient(135deg,#00843D 0%,#00B140 100%)', accent:'#00e676',   bg:'rgba(0,132,61,.25)',   svg:'nrl'  },
+  { key:'soccer_a_league',     label:'A-League',   icon:'⚽', grad:'linear-gradient(135deg,#1a1a2e 0%,#e94560 100%)', accent:'#e94560',   bg:'rgba(233,69,96,.2)',   svg:'soccer'},
+  { key:'horse_racing_au',     label:'Racing',     icon:'🐎', grad:'linear-gradient(135deg,#1a0a00 0%,#c0392b 100%)', accent:'#ff6b35',   bg:'rgba(192,57,43,.2)',   svg:'racing'},
+  { key:'greyhound_racing_au', label:'Greyhounds', icon:'🐕', grad:'linear-gradient(135deg,#0d0d0d 0%,#6c63ff 100%)', accent:'#6c63ff',   bg:'rgba(108,99,255,.2)',  svg:'dogs' },
+  { key:'mma_ufc',             label:'UFC',        icon:'🥊', grad:'linear-gradient(135deg,#0d0d0d 0%,#d4001a 100%)', accent:'#ff1744',   bg:'rgba(212,0,26,.2)',    svg:'ufc'  },
+  { key:'basketball_nba',      label:'NBA',        icon:'🏀', grad:'linear-gradient(135deg,#17408b 0%,#f26522 100%)', accent:'#f26522',   bg:'rgba(242,101,34,.2)',  svg:'nba'  },
+  { key:'cricket_t20',         label:'Cricket',    icon:'🏏', grad:'linear-gradient(135deg,#1a2a1a 0%,#2ecc71 100%)', accent:'#2ecc71',   bg:'rgba(46,204,113,.2)',  svg:'cricket'},
 ];
 
 const SPORT_LABEL: Record<string, string> = {
@@ -371,19 +371,54 @@ function DashboardInner() {
                   <div style={{ fontSize:13 }}>Signals appear here as soon as the scanner finds value. AFL &amp; NRL scan every 7 min on game days.</div>
                 </div>
               ) : (
-                <div style={{ display:'flex',flexDirection:'column',gap:24 }}>
-                  {signalsBySport.map(({ sport, signals: sportSignals }) => (
+                <div style={{ display:'flex',flexDirection:'column',gap:32 }}>
+                  {signalsBySport.map(({ sport, signals: sportSignals }) => {
+                    const topEV = Number(sportSignals[0]?.ev_percent || 0);
+                    return (
                     <div key={sport.key}>
-                      <div style={{ display:'flex',alignItems:'center',gap:8,marginBottom:10 }}>
-                        <span style={{ fontSize:16 }}>{sport.icon}</span>
-                        <span style={{ fontWeight:800,fontSize:14,letterSpacing:.5,textTransform:'uppercase' }}>{sport.label}</span>
-                        <span style={{ fontSize:11,color:'var(--cyan)',fontWeight:700,background:'rgba(0,230,246,.1)',border:'1px solid rgba(0,230,246,.2)',borderRadius:6,padding:'2px 7px' }}>{sportSignals.length} signal{sportSignals.length!==1?'s':''}</span>
+                      {/* Sport banner header */}
+                      <div style={{ position:'relative', borderRadius:16, overflow:'hidden', marginBottom:14, background:sport.bg, border:`1px solid ${sport.accent}30` }}>
+                        {/* Gradient sweep */}
+                        <div style={{ position:'absolute',inset:0, background:sport.grad, opacity:.18 }} />
+                        {/* Animated shimmer */}
+                        <div style={{ position:'absolute',inset:0, background:'linear-gradient(105deg,transparent 40%,rgba(255,255,255,.04) 50%,transparent 60%)', backgroundSize:'200% 100%', animation:'shimmer 3s infinite linear' }} />
+                        {/* Content */}
+                        <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px' }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+                            {/* Big sport icon with glow */}
+                            <div style={{ width:52, height:52, borderRadius:14, background:`${sport.accent}18`, border:`1.5px solid ${sport.accent}40`, display:'grid', placeItems:'center', fontSize:26, boxShadow:`0 0 20px ${sport.accent}30`, flexShrink:0 }}>
+                              {sport.icon}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight:900, fontSize:20, letterSpacing:.5, textTransform:'uppercase', color:'#fff', lineHeight:1 }}>{sport.label}</div>
+                              <div style={{ fontSize:12, color:'rgba(255,255,255,.5)', marginTop:3 }}>
+                                {sportSignals.length} active signal{sportSignals.length !== 1 ? 's' : ''} · best edge +{topEV.toFixed(1)}%
+                              </div>
+                            </div>
+                          </div>
+                          {/* Right: signal count badge + top EV pill */}
+                          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                            {topEV >= 8 && (
+                              <span style={{ fontSize:11, fontWeight:800, color:'#fff', background:'linear-gradient(135deg,#f97316,#dc2626)', padding:'4px 12px', borderRadius:20, letterSpacing:.5, boxShadow:'0 2px 12px rgba(249,115,22,.4)', animation:'pulse 2s infinite' }}>
+                                🔥 HOT
+                              </span>
+                            )}
+                            <div style={{ textAlign:'center', background:`${sport.accent}15`, border:`1px solid ${sport.accent}35`, borderRadius:12, padding:'8px 16px' }}>
+                              <div style={{ fontFamily:'var(--mono)', fontWeight:900, fontSize:22, color:sport.accent, lineHeight:1 }}>{sportSignals.length}</div>
+                              <div style={{ fontSize:9, color:'rgba(255,255,255,.4)', textTransform:'uppercase', letterSpacing:1, marginTop:2 }}>SIGNALS</div>
+                            </div>
+                          </div>
+                        </div>
+                        {/* Bottom accent line */}
+                        <div style={{ height:2, background:sport.grad, opacity:.6 }} />
                       </div>
+                      {/* Signal cards grid */}
                       <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:12 }}>
                         {sportSignals.slice(0,6).map((ev,i) => <SignalCard key={ev.id||i} ev={ev} />)}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
