@@ -92,9 +92,11 @@ export default function Home() {
 
       {/* ── Hero ──────────────────────────────────────────── */}
       <section style={{ position: 'relative', padding: 'clamp(60px,8vh,100px) 24px clamp(60px,8vh,100px)', overflow: 'hidden' }}>
+        {/* Animated gradient background */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,#050d18 0%,#0a1929 40%,#071424 70%,#050d18 100%)', backgroundSize: '400% 400%', animation: 'gradshift 12s ease infinite', zIndex: 0, pointerEvents: 'none' }} />
         {/* Background orbs */}
-        <div style={{ position: 'absolute', top: -300, left: '-5%', width: 700, height: 700, background: 'radial-gradient(ellipse, rgba(41,121,255,.06) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: -100, right: '5%', width: 500, height: 500, background: 'radial-gradient(ellipse, rgba(41,121,255,.08) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -300, left: '-5%', width: 800, height: 800, background: 'radial-gradient(ellipse, rgba(41,121,255,.09) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none', animation: 'floatSlow 8s ease infinite' }} />
+        <div style={{ position: 'absolute', top: -100, right: '5%', width: 600, height: 600, background: 'radial-gradient(ellipse, rgba(0,230,118,.05) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none', animation: 'floatSlow 10s ease infinite 2s' }} />
 
         <div className="landing-hero-grid" style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', zIndex: 1, gridTemplateColumns: '2fr 3fr' }}>
 
@@ -164,11 +166,12 @@ export default function Home() {
               position: 'relative', width: 270, height: 560,
               background: '#0c0f1a',
               borderRadius: 44,
-              border: '2px solid rgba(255,255,255,.12)',
-              boxShadow: '0 50px 120px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.04), inset 0 0 0 1px rgba(255,255,255,.05)',
+              border: '2px solid rgba(41,121,255,.25)',
+              boxShadow: '0 50px 120px rgba(0,0,0,.8), 0 0 40px rgba(41,121,255,.12), inset 0 0 0 1px rgba(255,255,255,.05)',
               overflow: 'hidden',
               flexShrink: 0,
               zIndex: 3,
+              animation: 'float 6s ease infinite',
             }}>
               {/* Dynamic island */}
               <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', width: 90, height: 26, background: '#000', borderRadius: 13, zIndex: 10 }} />
@@ -263,6 +266,37 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ── Live ticker ───────────────────────────────────── */}
+      <div style={{ background: 'rgba(0,0,0,.3)', borderTop: '1px solid rgba(41,121,255,.12)', borderBottom: '1px solid rgba(41,121,255,.12)', padding: '10px 0', overflow: 'hidden', position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 80, background: 'linear-gradient(90deg, #0a1929, transparent)', zIndex: 2 }} />
+        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, background: 'linear-gradient(270deg, #0a1929, transparent)', zIndex: 2 }} />
+        <div style={{ display: 'flex', gap: 0, animation: 'ticker 30s linear infinite', width: 'max-content' }}>
+          {[
+            { sport:'⚽', label:'AUS vs France · World Cup', ev:'+9.2%', bookie:'Bet365' },
+            { sport:'🏉', label:'Storm vs Roosters · NRL', ev:'+6.8%', bookie:'Sportsbet' },
+            { sport:'🏈', label:'Collingwood vs GWS · AFL', ev:'+5.4%', bookie:'TAB' },
+            { sport:'🏀', label:'Celtics vs Mavs · NBA Finals', ev:'+4.9%', bookie:'Neds' },
+            { sport:'⚽', label:'Spain vs Germany · World Cup', ev:'+7.1%', bookie:'Bet365' },
+            { sport:'🥊', label:'UFC 305 · Main Event', ev:'+11.3%', bookie:'Betfair' },
+            { sport:'🐎', label:'Flemington R6 · Racing', ev:'+8.6%', bookie:'TAB' },
+            { sport:'⚽', label:'AUS vs France · World Cup', ev:'+9.2%', bookie:'Bet365' },
+            { sport:'🏉', label:'Storm vs Roosters · NRL', ev:'+6.8%', bookie:'Sportsbet' },
+            { sport:'🏈', label:'Collingwood vs GWS · AFL', ev:'+5.4%', bookie:'TAB' },
+            { sport:'🏀', label:'Celtics vs Mavs · NBA Finals', ev:'+4.9%', bookie:'Neds' },
+            { sport:'⚽', label:'Spain vs Germany · World Cup', ev:'+7.1%', bookie:'Bet365' },
+            { sport:'🥊', label:'UFC 305 · Main Event', ev:'+11.3%', bookie:'Betfair' },
+            { sport:'🐎', label:'Flemington R6 · Racing', ev:'+8.6%', bookie:'TAB' },
+          ].map((t, i) => (
+            <div key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '0 28px', borderRight: '1px solid rgba(255,255,255,.05)', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 14 }}>{t.sport}</span>
+              <span style={{ fontSize: 12, color: '#9eb1c8', fontWeight: 500 }}>{t.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 900, color: '#00e676', fontFamily: 'monospace' }}>{t.ev}</span>
+              <span style={{ fontSize: 10, color: '#5e7390', background: 'rgba(255,255,255,.05)', padding: '2px 8px', borderRadius: 4 }}>{t.bookie}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── Education: what are shadow signals? ───────────── */}
       <section style={{ padding: '72px 24px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
         <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
@@ -294,14 +328,17 @@ export default function Home() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 14 }}>
             {[
-              { n: '01', title: 'The markets feed', desc: 'Every fixture across AFL, NRL, cricket and more — one card per match, best odds across 12 bookies.' },
-              { n: '02', title: 'Spot the signal', desc: 'The confidence score tells you instantly: green means back it, red means walk away. No jargon.' },
-              { n: '03', title: 'The arb finder', desc: 'When bookmakers disagree, lock in guaranteed profit regardless of the result.' },
-              { n: '04', title: 'The CLV tracker', desc: 'Proof of long-term edge. Every bet tracked against the closing line — the only metric that matters.' },
+              { n: '01', title: 'The markets feed', desc: 'Every fixture across AFL, NRL, cricket and more — one card per match, best odds across 12 bookies.', color: '#2979ff', bg: 'rgba(41,121,255,.08)', border: 'rgba(41,121,255,.2)', icon: '📡' },
+              { n: '02', title: 'Spot the signal', desc: 'The confidence score tells you instantly: green means back it, red means walk away. No jargon.', color: '#00e676', bg: 'rgba(0,230,118,.06)', border: 'rgba(0,230,118,.2)', icon: '🎯' },
+              { n: '03', title: 'The arb finder', desc: 'When bookmakers disagree, lock in guaranteed profit regardless of the result.', color: '#ffab00', bg: 'rgba(255,171,0,.06)', border: 'rgba(255,171,0,.2)', icon: '⚡' },
+              { n: '04', title: 'The CLV tracker', desc: 'Proof of long-term edge. Every bet tracked against the closing line — the only metric that matters.', color: '#a78bfa', bg: 'rgba(167,139,250,.06)', border: 'rgba(167,139,250,.2)', icon: '📈' },
             ].map(s => (
-              <div key={s.n} style={{ padding: 26, background: '#111827', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16 }}>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 800, color: '#2979ff', marginBottom: 12 }}>{s.n}</div>
-                <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 10 }}>{s.title}</div>
+              <div key={s.n} style={{ padding: 26, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 16, transition: 'transform .2s', cursor: 'default' }}
+                onMouseEnter={e => (e.currentTarget.style.transform='translateY(-4px)')}
+                onMouseLeave={e => (e.currentTarget.style.transform='translateY(0)')}>
+                <div style={{ fontSize: 28, marginBottom: 12 }}>{s.icon}</div>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, fontWeight: 800, color: s.color, marginBottom: 8, letterSpacing: 1 }}>{s.n}</div>
+                <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 10, color: '#fff' }}>{s.title}</div>
                 <div style={{ color: '#9eb1c8', fontSize: 14, lineHeight: 1.65 }}>{s.desc}</div>
               </div>
             ))}
@@ -362,7 +399,9 @@ export default function Home() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
             {FEATURES.map((f, i) => (
-              <div key={i} style={{ padding: 26, background: '#111827', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div key={i} style={{ padding: 26, background: '#111827', border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 14, transition: 'transform .2s, box-shadow .2s' }}
+                onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow='0 16px 40px rgba(0,0,0,.4)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none'; }}>
                 <div>{f.icon}</div>
                 <div style={{ fontWeight: 800, fontSize: 16 }}>{f.title}</div>
                 <div style={{ color: '#9eb1c8', fontSize: 14, lineHeight: 1.65 }}>{f.desc}</div>
@@ -434,7 +473,11 @@ export default function Home() {
 
       {/* ── Bottom CTA ──────────────────────────────────────── */}
       <section style={{ padding: '80px 32px', borderTop: '1px solid rgba(255,255,255,.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: -150, left: '50%', transform: 'translateX(-50%)', width: 700, height: 500, background: 'radial-gradient(ellipse, rgba(0,230,118,.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -150, left: '50%', transform: 'translateX(-50%)', width: 700, height: 500, background: 'radial-gradient(ellipse, rgba(0,230,118,.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Operative image left */}
+        <img src="/operatives/landing.png" alt="" style={{ position: 'absolute', bottom: 0, left: 'clamp(-40px,2vw,60px)', height: 420, objectFit: 'contain', opacity: .85, pointerEvents: 'none', filter: 'drop-shadow(0 0 30px rgba(41,121,255,.3))', animation: 'float 7s ease infinite' }} />
+        {/* Operative image right */}
+        <img src="/operatives/markets.png" alt="" style={{ position: 'absolute', bottom: 0, right: 'clamp(-40px,2vw,60px)', height: 400, objectFit: 'contain', opacity: .75, pointerEvents: 'none', filter: 'drop-shadow(0 0 30px rgba(0,230,118,.25)) scaleX(-1)', transform: 'scaleX(-1)', animation: 'float 9s ease infinite 1s' }} />
         <div style={{ maxWidth: 560, margin: '0 auto', position: 'relative' }}>
           <h2 style={{ fontSize: 'clamp(26px,4vw,42px)', fontWeight: 900, letterSpacing: -1, marginBottom: 14 }}>
             Your results could be next.
