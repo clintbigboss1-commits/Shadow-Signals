@@ -384,7 +384,7 @@ function DashboardInner() {
   /* group all signals by sport, sorted by EV descending within each sport */
   const allSignals = evOpps;
   const signalsBySport = SPORTS_NAV
-    .map(s => ({ sport: s, signals: evOpps.filter(e => e.sport_key === s.key).sort((a,b) => b.ev_percent - a.ev_percent) }))
+    .map(s => ({ sport: s, signals: evOpps.filter(e => e.sport_key === s.key).sort((a,b) => Number(b.ev_percent) - Number(a.ev_percent)) }))
     .filter(g => g.signals.length > 0);
   const signals = evOpps.filter(e => e.sport_key === activeSport);
   /* stat card values */
