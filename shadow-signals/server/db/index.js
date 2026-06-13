@@ -74,8 +74,8 @@ async function initDB() {
   const client = await pool.connect();
   let failed = 0;
   try {
-    await client.query("SET lock_timeout = '5s'");
-    await client.query("SET statement_timeout = '20s'");
+    await client.query("SET lock_timeout = '30s'");
+    await client.query("SET statement_timeout = '60s'");
     for (const stmt of statements) {
       try {
         await client.query(stmt);
@@ -102,8 +102,8 @@ async function initDB() {
     const mClient = await pool.connect();
     let mFailed = 0;
     try {
-      await mClient.query("SET lock_timeout = '5s'");
-      await mClient.query("SET statement_timeout = '20s'");
+      await mClient.query("SET lock_timeout = '30s'");
+      await mClient.query("SET statement_timeout = '60s'");
       for (const stmt of mStmts) {
         try { await mClient.query(stmt); }
         catch (err) {

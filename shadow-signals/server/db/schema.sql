@@ -103,9 +103,8 @@ CREATE TABLE IF NOT EXISTS api_call_log (
   month_year VARCHAR(7)
 );
 
-CREATE INDEX IF NOT EXISTS idx_odds_sport ON odds_cache(sport_key, fetched_at DESC);
-CREATE INDEX IF NOT EXISTS idx_odds_event ON odds_cache(event_id);
-CREATE INDEX IF NOT EXISTS idx_odds_expires ON odds_cache(expires_at);
+-- NOTE: odds_cache indexes are created by migrate.sql with CONCURRENTLY to avoid
+-- boot-time lock timeouts on the live table. Do not add them here.
 CREATE INDEX IF NOT EXISTS idx_ev_active ON ev_opportunities(is_active, ev_percent DESC);
 CREATE INDEX IF NOT EXISTS idx_ev_sport ON ev_opportunities(sport_key, is_active);
 CREATE INDEX IF NOT EXISTS idx_arb_active ON arb_opportunities(is_active, profit_percent DESC);
