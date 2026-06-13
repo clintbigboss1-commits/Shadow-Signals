@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import API from '../../lib/api';
-import { saveAuth, type User } from '../../lib/auth';
+import { saveAuth, isLoggedIn, type User } from '../../lib/auth';
 import Logo from '../../components/Logo';
 
 const WINS = [
@@ -28,6 +28,11 @@ export default function Signup() {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    // B1: redirect already-logged-in users
+    if (isLoggedIn()) router.replace('/dashboard');
+  }, [router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -103,9 +108,9 @@ export default function Signup() {
           </div>
         </div>
 
-        {/* Bottom trust row */}
+        {/* Bottom trust row — static brand values (not fake user stats) */}
         <div style={{ display: 'flex', gap: 24, position: 'relative', zIndex: 1 }}>
-          {[['7,416+', 'Active users'], ['78%', 'CLV positive'], ['+$2.8k', 'Avg monthly']].map(([v, l]) => (
+          {[['12', 'AU bookies scanned'], ['7-day', 'Free trial'], ['0–100%', 'Confidence score']].map(([v, l]) => (
             <div key={l}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18, color: '#2979ff', lineHeight: 1 }}>{v}</div>
               <div style={{ fontSize: 11, color: '#5e7390', marginTop: 4 }}>{l}</div>

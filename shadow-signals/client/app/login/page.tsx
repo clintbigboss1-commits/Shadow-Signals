@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import API from '../../lib/api';
-import { saveAuth, type User } from '../../lib/auth';
+import { saveAuth, isLoggedIn, type User } from '../../lib/auth';
 import Logo from '../../components/Logo';
 
 const BENEFITS = [
@@ -14,18 +14,20 @@ const BENEFITS = [
   'Betfair CLV tracking proves your edge',
 ];
 
-const STATS = [
-  { v: '7,416+', l: 'Active users' },
-  { v: '78%',    l: 'CLV positive' },
-  { v: '+$2.8k', l: 'Avg monthly gain' },
-];
-
 export default function Login() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
+  const [stats, setStats]       = useState<{ signals_today: number; clv_positive_pct: number; avg_win_profit_aud: number } | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // B1: redirect already-logged-in users
+    if (isLoggedIn()) { router.replace('/dashboard'); return; }
+    // Load real public stats
+    API.get('/stats/public').then(r => setStats(r.data)).catch(() => {});
+  }, [router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -97,9 +99,13 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats — real from API, no fake values */}
         <div style={{ display: 'flex', gap: 28, position: 'relative', zIndex: 1 }}>
-          {STATS.map(s => (
+          {[
+            { v: stats?.signals_today ? `${stats.signals_today}` : '—',    l: 'Signals today' },
+            { v: stats?.clv_positive_pct ? `${stats.clv_positive_pct}%` : '—',   l: 'CLV positive' },
+            { v: stats?.avg_win_profit_aud ? `+$${stats.avg_win_profit_aud}` : '—', l: 'Avg win profit' },
+          ].map(s => (
             <div key={s.l}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 20, color: '#2979ff', lineHeight: 1 }}>{s.v}</div>
               <div style={{ fontSize: 11, color: '#5e7390', marginTop: 4 }}>{s.l}</div>

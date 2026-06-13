@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import OperativePeek from '../../components/OperativePeek';
-import { getUser } from '../../lib/auth';
+import AppShell from '../../components/AppShell';
+import { getUser, isLoggedIn } from '../../lib/auth';
 
 /* ─── GHOST signal data ───────────────────────────────────────────────── */
 
@@ -236,16 +237,18 @@ function SignalCard({ s, isAdmin }: { s: Signal; isAdmin: boolean }) {
 type Tab = 'all' | 'strongest';
 
 export default function GhostPage() {
-  const [tab, setTab] = useState<Tab>('all');
+  const [tab, setTab]     = useState<Tab>('all');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
   const shown = tab === 'strongest' ? SIGNALS.filter(s => s.pct >= 80) : SIGNALS;
 
-  useEffect(() => { setIsAdmin(getUser()?.role === 'admin'); }, []);
+  useEffect(() => {
+    setIsAdmin(getUser()?.role === 'admin');
+    setLoggedIn(isLoggedIn());
+  }, []);
 
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-      <Navbar />
-
+  const inner = (
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
       {/* Hero */}
       <div style={{ padding: '36px 24px 0', maxWidth: 900, margin: '0 auto', width: '100%', position: 'relative' }}>
         <OperativePeek page="ghost" leftOffset={-60} width={280} bottom={0} />
@@ -279,7 +282,22 @@ export default function GhostPage() {
         {shown.map(s => <SignalCard key={s.name} s={s} isAdmin={isAdmin} />)}
       </div>
 
-      <Footer />
+      {!loggedIn && <Footer />}
+    </div>
+  );
+
+  if (loggedIn) {
+    return (
+      <AppShell>
+        {inner}
+      </AppShell>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+      <Navbar />
+      {inner}
     </div>
   );
 }

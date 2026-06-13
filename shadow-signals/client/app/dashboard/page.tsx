@@ -7,6 +7,9 @@ import API from '../../lib/api';
 import { getUser, getToken, saveAuth, type User } from '../../lib/auth';
 import { connectSocket } from '../../lib/socket';
 import { confidenceFromEV } from '../../lib/confidence';
+import AppShell from '../../components/AppShell';
+import OnboardingModal from '../../components/OnboardingModal';
+import MarketPulse from '../../components/MarketPulse';
 
 /* ─── types ──────────────────────────────────────────────── */
 interface EVOpp {
@@ -344,6 +347,7 @@ function DashboardInner() {
   const [loading, setLoading]   = useState(true);
   const [upgraded, setUpgraded] = useState(false);
   const [activeSport, setActiveSport] = useState('aussierules_afl');
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     const u = getUser();
@@ -357,9 +361,11 @@ function DashboardInner() {
     Promise.all([
       API.get('/ev', { params:{ limit:40 } }),
       API.get('/bets'),
-    ]).then(([evRes, betRes]) => {
+      API.get('/users/me/preferences'),
+    ]).then(([evRes, betRes, prefRes]) => {
       setEvOpps(evRes.data.data || []);
       setBets(betRes.data || []);
+      if (!prefRes.data.onboarding_done) setShowOnboarding(true);
     }).catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -381,10 +387,9 @@ function DashboardInner() {
     );
   }
 
-  /* signals for the active sport, fall back to demo data */
-  const filtered = evOpps.filter(e => e.sport_key === activeSport);
-  const signals  = filtered.length > 0 ? filtered : FALLBACK_SIGNALS.filter(e => e.sport_key === activeSport);
-  const allSignals = evOpps.length > 0 ? evOpps : FALLBACK_SIGNALS;
+  /* signals for the active sport — B2: activeSport actually filters content now */
+  const signals    = evOpps.filter(e => e.sport_key === activeSport);
+  const allSignals = evOpps;
   const displayBets = bets.length > 0 ? bets : FALLBACK_BETS;
 
   /* stat card values */
@@ -396,10 +401,12 @@ function DashboardInner() {
   const sportName = SPORTS_NAV.find(s => s.key === activeSport)?.label || activeSport;
 
   return (
-    <div className="app-shell">
-      <Sidebar user={user} activeSport={activeSport} setActiveSport={setActiveSport} />
+    <>
+      {showOnboarding && (
+        <OnboardingModal userName={user?.name} onDone={() => setShowOnboarding(false)} />
+      )}
 
-      <div className="main-area">
+      <AppShell activeSport={activeSport} onSportChange={setActiveSport}>
         <div className="content" style={{ maxWidth:1400 }}>
 
           {/* Upgrade banner */}
@@ -413,7 +420,7 @@ function DashboardInner() {
           {/* Header */}
           <div style={{ marginBottom:24 }}>
             <h1 style={{ fontSize:28,fontWeight:900,letterSpacing:-0.5,marginBottom:4 }}>DASHBOARD</h1>
-            <p style={{ color:'var(--muted)',fontSize:14 }}>G&apos;day, {user?.name?.split(' ')[0] || 'Demo'}. Here&apos;s what the market is showing right now.</p>
+            <p style={{ color:'var(--muted)',fontSize:14 }}>G&apos;day, {user?.name?.split(' ')[0] || 'there'}. Here&apos;s what the market is showing right now.</p>
           </div>
 
           {/* 4 stat cards */}
@@ -421,7 +428,7 @@ function DashboardInner() {
             {[
               { label:'ACTIVE SIGNALS', value:String(allSignals.length),      sub:'Right now',           color:'var(--cyan)'  },
               { label:'TOTAL P&L',      value:`${profit>=0?'+':''}$${Math.abs(profit).toFixed(0)}`, sub:'All settled bets', color:profit>=0?'var(--green)':'var(--red)' },
-              { label:'CLV WIN RATE',   value:`${clvWin}%`,                   sub:'Beats closing line',  color:'var(--gold)'  },
+              { label:'CLV WIN RATE',   value:settled.length ? `${clvWin}%` : '—',  sub:'Beats closing line',  color:'var(--gold)'  },
               { label:'BETS TRACKED',   value:String(displayBets.length),     sub:`${wins.length}W · ${settled.length-wins.length}L · ${displayBets.filter(b=>b.result==='pending').length} pending`, color:'var(--text)' },
             ].map(c => (
               <div key={c.label} className="stat-card">
@@ -432,19 +439,21 @@ function DashboardInner() {
             ))}
           </div>
 
-          {/* Two-column: signals + sidebar panels */}
+          {/* Two-column: signals + right panels */}
           <div className="dash-content-grid">
 
-            {/* LEFT: live signals */}
+            {/* LEFT: live signals — B2: filtered by activeSport */}
             <div>
               <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:16 }}>
                 <h2 style={{ fontSize:18,fontWeight:900,letterSpacing:-.3 }}>LIVE SIGNALS</h2>
-                <span style={{ fontSize:13,color:'var(--muted)' }}>· filtered by {sportName}</span>
+                <span style={{ fontSize:13,color:'var(--muted)' }}>· {sportName}</span>
               </div>
 
               {signals.length === 0 ? (
                 <div style={{ padding:'48px 24px',textAlign:'center',background:'var(--bg2)',borderRadius:14,border:'1px solid var(--border)',color:'var(--muted)' }}>
-                  No signals for {sportName} right now. Check back soon.
+                  <div style={{ fontSize:32,marginBottom:12 }}>📡</div>
+                  <div style={{ fontWeight:700,marginBottom:6 }}>No {sportName} signals right now</div>
+                  <div style={{ fontSize:13 }}>Scanner runs every 45 min — or select another sport in the sidebar.</div>
                 </div>
               ) : (
                 <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(380px,1fr))',gap:14 }}>
@@ -453,8 +462,11 @@ function DashboardInner() {
               )}
             </div>
 
-            {/* RIGHT: recent bets + top confidence */}
+            {/* RIGHT: Market Pulse + recent bets + top confidence */}
             <div>
+              <div style={{ marginBottom:14 }}>
+                <MarketPulse />
+              </div>
               <RecentBetsPanel bets={displayBets} />
               <TopConfidencePanel signals={allSignals} />
             </div>
@@ -482,8 +494,8 @@ function DashboardInner() {
           )}
 
         </div>
-      </div>
-    </div>
+      </AppShell>
+    </>
   );
 }
 

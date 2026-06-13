@@ -112,6 +112,70 @@ router.get('/models/runs', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/quota — The Odds API usage dashboard tile
+router.get('/quota', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    // Most recent recorded remaining credits (using existing schema: api_name, quota_remaining, created_at OR month_year)
+    const { rows: latestRows } = await db.query(`
+      SELECT quota_remaining AS credits_remaining, called_at
+      FROM api_call_log
+      WHERE api_name = 'theoddsapi' AND quota_remaining IS NOT NULL
+      ORDER BY called_at DESC
+      LIMIT 1
+    `).catch(() => ({ rows: [] }));
+
+    // Calls in last 24h
+    const { rows: calls24h } = await db.query(`
+      SELECT COUNT(*)::int AS count
+      FROM api_call_log
+      WHERE api_name = 'theoddsapi'
+        AND called_at > NOW() - INTERVAL '24 hours'
+    `).catch(() => ({ rows: [{ count: 0 }] }));
+
+    // Calls per sport (endpoint = sport_key in current schema)
+    const { rows: bySport } = await db.query(`
+      SELECT endpoint AS sport_key, COUNT(*)::int AS count
+      FROM api_call_log
+      WHERE api_name = 'theoddsapi'
+        AND called_at > NOW() - INTERVAL '24 hours'
+        AND endpoint IS NOT NULL
+      GROUP BY endpoint
+      ORDER BY count DESC
+      LIMIT 20
+    `).catch(() => ({ rows: [] }));
+
+    // L1+L2 cache size
+    const { rows: cacheRows } = await db.query(`
+      SELECT COUNT(DISTINCT event_id)::int AS unique_events
+      FROM odds_cache
+      WHERE expires_at > NOW()
+    `);
+
+    const remaining = latestRows[0]?.credits_remaining ?? null;
+    const MONTHLY_LIMIT = 100000;
+    const soft_limit = Math.round(MONTHLY_LIMIT * 0.8);
+
+    res.json({
+      the_odds_api: {
+        remaining,
+        used: remaining !== null ? MONTHLY_LIMIT - remaining : null,
+        monthly_limit: MONTHLY_LIMIT,
+        soft_limit,
+        last_call_at: latestRows[0]?.called_at || null,
+        status: remaining === null ? 'unknown'
+          : remaining < 1000 ? 'critical'
+          : remaining < soft_limit * 0.2 ? 'warning'
+          : 'ok',
+      },
+      calls_24h: calls24h[0]?.count || 0,
+      calls_by_sport_24h: bySport,
+      cache_size: cacheRows[0]?.unique_events || 0,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/clv — CLV beat rate report
 router.get('/clv', requireAuth, requireAdmin, async (req, res) => {
   try {

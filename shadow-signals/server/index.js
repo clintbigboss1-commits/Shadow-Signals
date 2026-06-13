@@ -12,6 +12,7 @@ const jwt        = require('jsonwebtoken');
 const { initDB }               = require('./db');
 const { initScheduler, setIO } = require('./services/scheduler');
 const { setIO: setNotifIO }    = require('./services/notifications');
+const { initPulse }            = require('./services/pulse');
 
 const authRoutes          = require('./routes/auth');
 const evRoutes            = require('./routes/ev');
@@ -24,6 +25,8 @@ const notificationsRoutes = require('./routes/notifications');
 const ghostRoutes         = require('./routes/ghost');
 const backtestRoutes      = require('./routes/backtest');
 const adminRoutes         = require('./routes/admin');
+const usersRoutes         = require('./routes/users');
+const statsRoutes         = require('./routes/stats');
 const { webhookHandler }  = require('./routes/payments');
 const { initGhost }       = require('./services/ghostPoster');
 
@@ -47,6 +50,7 @@ const io = new Server(server, {
 });
 setIO(io);
 setNotifIO(io);
+initPulse(io);
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
@@ -90,6 +94,8 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/ghost',         ghostRoutes);
 app.use('/api/backtest',      backtestRoutes);
 app.use('/api/admin',         adminRoutes);
+app.use('/api/users',         usersRoutes);
+app.use('/api/stats',         statsRoutes);
 
 // ── /api/health — diagnose your config instantly ──────────────────────────
 app.get('/api/health', (req, res) => {
@@ -106,8 +112,7 @@ app.get('/api/health', (req, res) => {
       price_elite:    process.env.STRIPE_PRICE_ELITE_MONTH   || 'NOT SET',
     },
     database:  process.env.DATABASE_URL   ? 'set OK' : 'NOT SET',
-    odds_api:  process.env.ODDS_API_KEY   ? 'set OK' : 'NOT SET',
-    the_odds_api: process.env.THE_ODDS_API_KEY ? 'set OK' : 'NOT SET (primary odds source off)',
+    odds_api: (process.env.THE_ODDS_API_KEY || process.env.ODDS_API_KEY) ? 'set OK' : 'NOT SET — add THE_ODDS_API_KEY or ODDS_API_KEY',
     email:     process.env.RESEND_API_KEY ? 'set OK' : 'not set (emails wont send)',
     ghost: {
       facebook:  (process.env.META_PAGE_ID && process.env.META_PAGE_ACCESS_TOKEN) ? 'set OK' : 'NOT SET (GHOST in dry-run)',

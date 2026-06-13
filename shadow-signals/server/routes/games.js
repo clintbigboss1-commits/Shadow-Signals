@@ -63,6 +63,70 @@ function dedupeFixtures(games) {
   return out;
 }
 
+// GET /api/games/schedule — upcoming fixtures for a sport, next N hours
+router.get('/schedule', requireAuth, async (req, res) => {
+  try {
+    const sport      = req.query.sport || 'all';
+    const windowHrs  = Math.min(parseInt(req.query.window || '72', 10), 168);
+    const limit      = Math.min(parseInt(req.query.limit || '50', 10), 200);
+
+    let q, params;
+    if (sport !== 'all') {
+      q = `
+        SELECT DISTINCT ON (event_id)
+          event_id, sport_key, home_team, away_team, commence_time
+        FROM odds_cache
+        WHERE expires_at > NOW()
+          AND commence_time > NOW()
+          AND commence_time < NOW() + ($1 || ' hours')::INTERVAL
+          AND market = 'h2h'
+          AND sport_key = $2
+        ORDER BY event_id, fetched_at DESC
+        LIMIT $3
+      `;
+      params = [windowHrs, sport, limit];
+    } else {
+      q = `
+        SELECT DISTINCT ON (event_id)
+          event_id, sport_key, home_team, away_team, commence_time
+        FROM odds_cache
+        WHERE expires_at > NOW()
+          AND commence_time > NOW()
+          AND commence_time < NOW() + ($1 || ' hours')::INTERVAL
+          AND market = 'h2h'
+        ORDER BY event_id, fetched_at DESC
+        LIMIT $2
+      `;
+      params = [windowHrs, limit];
+    }
+
+    const { rows } = await db.query(q, params);
+    res.json({ data: rows, total: rows.length, window_hours: windowHrs });
+  } catch (err) {
+    console.error('Schedule route error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/sports/in-season — sports with at least one upcoming fixture
+router.get('/in-season', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT DISTINCT sport_key, COUNT(DISTINCT event_id)::int AS fixture_count
+      FROM odds_cache
+      WHERE expires_at > NOW()
+        AND commence_time > NOW()
+        AND commence_time < NOW() + INTERVAL '14 days'
+        AND market = 'h2h'
+      GROUP BY sport_key
+      ORDER BY fixture_count DESC
+    `);
+    res.json({ sports: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/games — all upcoming events from odds cache, EV picks overlaid
 router.get('/', requireAuth, async (req, res) => {
   try {

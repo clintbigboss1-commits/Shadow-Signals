@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ExitPopup from '../components/ExitPopup';
 import Navbar from '../components/Navbar';
@@ -58,14 +61,30 @@ const SPORTS = [
     photo: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1200&q=85' },
 ];
 
-const STATS = [
-  { value: '127',     label: 'Signals today',         color: '#00e676' },
-  { value: '78%',     label: 'CLV positive rate',     color: '#ffab00' },
-  { value: '+$2,847', label: 'Avg monthly profit AUD', color: '#ffffff' },
-  { value: '12',      label: 'Bookmakers scanned',    color: '#a78bfa' },
-];
+interface PublicStats {
+  signals_today: number;
+  clv_positive_pct: number;
+  avg_win_profit_aud: number;
+  bookmakers_scanned: number;
+}
 
 export default function Home() {
+  const [stats, setStats] = useState<PublicStats | null>(null);
+
+  useEffect(() => {
+    fetch('/api/stats/public')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setStats(d); })
+      .catch(() => {});
+  }, []);
+
+  const STATS = [
+    { value: stats?.signals_today ? String(stats.signals_today) : '—',     label: 'Signals today',          color: '#00e676' },
+    { value: stats?.clv_positive_pct ? `${stats.clv_positive_pct}%` : '—', label: 'CLV positive rate',      color: '#ffab00' },
+    { value: stats?.avg_win_profit_aud ? `+$${stats.avg_win_profit_aud.toLocaleString()}` : '—', label: 'Avg win profit AUD', color: '#ffffff' },
+    { value: '12',                                                            label: 'Bookmakers scanned',     color: '#a78bfa' },
+  ];
+
   return (
     <div style={{ minHeight: '100vh', background: '#0a1929', color: '#ffffff', fontFamily: 'Inter, system-ui, sans-serif', overflowX: 'hidden' }}>
 

@@ -3,6 +3,7 @@ const { db } = require('../db');
 const { getModel } = require('./models');
 const { norm } = require('./models/shared/normalise');
 const { recordSignal } = require('./clvTracker');
+const pulse = require('./pulse');
 
 // Remove bookmaker margin — return array of fair probabilities
 function removeVig(oddsArray) {
@@ -228,6 +229,7 @@ async function computeEVFromCache(sportKey = null) {
 
         opportunities.push(opp);
         recordSignal(opp); // best-effort, non-blocking
+        if (opp.ev_percent >= 3) pulse.recordEdge(opp);
 
         await client.query(
           `INSERT INTO ev_opportunities

@@ -38,18 +38,18 @@ export default function WinsPage() {
     }).catch(() => {});
   }, []);
 
-  const clvPct   = stats ? Number(stats.clv_positive_pct).toFixed(0) + '%' : '78%';
-  const sPlus    = stats ? stats.s_plus_this_month : '127';
-  const avgProfit = stats ? '+$' + Number(stats.avg_win_profit).toFixed(0) : '+$284';
+  const clvPct    = stats ? Number(stats.clv_positive_pct).toFixed(0) + '%' : '—';
+  const sPlus     = stats ? stats.s_plus_this_month : '—';
+  const avgProfit = stats ? '+$' + Number(stats.avg_win_profit).toFixed(0) : '—';
 
   return (
     <div style={{ minHeight: '100vh', background: '#08111e', color: '#e2e8f0', fontFamily: 'Inter, sans-serif' }}>
 
-      {/* Nav */}
+      {/* Nav — B5: replaced "SHADOW ELITE" with correct brand */}
       <nav style={{ borderBottom: '1px solid rgba(255,255,255,.06)', padding: '0 32px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 60 }}>
           <Link href="/" style={{ fontWeight: 900, fontSize: 17, letterSpacing: -.3 }}>
-            SHADOW <span style={{ color: '#2979ff' }}>ELITE</span>
+            SHADOW <span style={{ color: '#2979ff' }}>SIGNALS</span>
           </Link>
           <div style={{ display: 'flex', gap: 10 }}>
             <Link href="/login"  style={{ padding: '7px 16px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, color: '#94a3b8' }}>Sign In</Link>
@@ -77,7 +77,7 @@ export default function WinsPage() {
             { v: clvPct,    l: 'CLV positive bets' },
             { v: avgProfit, l: 'Avg win profit' },
             { v: String(sPlus), l: 'High-confidence bets this month' },
-            { v: '4.2%',    l: 'Avg edge per bet' },
+            { v: '12',      l: 'Bookmakers scanned' },
           ].map(s => (
             <div key={s.l} className="card" style={{ textAlign: 'center', padding: 20 }}>
               <div style={{ fontSize: 26, fontWeight: 900, color: '#2979ff', fontFamily: 'JetBrains Mono, monospace', marginBottom: 4 }}>{s.v}</div>

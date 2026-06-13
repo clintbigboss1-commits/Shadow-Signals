@@ -264,5 +264,40 @@ CREATE INDEX IF NOT EXISTS idx_clv_pending ON clv_tracking(commence_time)
 
 ALTER TABLE clv_tracking DISABLE ROW LEVEL SECURITY;
 
+-- ── 11. v2 — user_preferences, api_call_log, pulse_events ───────────────────
+
+CREATE TABLE IF NOT EXISTS user_preferences (
+  user_id    UUID        PRIMARY KEY,
+  onboarding_done   BOOLEAN     NOT NULL DEFAULT FALSE,
+  email_alerts      BOOLEAN     NOT NULL DEFAULT TRUE,
+  push_alerts       BOOLEAN     NOT NULL DEFAULT TRUE,
+  alert_min_ev      NUMERIC(6,2) NOT NULL DEFAULT 5.0,
+  default_stake_aud NUMERIC(10,2),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS api_call_log (
+  id          BIGSERIAL   PRIMARY KEY,
+  provider    TEXT        NOT NULL,
+  sport_key   TEXT,
+  credits_remaining BIGINT,
+  called_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS pulse_events (
+  id          BIGSERIAL   PRIMARY KEY,
+  event_type  TEXT        NOT NULL,
+  event_name  TEXT,
+  ev_percent  NUMERIC(6,2),
+  recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS pulse_events_recorded_at_idx ON pulse_events (recorded_at DESC);
+
+DO $$ BEGIN
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_done BOOLEAN NOT NULL DEFAULT FALSE;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
 -- Done.
 SELECT 'Migration complete' AS status;

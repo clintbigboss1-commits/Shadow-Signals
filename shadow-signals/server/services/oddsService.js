@@ -1,6 +1,7 @@
 'use strict';
 require('dotenv').config();
-const axios = require('axios');
+const axios  = require('axios');
+const pulse  = require('./pulse');
 const {
   canCallAPI,
   recordAPICall,
@@ -14,7 +15,8 @@ const SGO_API_KEY    = process.env.SPORT_GAME_ODDS || '';
 const SGO_BASE       = 'https://api.sportsgameodds.com/v2';
 
 // The Odds API (the-odds-api.com) — primary paid source (100k credits/month)
-const TOA_API_KEY  = process.env.ODDS_API_KEY || '';
+// Support both Railway var names: THE_ODDS_API_KEY (preferred) and ODDS_API_KEY (legacy)
+const TOA_API_KEY  = process.env.THE_ODDS_API_KEY || process.env.ODDS_API_KEY || '';
 const TOA_BASE     = 'https://api.the-odds-api.com/v4';
 const TOA_REGIONS  = process.env.THE_ODDS_API_REGIONS || 'au,eu';
 const TOA_MARKETS  = 'h2h';
@@ -481,6 +483,7 @@ async function fetchFromOddsAPI(sportKey) {
         await recordAPICall('theoddsapi', sportKey, result.remaining ?? null);
         setL1(l1Key, result.events, ttl);
         await setL2Odds(sportKey, result.events, ttl * 6, 'theoddsapi');
+        pulse.recordScan(sportKey);
         console.log(`✅ The Odds API: ${result.events.length} events for ${sportTitle} (${result.remaining ?? '?'} credits left)`);
         return { events: result.events, source: 'theoddsapi', callsUsed: 1 };
       }
