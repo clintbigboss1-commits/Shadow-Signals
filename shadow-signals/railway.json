@@ -7,7 +7,7 @@
     "numReplicas": 1,
     "startCommand": "node server/index.js",
     "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 120,
+    "healthcheckTimeout": 300,
     "restartPolicyType": "ALWAYS"
   }
 }
