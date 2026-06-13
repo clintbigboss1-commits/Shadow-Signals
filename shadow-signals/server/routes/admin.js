@@ -3,6 +3,7 @@ const router = require('express').Router();
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const { db } = require('../db');
 const { MODELS } = require('../services/models');
+const { getCLVReport } = require('../services/clvTracker');
 
 // GET /api/admin/models/status — all models + recent run log
 router.get('/models/status', requireAuth, requireAdmin, async (req, res) => {
@@ -106,6 +107,16 @@ router.get('/models/runs', requireAuth, requireAdmin, async (req, res) => {
        FROM model_runs ORDER BY created_at DESC LIMIT 100`
     );
     res.json({ runs: rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/clv — CLV beat rate report
+router.get('/clv', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const report = await getCLVReport();
+    res.json(report);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

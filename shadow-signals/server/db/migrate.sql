@@ -129,5 +129,34 @@ DO $$ BEGIN ALTER TABLE nba_power_ratings DISABLE ROW LEVEL SECURITY; EXCEPTION 
 DO $$ BEGIN ALTER TABLE nba_predictions DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE model_runs DISABLE ROW LEVEL SECURITY; EXCEPTION WHEN undefined_table THEN NULL; END $$;
 
+-- ── 9. CLV tracking table ────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS clv_tracking (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id VARCHAR(255) NOT NULL,
+  sport_key VARCHAR(100) NOT NULL,
+  event_name VARCHAR(500),
+  market VARCHAR(100) NOT NULL DEFAULT 'h2h',
+  selection VARCHAR(255) NOT NULL,
+  bookie VARCHAR(100) NOT NULL,
+  signal_odds DECIMAL(10,4) NOT NULL,
+  signal_fair_odds DECIMAL(10,4) NOT NULL,
+  signal_ev_percent DECIMAL(8,3) NOT NULL,
+  signal_source TEXT NOT NULL DEFAULT 'consensus_v1',
+  signal_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  commence_time TIMESTAMPTZ,
+  closing_odds DECIMAL(10,4),
+  closing_fair_odds DECIMAL(10,4),
+  clv_percent DECIMAL(8,3),
+  closed_at TIMESTAMPTZ,
+  UNIQUE(event_id, market, selection, bookie)
+);
+
+CREATE INDEX IF NOT EXISTS idx_clv_event ON clv_tracking(event_id);
+CREATE INDEX IF NOT EXISTS idx_clv_pending ON clv_tracking(commence_time)
+  WHERE closed_at IS NULL;
+
+ALTER TABLE clv_tracking DISABLE ROW LEVEL SECURITY;
+
 -- Done.
 SELECT 'Migration complete' AS status;

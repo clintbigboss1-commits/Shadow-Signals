@@ -10,6 +10,7 @@ const { createNotification } = require('./notifications');
 const { fetchAllScores, backfillHistoricalOdds } = require('./historicalFetcher');
 const { runBacktest } = require('./backtester');
 const { activeModels } = require('./models');
+const { captureClosingLines } = require('./clvTracker');
 
 let _io = null;
 function setIO(io) { _io = io; }
@@ -272,6 +273,13 @@ function initScheduler() {
   cron.schedule('0 */4 * * *', async () => {
     for (const m of activeModels()) {
       await logModelRun(m.sportKey, 'predict', () => m.generatePredictions());
+    }
+  });
+
+  // CLV closing line capture — every 5 minutes, captures sharp prices for games about to start
+  cron.schedule('*/5 * * * *', async () => {
+    try { await captureClosingLines(); } catch (e) {
+      console.error('CLV capture error:', e.message);
     }
   });
 

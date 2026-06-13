@@ -251,6 +251,35 @@ CREATE TABLE IF NOT EXISTS nba_predictions (
 );
 CREATE INDEX IF NOT EXISTS nba_predictions_fixture ON nba_predictions(fixture_id);
 
+-- ── CLV (Closing Line Value) tracking ───────────────────────────────────────
+-- Records each EV signal at the time it's found, then captures the closing
+-- sharp price when the game is ~30 min from starting.
+-- CLV% = (signal_odds / closing_fair_odds - 1) * 100
+-- Positive CLV = we got better odds than the market assessed at close.
+CREATE TABLE IF NOT EXISTS clv_tracking (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id VARCHAR(255) NOT NULL,
+  sport_key VARCHAR(100) NOT NULL,
+  event_name VARCHAR(500),
+  market VARCHAR(100) NOT NULL DEFAULT 'h2h',
+  selection VARCHAR(255) NOT NULL,
+  bookie VARCHAR(100) NOT NULL,
+  signal_odds DECIMAL(10,4) NOT NULL,
+  signal_fair_odds DECIMAL(10,4) NOT NULL,
+  signal_ev_percent DECIMAL(8,3) NOT NULL,
+  signal_source TEXT NOT NULL DEFAULT 'consensus_v1',
+  signal_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  commence_time TIMESTAMPTZ,
+  closing_odds DECIMAL(10,4),
+  closing_fair_odds DECIMAL(10,4),
+  clv_percent DECIMAL(8,3),
+  closed_at TIMESTAMPTZ,
+  UNIQUE(event_id, market, selection, bookie)
+);
+CREATE INDEX IF NOT EXISTS idx_clv_event ON clv_tracking(event_id);
+CREATE INDEX IF NOT EXISTS idx_clv_pending ON clv_tracking(commence_time)
+  WHERE closed_at IS NULL;
+
 -- Model run log
 CREATE TABLE IF NOT EXISTS model_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
