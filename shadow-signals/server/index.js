@@ -156,7 +156,11 @@ async function start() {
   const wh = process.env.STRIPE_WEBHOOK_SECRET;
 
   // Listen immediately so Railway healthcheck passes while migrations run in background
-  server.listen(PORT, () => {
+  server.on('error', (err) => {
+    console.error('HTTP server error:', err.message);
+    process.exit(1);
+  });
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`\nShadow Syndicate API -> port ${PORT}`);
     console.log(`   Stripe:  ${sk.startsWith('sk_live') ? 'LIVE' : sk.startsWith('sk_test') ? 'TEST' : 'NOT SET'}`);
     console.log(`   Webhook: ${wh ? 'set' : 'NOT SET - plans wont update after payment'}`);
