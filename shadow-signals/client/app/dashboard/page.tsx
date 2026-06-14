@@ -10,6 +10,7 @@ import { confidenceFromEV } from '../../lib/confidence';
 import AppShell from '../../components/AppShell';
 import OnboardingModal from '../../components/OnboardingModal';
 import MarketPulse from '../../components/MarketPulse';
+import EventCard, { type GameEvent } from '../../components/EventCard';
 
 /* ─── types ──────────────────────────────────────────────── */
 interface EVOpp {
@@ -223,20 +224,26 @@ function RecentBetsPanel({ bets }: { bets: Bet[] }) {
 }
 
 /* ─── top confidence panel ───────────────────────────────── */
-function TopConfidencePanel({ signals }: { signals: EVOpp[] }) {
-  const top = [...signals].sort((a,b) => Number(b.ev_percent)-Number(a.ev_percent)).slice(0,3);
+function TopConfidencePanel({ games }: { games: GameEvent[] }) {
+  const top = games
+    .flatMap(g => g.ev_picks.map(p => ({ ...p, event_name: g.event_name, event_id: g.event_id })))
+    .sort((a, b) => b.ev_percent - a.ev_percent)
+    .slice(0, 4);
+
+  if (top.length === 0) return null;
+
   return (
     <div style={{ background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:14,padding:0,overflow:'hidden',marginTop:14 }}>
       <div style={{ padding:'14px 16px',borderBottom:'1px solid var(--border)',fontWeight:700,fontSize:14 }}>Top Confidence Today</div>
-      {top.map((ev,i) => {
-        const score = confidenceFromEV(Number(ev.ev_percent));
+      {top.map((pick, i) => {
+        const score = confidenceFromEV(pick.ev_percent);
         const color = confColor(score);
         return (
-          <div key={ev.id||i} style={{ padding:'11px 16px',borderBottom:i<2?'1px solid var(--border2)':'none' }}>
+          <div key={`${pick.event_id}-${pick.selection}`} style={{ padding:'11px 16px',borderBottom:i<top.length-1?'1px solid var(--border2)':'none' }}>
             <div style={{ display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4 }}>
-              <div>
-                <div style={{ fontWeight:600,fontSize:12,marginBottom:2 }}>{ev.event_name}</div>
-                <div style={{ fontSize:11,color:'var(--muted)' }}>{ev.selection}</div>
+              <div style={{ minWidth:0, flex:1 }}>
+                <div style={{ fontWeight:600,fontSize:12,marginBottom:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{pick.event_name}</div>
+                <div style={{ fontSize:11,color:'var(--muted)' }}>{pick.selection} · +{pick.ev_percent.toFixed(1)}% EV</div>
               </div>
               <span style={{ fontFamily:'var(--mono)',fontWeight:800,fontSize:14,color,flexShrink:0,marginLeft:8 }}>{score}%</span>
             </div>
@@ -271,11 +278,11 @@ function UpgradePoller({ onUpgrade }: { onUpgrade:(plan:string)=>void }) {
 
 /* ─── main dashboard ─────────────────────────────────────── */
 function DashboardInner() {
-  const [user, setUser]         = useState<User|null>(null);
-  const [evOpps, setEvOpps]     = useState<EVOpp[]>([]);
-  const [bets, setBets]         = useState<Bet[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [upgraded, setUpgraded] = useState(false);
+  const [user, setUser]             = useState<User|null>(null);
+  const [games, setGames]           = useState<GameEvent[]>([]);
+  const [bets, setBets]             = useState<Bet[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [upgraded, setUpgraded]     = useState(false);
   const [activeSport, setActiveSport] = useState('aussierules_afl');
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -286,14 +293,16 @@ function DashboardInner() {
     const token = getToken();
     if (token) {
       const s = connectSocket(token);
-      s.on('ev:update', (data: EVOpp[]) => setEvOpps(data));
+      s.on('ev:update', () => {
+        API.get('/games', { params:{ limit:80 } }).then(r => setGames(r.data.data || [])).catch(() => {});
+      });
     }
     Promise.all([
-      API.get('/ev', { params:{ limit:40 } }),
+      API.get('/games', { params:{ limit:80 } }),
       API.get('/bets'),
       API.get('/users/me/preferences'),
-    ]).then(([evRes, betRes, prefRes]) => {
-      setEvOpps(evRes.data.data || []);
+    ]).then(([gamesRes, betRes, prefRes]) => {
+      setGames(gamesRes.data.data || []);
       setBets(betRes.data || []);
       if (!prefRes.data.onboarding_done) setShowOnboarding(true);
     }).catch(console.error)
@@ -311,16 +320,27 @@ function DashboardInner() {
     );
   }
 
-  /* group all signals by sport, sorted by EV descending within each sport */
-  const allSignals = evOpps;
-  const signalsBySport = SPORTS_NAV
-    .map(s => ({ sport: s, signals: evOpps.filter(e => e.sport_key === s.key).sort((a,b) => Number(b.ev_percent) - Number(a.ev_percent)) }))
-    .filter(g => g.signals.length > 0);
-  /* stat card values */
-  const settled = bets.filter(b => b.result !== 'pending');
-  const wins    = settled.filter(b => b.result === 'win');
-  const profit  = settled.reduce((a,b) => a + Number(b.profit_aud||0), 0);
-  const clvWin  = settled.length ? Math.round((wins.length/settled.length)*100) : 0;
+  /* derived stats */
+  const totalSignals = games.flatMap(g => g.ev_picks).length;
+  const hotPicks     = games.filter(g => g.shadow_pick).length;
+  const settled      = bets.filter(b => b.result !== 'pending');
+  const wins         = settled.filter(b => b.result === 'win');
+  const profit       = settled.reduce((a,b) => a + Number(b.profit_aud||0), 0);
+  const clvWin       = settled.length ? Math.round((wins.length/settled.length)*100) : 0;
+
+  /* group events by sport, shadow picks first */
+  const gamesBySport = SPORTS_NAV
+    .map(s => ({
+      sport: s,
+      events: games
+        .filter(g => g.sport_key === s.key)
+        .sort((a,b) => (b.shadow_pick ? 1 : 0) - (a.shadow_pick ? 1 : 0)),
+    }))
+    .filter(g => g.events.length > 0);
+
+  /* any sport not in SPORTS_NAV */
+  const knownKeys  = new Set(SPORTS_NAV.map(s => s.key));
+  const otherGames = games.filter(g => !knownKeys.has(g.sport_key));
 
   return (
     <>
@@ -348,10 +368,10 @@ function DashboardInner() {
           {/* 4 stat cards */}
           <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:24 }}>
             {[
-              { label:'ACTIVE SIGNALS', value:String(allSignals.length),      sub:'Right now',           color:'var(--cyan)'  },
-              { label:'TOTAL P&L',      value:`${profit>=0?'+':''}$${Math.abs(profit).toFixed(0)}`, sub:'All settled bets', color:profit>=0?'var(--green)':'var(--red)' },
-              { label:'CLV WIN RATE',   value:settled.length ? `${clvWin}%` : '—',  sub:'Beats closing line',  color:'var(--gold)'  },
-              { label:'BETS TRACKED',   value:String(bets.length),     sub:`${wins.length}W · ${settled.length-wins.length}L · ${bets.filter(b=>b.result==='pending').length} pending`, color:'var(--text)' },
+              { label:'LIVE EVENTS',  value:String(games.length),   sub:`${totalSignals} EV edges found`, color:'var(--cyan)' },
+              { label:'HOT PICKS',    value:String(hotPicks),        sub:'Shadow Signals ≥ 8% EV',       color:hotPicks>0?'var(--green)':'var(--muted)' },
+              { label:'TOTAL P&L',    value:`${profit>=0?'+':''}$${Math.abs(profit).toFixed(0)}`, sub:'All settled bets', color:profit>=0?'var(--green)':'var(--red)' },
+              { label:'BETS TRACKED', value:String(bets.length),    sub:`${wins.length}W · ${settled.length-wins.length}L · ${bets.filter(b=>b.result==='pending').length} pending`, color:'var(--text)' },
             ].map(c => (
               <div key={c.label} className="stat-card">
                 <div className="label">{c.label}</div>
@@ -361,73 +381,78 @@ function DashboardInner() {
             ))}
           </div>
 
-          {/* Two-column: signals + right panels */}
+          {/* Two-column: events + right panels */}
           <div className="dash-content-grid">
 
-            {/* LEFT: live signals — all sports grouped */}
+            {/* LEFT: live events grouped by sport */}
             <div>
               <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:16 }}>
-                <h2 style={{ fontSize:18,fontWeight:900,letterSpacing:-.3 }}>LIVE SIGNALS</h2>
-                <span style={{ fontSize:13,color:'var(--muted)' }}>· {allSignals.length} across all sports</span>
+                <h2 style={{ fontSize:18,fontWeight:900,letterSpacing:-.3 }}>LIVE MARKETS</h2>
+                <span style={{ fontSize:13,color:'var(--muted)' }}>· {games.length} events · {totalSignals} edges</span>
               </div>
 
-              {allSignals.length === 0 ? (
+              {games.length === 0 ? (
                 <div style={{ padding:'48px 24px',textAlign:'center',background:'var(--bg2)',borderRadius:14,border:'1px solid var(--border)',color:'var(--muted)' }}>
                   <div style={{ fontSize:32,marginBottom:12 }}>📡</div>
-                  <div style={{ fontWeight:700,marginBottom:6 }}>Scanner is warming up</div>
-                  <div style={{ fontSize:13 }}>Signals appear here as soon as the scanner finds value. AFL &amp; NRL scan every 7 min on game days.</div>
+                  <div style={{ fontWeight:700,marginBottom:6 }}>Markets loading</div>
+                  <div style={{ fontSize:13 }}>Events appear here as soon as the scanner picks up odds. AFL &amp; NRL update every 7 min on game days.</div>
                 </div>
               ) : (
                 <div style={{ display:'flex',flexDirection:'column',gap:32 }}>
-                  {signalsBySport.map(({ sport, signals: sportSignals }) => {
-                    const topEV = Number(sportSignals[0]?.ev_percent || 0);
+                  {gamesBySport.map(({ sport, events }) => {
+                    const topEV = Math.max(0, ...events.flatMap(g => g.ev_picks.map(p => p.ev_percent)));
                     return (
-                    <div key={sport.key}>
-                      {/* Sport banner header */}
-                      <div style={{ position:'relative', borderRadius:16, overflow:'hidden', marginBottom:14, border:`1px solid ${sport.accent}30` }}>
-                        {/* Real sport photo */}
-                        <div style={{ position:'absolute',inset:0, backgroundImage:`url(${sport.img})`, backgroundSize:'cover', backgroundPosition:'center', filter:'brightness(0.35) saturate(1.2)' }} />
-                        {/* Gradient overlay */}
-                        <div style={{ position:'absolute',inset:0, background:`linear-gradient(90deg, rgba(5,13,24,.95) 0%, rgba(5,13,24,.6) 60%, transparent 100%)` }} />
-                        {/* Animated shimmer */}
-                        <div style={{ position:'absolute',inset:0, background:'linear-gradient(105deg,transparent 40%,rgba(255,255,255,.03) 50%,transparent 60%)', backgroundSize:'200% 100%', animation:'shimmer 3s infinite linear' }} />
-                        {/* Content */}
-                        <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px' }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-                            {/* Big sport icon with glow */}
-                            <div style={{ width:52, height:52, borderRadius:14, background:`${sport.accent}18`, border:`1.5px solid ${sport.accent}40`, display:'grid', placeItems:'center', fontSize:26, boxShadow:`0 0 20px ${sport.accent}30`, flexShrink:0 }}>
-                              {sport.icon}
+                      <div key={sport.key}>
+                        {/* Sport banner header */}
+                        <div style={{ position:'relative',borderRadius:16,overflow:'hidden',marginBottom:14,border:`1px solid ${sport.accent}30` }}>
+                          <div style={{ position:'absolute',inset:0,backgroundImage:`url(${sport.img})`,backgroundSize:'cover',backgroundPosition:'center',filter:'brightness(0.3) saturate(1.2)' }} />
+                          <div style={{ position:'absolute',inset:0,background:`linear-gradient(90deg,rgba(5,13,24,.95) 0%,rgba(5,13,24,.55) 60%,transparent 100%)` }} />
+                          <div style={{ position:'absolute',inset:0,background:'linear-gradient(105deg,transparent 40%,rgba(255,255,255,.03) 50%,transparent 60%)',backgroundSize:'200% 100%',animation:'shimmer 3s infinite linear' }} />
+                          <div style={{ position:'relative',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px' }}>
+                            <div style={{ display:'flex',alignItems:'center',gap:14 }}>
+                              <div style={{ width:52,height:52,borderRadius:14,background:`${sport.accent}18`,border:`1.5px solid ${sport.accent}40`,display:'grid',placeItems:'center',fontSize:26,boxShadow:`0 0 20px ${sport.accent}30`,flexShrink:0 }}>
+                                {sport.icon}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight:900,fontSize:20,letterSpacing:.5,textTransform:'uppercase',color:'#fff',lineHeight:1 }}>{sport.label}</div>
+                                <div style={{ fontSize:12,color:'rgba(255,255,255,.5)',marginTop:3 }}>
+                                  {events.length} event{events.length!==1?'s':''} · {events.flatMap(g=>g.ev_picks).length} edge{events.flatMap(g=>g.ev_picks).length!==1?'s':''}
+                                  {topEV>0 && ` · best +${topEV.toFixed(1)}%`}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <div style={{ fontWeight:900, fontSize:20, letterSpacing:.5, textTransform:'uppercase', color:'#fff', lineHeight:1 }}>{sport.label}</div>
-                              <div style={{ fontSize:12, color:'rgba(255,255,255,.5)', marginTop:3 }}>
-                                {sportSignals.length} active signal{sportSignals.length !== 1 ? 's' : ''} · best edge +{topEV.toFixed(1)}%
+                            <div style={{ display:'flex',alignItems:'center',gap:10 }}>
+                              {topEV >= 8 && (
+                                <span style={{ fontSize:11,fontWeight:800,color:'#fff',background:'linear-gradient(135deg,#f97316,#dc2626)',padding:'4px 12px',borderRadius:20,letterSpacing:.5,boxShadow:'0 2px 12px rgba(249,115,22,.4)',animation:'pulse 2s infinite' }}>
+                                  🔥 HOT
+                                </span>
+                              )}
+                              <div style={{ textAlign:'center',background:`${sport.accent}15`,border:`1px solid ${sport.accent}35`,borderRadius:12,padding:'8px 16px' }}>
+                                <div style={{ fontFamily:'var(--mono)',fontWeight:900,fontSize:22,color:sport.accent,lineHeight:1 }}>{events.length}</div>
+                                <div style={{ fontSize:9,color:'rgba(255,255,255,.4)',textTransform:'uppercase',letterSpacing:1,marginTop:2 }}>EVENTS</div>
                               </div>
                             </div>
                           </div>
-                          {/* Right: signal count badge + top EV pill */}
-                          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                            {topEV >= 8 && (
-                              <span style={{ fontSize:11, fontWeight:800, color:'#fff', background:'linear-gradient(135deg,#f97316,#dc2626)', padding:'4px 12px', borderRadius:20, letterSpacing:.5, boxShadow:'0 2px 12px rgba(249,115,22,.4)', animation:'pulse 2s infinite' }}>
-                                🔥 HOT
-                              </span>
-                            )}
-                            <div style={{ textAlign:'center', background:`${sport.accent}15`, border:`1px solid ${sport.accent}35`, borderRadius:12, padding:'8px 16px' }}>
-                              <div style={{ fontFamily:'var(--mono)', fontWeight:900, fontSize:22, color:sport.accent, lineHeight:1 }}>{sportSignals.length}</div>
-                              <div style={{ fontSize:9, color:'rgba(255,255,255,.4)', textTransform:'uppercase', letterSpacing:1, marginTop:2 }}>SIGNALS</div>
-                            </div>
-                          </div>
+                          <div style={{ height:2,background:sport.grad,opacity:.6 }} />
                         </div>
-                        {/* Bottom accent line */}
-                        <div style={{ height:2, background:sport.grad, opacity:.6 }} />
+
+                        {/* Event cards */}
+                        <div style={{ display:'flex',flexDirection:'column',gap:10 }}>
+                          {events.slice(0,8).map(ev => <EventCard key={ev.event_id} event={ev} />)}
+                        </div>
                       </div>
-                      {/* Signal cards grid */}
-                      <div style={{ display:'flex',flexDirection:'column',gap:12 }}>
-                        {sportSignals.slice(0,6).map((ev,i) => <SignalCard key={ev.id||i} ev={ev} />)}
-                      </div>
-                    </div>
                     );
                   })}
+
+                  {/* Other sports not in SPORTS_NAV */}
+                  {otherGames.length > 0 && (
+                    <div>
+                      <div style={{ fontWeight:800,fontSize:16,letterSpacing:.3,color:'#fff',marginBottom:12 }}>OTHER MARKETS</div>
+                      <div style={{ display:'flex',flexDirection:'column',gap:10 }}>
+                        {otherGames.map(ev => <EventCard key={ev.event_id} event={ev} />)}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -438,7 +463,7 @@ function DashboardInner() {
                 <MarketPulse />
               </div>
               <RecentBetsPanel bets={bets} />
-              <TopConfidencePanel signals={allSignals} />
+              <TopConfidencePanel games={games} />
             </div>
           </div>
 
