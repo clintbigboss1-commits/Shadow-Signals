@@ -2,3 +2,14 @@
 uploads/
 shadow-signals/client/tsconfig.tsbuildinfo
 node_modules/
+
+# Junk / leftover artifacts
+shadow-signals/files.zip
+shadow-signals/ghost_fullwidth_fix.html
+shadow-signals/shadow-signals-rebuild-prompt/
+shadow-signals/vendor/
+shadow-signals/.claude/
+shadow-signals/.mcp.json
+shadow-signals/client/public/spoets/
+desktop.ini
+**/desktop.ini

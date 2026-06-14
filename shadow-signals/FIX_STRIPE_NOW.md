@@ -33,7 +33,7 @@ Add/update:
   STRIPE_WEBHOOK_SECRET = whsec_xxxxxxxxxxxx  (your actual secret)
 
 Make sure you also have:
-  STRIPE_SECRET_KEY     = sk_live_xxxxxxxxxxxx
+  STRIPE_SECRET_KEY     = sk_live_
   STRIPE_PRICE_STARTER_MONTH    = price_xxxx
   STRIPE_PRICE_PRO_MONTH  = price_xxxx  
   STRIPE_PRICE_ELITE_MONTH  = price_xxxx
