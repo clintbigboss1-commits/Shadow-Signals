@@ -41,10 +41,13 @@ const SPORT_CFG: Record<string, { icon: string; label: string; color: string }> 
   icehockey_nhl:         { icon: '🏒', label: 'NHL',        color: '#041e42' },
   tennis_atp:            { icon: '🎾', label: 'Tennis',     color: '#1a5c1a' },
   golf_pga:              { icon: '⛳', label: 'Golf',       color: '#2e7d32' },
-  horse_racing_au:       { icon: '🐎', label: 'Racing',     color: '#5c2d00' },
-  horse_racing_us:       { icon: '🐎', label: 'Racing',     color: '#5c2d00' },
-  greyhound_racing_au:   { icon: '🐕', label: 'Greyhounds', color: '#2d1a5c' },
-  greyhound_racing_us:   { icon: '🐕', label: 'Greyhounds', color: '#2d1a5c' },
+  horse_racing_au:       { icon: '🐎', label: 'Racing',      color: '#5c2d00' },
+  horse_racing_us:       { icon: '🐎', label: 'Racing',      color: '#5c2d00' },
+  horse_racing_gb:       { icon: '🐎', label: 'UK Racing',   color: '#6b1a00' },
+  horse_racing_ire:      { icon: '🐎', label: 'IRE Racing',  color: '#0a3d1a' },
+  greyhound_racing_au:   { icon: '🐕', label: 'Greyhounds',  color: '#2d1a5c' },
+  greyhound_racing_us:   { icon: '🐕', label: 'Greyhounds',  color: '#2d1a5c' },
+  greyhound_racing_ire:  { icon: '🐕', label: 'IRE Greys',   color: '#1a0a3d' },
 };
 
 function getSportCfg(key: string) {
