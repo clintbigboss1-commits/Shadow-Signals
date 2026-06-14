@@ -12,7 +12,7 @@
  * 5. Win alert (when we find a big edge)
  */
 
-const FROM = process.env.EMAIL_FROM || 'Shadow Signals <send@shadowsignals.app>';
+const FROM = process.env.EMAIL_FROM || 'Shadow Signals <noreply@send.shadowsignals.app>';
 // FRONTEND_URL may be a comma-separated origin list — links use the first one
 const BASE = (process.env.FRONTEND_URL || 'https://shadowsignals.app').split(',')[0].trim();
 
