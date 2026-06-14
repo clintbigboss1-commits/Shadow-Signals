@@ -68,6 +68,11 @@ function confColor(score: number) {
   if (score >= 65) return '#ffab00';
   return '#64748b';
 }
+function confColorDark(score: number) {
+  if (score >= 80) return '#008a3d';
+  if (score >= 65) return '#b56f00';
+  return '#475569';
+}
 
 /* ─── sidebar ────────────────────────────────────────────── */
 /* ─── signal card ────────────────────────────────────────── */
@@ -78,11 +83,12 @@ function SignalCard({ ev }: { ev: EVOpp }) {
   const evNum    = Number(ev.ev_percent);
   const oddsNum  = Number(ev.bookie_odds);
   const fairNum  = Number(ev.fair_odds);
-  const score    = confidenceFromEV(evNum);
-  const isHot    = evNum >= 8;
-  const label    = confLabel(score);
-  const color    = confColor(score);
-  const stake    = ((score / 100) * 2).toFixed(1);
+  const score     = confidenceFromEV(evNum);
+  const isHot     = evNum >= 8;
+  const label     = confLabel(score);
+  const color     = confColor(score);
+  const colorDark = confColorDark(score);
+  const stake     = ((score / 100) * 2).toFixed(1);
   const sportLbl = SPORT_LABEL[ev.sport_key] || ev.sport_key?.split('_').pop()?.toUpperCase() || '—';
 
   async function trackBet() {
@@ -97,29 +103,29 @@ function SignalCard({ ev }: { ev: EVOpp }) {
   }
 
   return (
-    <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:14, padding:'18px 20px', borderLeft: isHot ? '3px solid #f97316' : '3px solid transparent' }}>
+    <div style={{ background:'#fff', border:`2px solid ${isHot ? '#f97316' : '#dde8f5'}`, borderLeft:`4px solid ${isHot ? '#f97316' : '#2979ff'}`, borderRadius:14, padding:'18px 20px', boxShadow:'0 4px 20px rgba(7,17,32,.10)' }}>
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-          <span style={{ fontSize:11,fontWeight:800,color:'#fff',background:'rgba(41,121,255,.15)',padding:'3px 10px',borderRadius:6 }}>{sportLbl}</span>
+          <span style={{ fontSize:11,fontWeight:800,color:'#2979ff',background:'rgba(41,121,255,.1)',padding:'3px 10px',borderRadius:6 }}>{sportLbl}</span>
           {isHot && <span style={{ fontSize:11,fontWeight:800,color:'#fff',background:'linear-gradient(135deg,#f97316,#dc2626)',padding:'3px 10px',borderRadius:6 }}>🔥 HOT EDGE</span>}
         </div>
-        <span style={{ fontFamily:'var(--mono)',fontWeight:900,fontSize:16,color:'#00e676' }}>+{evNum.toFixed(1)}%</span>
+        <span style={{ fontFamily:'var(--mono)',fontWeight:900,fontSize:16,color:'#008a3d' }}>+{evNum.toFixed(1)}%</span>
       </div>
 
       {/* Event name */}
-      <div style={{ fontWeight:800,fontSize:17,marginBottom:14,color:'var(--text)' }}>{ev.event_name}</div>
+      <div style={{ fontWeight:800,fontSize:17,marginBottom:14,color:'#071120' }}>{ev.event_name}</div>
 
       {/* 4-col info */}
       <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14 }}>
         {[
-          { lbl:'Our Pick',   val:ev.selection,            style:{ fontWeight:700,fontSize:13 } },
-          { lbl:'Best Price', val:`$${oddsNum.toFixed(2)}`, style:{ fontWeight:800,fontSize:14,color:'#2979ff',fontFamily:'var(--mono)' } },
-          { lbl:'At',         val:bookieLabel(ev.bookie),  style:{ fontWeight:600,fontSize:12 } },
-          { lbl:'Kickoff',    val:fmtKickoff(ev.commence_time), style:{ fontWeight:600,fontSize:11 } },
+          { lbl:'Our Pick',   val:ev.selection,             style:{ fontWeight:700,fontSize:13,color:'#1e3a5f' } },
+          { lbl:'Best Price', val:`$${oddsNum.toFixed(2)}`,  style:{ fontWeight:800,fontSize:14,color:'#2979ff',fontFamily:'var(--mono)' } },
+          { lbl:'At',         val:bookieLabel(ev.bookie),   style:{ fontWeight:600,fontSize:12,color:'#1e3a5f' } },
+          { lbl:'Kickoff',    val:fmtKickoff(ev.commence_time), style:{ fontWeight:600,fontSize:11,color:'#1e3a5f' } },
         ].map(c => (
           <div key={c.lbl}>
-            <div style={{ fontSize:9,color:'#64748b',textTransform:'uppercase',letterSpacing:1,marginBottom:4 }}>{c.lbl}</div>
+            <div style={{ fontSize:9,color:'#6b8aaa',textTransform:'uppercase',letterSpacing:1,marginBottom:4 }}>{c.lbl}</div>
             <div style={c.style as React.CSSProperties}>{c.val}</div>
           </div>
         ))}
@@ -128,29 +134,29 @@ function SignalCard({ ev }: { ev: EVOpp }) {
       {/* Confidence bar */}
       <div style={{ marginBottom:12 }}>
         <div style={{ display:'flex',justifyContent:'space-between',marginBottom:5 }}>
-          <span style={{ fontSize:9,color:'#64748b',textTransform:'uppercase',letterSpacing:1 }}>Confidence</span>
-          <span style={{ fontSize:13,fontWeight:700 }}><span style={{ color }}>{score}%</span> · {label}</span>
+          <span style={{ fontSize:9,color:'#6b8aaa',textTransform:'uppercase',letterSpacing:1 }}>Confidence</span>
+          <span style={{ fontSize:13,fontWeight:700,color:'#071120' }}><span style={{ color:colorDark }}>{score}%</span> · {label}</span>
         </div>
-        <div style={{ height:6,background:'rgba(255,255,255,.06)',borderRadius:99,overflow:'hidden' }}>
+        <div style={{ height:6,background:'rgba(7,17,32,.08)',borderRadius:99,overflow:'hidden' }}>
           <div style={{ height:'100%',width:`${score}%`,background:color,borderRadius:99 }} />
         </div>
       </div>
 
       {/* Stake / fair odds */}
-      <div style={{ display:'flex',justifyContent:'space-between',fontSize:13,color:'#9eb1c8',marginBottom:14 }}>
-        <span>Suggested stake: <strong style={{ color:'#fff' }}>{stake}% of bankroll</strong></span>
-        <span>Fair odds: <strong style={{ color:'#9eb1c8' }}>${fairNum.toFixed(2)}</strong></span>
+      <div style={{ display:'flex',justifyContent:'space-between',fontSize:13,color:'#5a7a9a',marginBottom:14 }}>
+        <span>Suggested stake: <strong style={{ color:'#071120' }}>{stake}% of bankroll</strong></span>
+        <span>Fair odds: <strong style={{ color:'#5a7a9a' }}>${fairNum.toFixed(2)}</strong></span>
       </div>
 
       {/* Maths panel */}
       {expanded && (
-        <div style={{ background:'rgba(7,17,32,.6)',borderRadius:10,padding:'12px 14px',marginBottom:14,fontSize:12,color:'#9eb1c8' }}>
-          <div style={{ fontSize:9,fontWeight:700,color:'#64748b',textTransform:'uppercase',letterSpacing:1.2,marginBottom:8 }}>Fair Value Calculation</div>
+        <div style={{ background:'#f0f5ff',borderRadius:10,padding:'12px 14px',marginBottom:14,fontSize:12,color:'#4a6580',border:'1px solid #dde8f5' }}>
+          <div style={{ fontSize:9,fontWeight:700,color:'#6b8aaa',textTransform:'uppercase',letterSpacing:1.2,marginBottom:8 }}>Fair Value Calculation</div>
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:6 }}>
-            <div>Our fair probability: <strong style={{ color:'#fff' }}>{(100/fairNum).toFixed(1)}%</strong></div>
-            <div>Bookie implied prob: <strong style={{ color:'#fff' }}>{(100/oddsNum).toFixed(1)}%</strong></div>
-            <div>Mathematical edge: <strong style={{ color:'#00e676' }}>+{evNum.toFixed(1)}%</strong></div>
-            <div>Kelly stake: <strong style={{ color:'#fff' }}>{stake}% of bankroll</strong></div>
+            <div>Our fair probability: <strong style={{ color:'#071120' }}>{(100/fairNum).toFixed(1)}%</strong></div>
+            <div>Bookie implied prob: <strong style={{ color:'#071120' }}>{(100/oddsNum).toFixed(1)}%</strong></div>
+            <div>Mathematical edge: <strong style={{ color:'#008a3d' }}>+{evNum.toFixed(1)}%</strong></div>
+            <div>Kelly stake: <strong style={{ color:'#071120' }}>{stake}% of bankroll</strong></div>
           </div>
         </div>
       )}
@@ -160,7 +166,7 @@ function SignalCard({ ev }: { ev: EVOpp }) {
         <button onClick={() => setExpanded(!expanded)} style={{ background:'none',border:'none',color:'#2979ff',fontWeight:700,fontSize:13,cursor:'pointer',padding:0 }}>
           Show maths {expanded ? '↑' : '↓'}
         </button>
-        <button onClick={trackBet} style={{ padding:'9px 20px',borderRadius:9,background:tracked?'rgba(0,230,118,.12)':'linear-gradient(135deg,#2979ff,#1e63d9)',border:tracked?'1px solid rgba(0,230,118,.3)':'none',color:tracked?'#00e676':'#fff',fontWeight:700,fontSize:13,cursor:'pointer' }}>
+        <button onClick={trackBet} style={{ padding:'9px 20px',borderRadius:9,background:tracked?'rgba(0,180,100,.1)':'linear-gradient(135deg,#2979ff,#1e63d9)',border:tracked?'1.5px solid #008a3d':'none',color:tracked?'#008a3d':'#fff',fontWeight:700,fontSize:13,cursor:'pointer' }}>
           {tracked ? '✓ Tracked' : 'Track this bet'}
         </button>
       </div>
@@ -416,7 +422,7 @@ function DashboardInner() {
                         <div style={{ height:2, background:sport.grad, opacity:.6 }} />
                       </div>
                       {/* Signal cards grid */}
-                      <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:12 }}>
+                      <div style={{ display:'flex',flexDirection:'column',gap:12 }}>
                         {sportSignals.slice(0,6).map((ev,i) => <SignalCard key={ev.id||i} ev={ev} />)}
                       </div>
                     </div>

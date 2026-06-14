@@ -122,78 +122,73 @@ export default function EVTable({ planLimit = 999 }: { planLimit?: number }) {
       </div>
 
       {/* Table */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div style={{ background: '#fff', border: '2px solid #dde8f5', borderRadius: 14, padding: 0, overflow: 'hidden', boxShadow: '0 4px 24px rgba(7,17,32,.10)' }}>
         {loading ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#64748b' }}>
+          <div style={{ padding: 48, textAlign: 'center', color: '#6b8aaa' }}>
             <div className="spinner" style={{ margin: '0 auto 12px' }} />
             Scanning bookmakers...
           </div>
         ) : rows.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#64748b' }}>
+          <div style={{ padding: 48, textAlign: 'center', color: '#6b8aaa' }}>
             <div style={{ fontSize: 28, marginBottom: 10 }}>🔍</div>
             No edges right now — try lowering the EV filter or check back when AU games are live.
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table className="data-table" style={{ minWidth: 720 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
               <thead>
-                <tr>
-                  <th>Event / Sport</th>
-                  <th>Selection</th>
-                  <th>Bookie</th>
-                  <th style={{ textAlign: 'right' }}>Odds</th>
-                  <th style={{ textAlign: 'right' }}>Fair</th>
-                  <th style={{ minWidth: 140 }}>Edge</th>
-                  <th style={{ textAlign: 'right' }}>Kelly</th>
-                  <th>Start</th>
+                <tr style={{ background: '#f5f9ff' }}>
+                  {['Event / Sport','Selection','Bookie','Odds','Fair','Edge','Kelly','Start'].map((h, i) => (
+                    <th key={h} style={{ fontSize: 10, fontWeight: 700, color: '#5a7a9a', textTransform: 'uppercase', letterSpacing: 1, padding: '12px 14px', textAlign: i >= 3 && i <= 6 ? 'right' : 'left', borderBottom: '2px solid #dde8f5', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => {
                   const ev  = Number(row.ev_percent);
-                  const col = BOOKIE_COL[row.bookie] || '#64748b';
+                  const col = BOOKIE_COL[row.bookie] || '#475569';
                   return (
-                    <tr key={row.id || i} className="fadein">
-                      <td>
+                    <tr key={row.id || i} className="fadein" style={{ borderBottom: i < rows.length - 1 ? '1px solid #edf3ff' : 'none' }}>
+                      <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
                         {row.event_id ? (
                           <Link href={`/match/${encodeURIComponent(row.event_id)}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <div style={{ fontWeight: 600, fontSize: 13, color: '#e2e8f0' }}>{row.event_name} <span style={{ color: '#2979ff', fontSize: 11 }}>→</span></div>
+                            <div style={{ fontWeight: 600, fontSize: 13, color: '#071120' }}>{row.event_name} <span style={{ color: '#2979ff', fontSize: 11 }}>→</span></div>
                           </Link>
                         ) : (
-                          <div style={{ fontWeight: 600, fontSize: 13 }}>{row.event_name}</div>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: '#071120' }}>{row.event_name}</div>
                         )}
-                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                        <div style={{ fontSize: 11, color: '#6b8aaa', marginTop: 2 }}>
                           {row.sport_key?.replace(/_/g, ' ')}
                         </div>
                       </td>
-                      <td style={{ fontWeight: 600, color: '#e2e8f0' }}>{row.selection}</td>
-                      <td>
+                      <td style={{ padding: '12px 14px', verticalAlign: 'middle', fontWeight: 600, color: '#1e3a5f' }}>{row.selection}</td>
+                      <td style={{ padding: '12px 14px', verticalAlign: 'middle' }}>
                         <span style={{
-                          fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4,
+                          fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 5,
                           background: `${col}18`, color: col,
-                          textTransform: 'capitalize',
+                          textTransform: 'capitalize', border: `1px solid ${col}30`,
                         }}>{row.bookie?.replace(/_/g, ' ')}</span>
                       </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#00c853' }}>
+                      <td style={{ padding: '12px 14px', verticalAlign: 'middle', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#008a3d' }}>
                         ${Number(row.bookie_odds).toFixed(2)}
                       </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: '#64748b' }}>
+                      <td style={{ padding: '12px 14px', verticalAlign: 'middle', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: '#6b8aaa' }}>
                         ${Number(row.fair_odds).toFixed(2)}
                       </td>
-                      <td>
-                        <div className="ev-bar">
-                          <div className="ev-bar-track">
-                            <div className="ev-bar-fill" style={{ width: `${Math.min(ev * 5, 100)}%` }} />
+                      <td style={{ padding: '12px 14px', verticalAlign: 'middle', minWidth: 140 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ flex: 1, height: 5, background: 'rgba(7,17,32,.08)', borderRadius: 99, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${Math.min(ev * 5, 100)}%`, background: 'linear-gradient(90deg,#2979ff,#00c853)', borderRadius: 99 }} />
                           </div>
-                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#00c853', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: '#008a3d', whiteSpace: 'nowrap' }}>
                             +{ev.toFixed(1)}%
                           </span>
                         </div>
                       </td>
-                      <td style={{ textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#64748b' }}>
+                      <td style={{ padding: '12px 14px', verticalAlign: 'middle', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#6b8aaa' }}>
                         {Number(row.kelly_percent).toFixed(1)}%
                       </td>
-                      <td style={{ fontSize: 12, color: '#64748b', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '12px 14px', verticalAlign: 'middle', fontSize: 12, color: '#6b8aaa', whiteSpace: 'nowrap' }}>
                         {row.commence_time ? fmt(row.commence_time) : '—'}
                       </td>
                     </tr>

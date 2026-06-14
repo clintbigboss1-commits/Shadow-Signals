@@ -763,6 +763,17 @@ input::placeholder { color: var(--faint); }
   box-shadow: 0 16px 40px rgba(0,0,0,.6);
 }
 
+/* ── Section label ──────────────────────────────────────── */
+.section-label {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px;
+}
+
+/* ── EV bar (scanner table) ─────────────────────────────── */
+.ev-bar { display: flex; align-items: center; gap: 8px; }
+.ev-bar-track { flex: 1; height: 5px; background: rgba(7,17,32,.08); border-radius: 99px; overflow: hidden; }
+.ev-bar-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#2979ff,#00c853); transition: width .5s; }
+
 /* ── Widget dark theme overrides ────────────────────────── */
 api-sports-widget {
   --widget-bg: #0d1526;
