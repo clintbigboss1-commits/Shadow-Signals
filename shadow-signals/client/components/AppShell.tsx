@@ -8,14 +8,16 @@ import { connectSocket, getSocket } from '../lib/socket';
 import API from '../lib/api';
 
 const SPORT_NAV = [
-  { key: 'aussierules_afl',      label: 'AFL',        icon: '🏉' },
-  { key: 'rugbyleague_nrl',      label: 'NRL',        icon: '🏉' },
-  { key: 'basketball_nba',       label: 'NBA',        icon: '🏀' },
-  { key: 'soccer_epl',           label: 'EPL',        icon: '⚽' },
-  { key: 'cricket_international_t20', label: 'T20I',  icon: '🏏' },
-  { key: 'mma_mixed_martial_arts', label: 'MMA',      icon: '🥊' },
-  { key: 'americanfootball_nfl', label: 'NFL',        icon: '🏈' },
-  { key: 'baseball_mlb',         label: 'MLB',        icon: '⚾' },
+  { key: 'aussierules_afl',           label: 'AFL',        icon: '🏈' },
+  { key: 'rugbyleague_nrl',           label: 'NRL',        icon: '🏉' },
+  { key: 'horse_racing_au',           label: 'Racing',     icon: '🐎' },
+  { key: 'greyhound_racing_au',       label: 'Greyhounds', icon: '🐕' },
+  { key: 'basketball_nba',            label: 'NBA',        icon: '🏀' },
+  { key: 'soccer_epl',                label: 'EPL',        icon: '⚽' },
+  { key: 'soccer_a_league',           label: 'A-League',   icon: '⚽' },
+  { key: 'mma_mixed_martial_arts',    label: 'MMA',        icon: '🥊' },
+  { key: 'cricket_international_t20', label: 'T20I',       icon: '🏏' },
+  { key: 'baseball_mlb',              label: 'MLB',        icon: '⚾' },
 ];
 
 const PLAN_COLOR: Record<string, string> = {
@@ -67,7 +69,7 @@ export default function AppShell({ children, activeSport, onSportChange }: Props
   const NAV_ITEMS = [
     { href: '/dashboard', label: 'Dashboard',  icon: '⊞' },
     { href: '/markets',   label: 'Markets',    icon: '~' },
-    { href: '/ghost',     label: 'Signals',    icon: '◎' },
+    { href: '/scanner',   label: 'Signals',    icon: '◎' },
     { href: '/wins',      label: 'My Wins',    icon: '↗' },
     { href: '/settings',  label: 'Settings',   icon: '⚙' },
   ];
