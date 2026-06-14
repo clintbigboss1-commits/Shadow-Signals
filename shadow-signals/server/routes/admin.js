@@ -5,6 +5,34 @@ const { db } = require('../db');
 const { MODELS } = require('../services/models');
 const { getCLVReport } = require('../services/clvTracker');
 
+// POST /api/admin/refresh — force an immediate odds fetch + EV recompute
+router.post('/refresh', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { fetchFromOddsAPI, fetchPropsForUpcomingEvents } = require('../services/oddsService');
+    const { computeEVFromCache } = require('../services/evCalculator');
+
+    const AU_PRIORITY = ['aussierules_afl', 'rugbyleague_nrl', 'rugbyleague_nrl_state_of_origin',
+      'basketball_nba', 'baseball_mlb', 'soccer_mls', 'soccer_conmebol_copa_libertadores',
+      'cricket_international_t20', 'cricket_odi', 'americanfootball_cfl',
+      'icehockey_nhl', 'mma_mixed_martial_arts'];
+
+    const results = {};
+    for (const sport of AU_PRIORITY) {
+      try {
+        const r = await fetchFromOddsAPI(sport);
+        results[sport] = { events: r.events?.length ?? 0, source: r.source };
+      } catch (e) {
+        results[sport] = { error: e.message };
+      }
+    }
+
+    const evOpps = await computeEVFromCache();
+    res.json({ ok: true, fetched: results, ev_opportunities: evOpps.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/models/status — all models + recent run log
 router.get('/models/status', requireAuth, requireAdmin, async (req, res) => {
   try {

@@ -221,13 +221,50 @@ const DEMO_GAMES = {
   mma_boxing: [
     { home: 'Tyson Fury',        away: 'Oleksandr Usyk',  commenceOffsetH: 168 },
   ],
+  aussierules_afl: [
+    { home: 'Collingwood',       away: 'Richmond',        commenceOffsetH: 18 },
+    { home: 'Carlton',           away: 'Hawthorn',        commenceOffsetH: 22 },
+    { home: 'Essendon',          away: 'Melbourne',       commenceOffsetH: 40 },
+    { home: 'Geelong',           away: 'Brisbane Lions',  commenceOffsetH: 44 },
+    { home: 'Sydney Swans',      away: 'GWS Giants',      commenceOffsetH: 66 },
+    { home: 'Port Adelaide',     away: 'Adelaide Crows',  commenceOffsetH: 70 },
+    { home: 'Western Bulldogs',  away: 'North Melbourne', commenceOffsetH: 90 },
+    { home: 'Fremantle',         away: 'West Coast',      commenceOffsetH: 114 },
+  ],
+  rugbyleague_nrl: [
+    { home: 'Melbourne Storm',   away: 'Penrith Panthers',commenceOffsetH: 20 },
+    { home: 'Parramatta Eels',   away: 'South Sydney',    commenceOffsetH: 22 },
+    { home: 'Brisbane Broncos',  away: 'Gold Coast Titans',commenceOffsetH: 44 },
+    { home: 'Sydney Roosters',   away: 'Manly Sea Eagles',commenceOffsetH: 46 },
+    { home: 'Canterbury Bulldogs','away': 'North QLD Cowboys',commenceOffsetH: 68 },
+    { home: 'New Zealand Warriors','away': 'Canberra Raiders',commenceOffsetH: 92 },
+  ],
+  rugbyleague_nrl_state_of_origin: [
+    { home: 'Queensland',        away: 'New South Wales', commenceOffsetH: 48 },
+  ],
+  cricket_international_t20: [
+    { home: 'Australia',         away: 'England',         commenceOffsetH: 24 },
+    { home: 'India',             away: 'Pakistan',        commenceOffsetH: 48 },
+  ],
+  cricket_odi: [
+    { home: 'Australia',         away: 'West Indies',     commenceOffsetH: 36 },
+    { home: 'England',           away: 'South Africa',    commenceOffsetH: 60 },
+  ],
+  soccer_mls: [
+    { home: 'LAFC',              away: 'Inter Miami',     commenceOffsetH: 12 },
+    { home: 'Seattle Sounders',  away: 'Portland Timbers',commenceOffsetH: 30 },
+    { home: 'Chicago Fire',      away: 'Atlanta United',  commenceOffsetH: 36 },
+    { home: 'NYCFC',             away: 'Philadelphia Union',commenceOffsetH: 60 },
+  ],
 };
 
 const DEMO_BOOKS = [
-  { key: 'draftkings', title: 'DraftKings',  margin: 0.040 },
-  { key: 'fanduel',    title: 'FanDuel',     margin: 0.045 },
-  { key: 'betmgm',     title: 'BetMGM',      margin: 0.050 },
-  { key: 'caesars',    title: 'Caesars',     margin: 0.055 },
+  { key: 'sportsbet',   title: 'Sportsbet',  margin: 0.040 },
+  { key: 'tab',         title: 'TAB',        margin: 0.045 },
+  { key: 'bet365_au',   title: 'Bet365',     margin: 0.042 },
+  { key: 'unibet',      title: 'Unibet',     margin: 0.048 },
+  { key: 'pointsbet',   title: 'Pointsbet',  margin: 0.050 },
+  { key: 'betdeluxe',   title: 'BetDeluxe',  margin: 0.055 },
 ];
 
 function seededRandom(seed) {

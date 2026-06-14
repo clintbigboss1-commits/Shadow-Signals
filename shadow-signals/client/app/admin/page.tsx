@@ -24,6 +24,8 @@ export default function AdminPage() {
   const [checked, setChecked] = useState(false);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshResult, setRefreshResult] = useState<any>(null);
 
   // Invite form
   const [email, setEmail] = useState('');
@@ -59,6 +61,20 @@ export default function AdminPage() {
       setErr(e.response?.data?.error || 'Something went wrong');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function forceRefresh() {
+    setRefreshing(true); setRefreshResult(null); setMsg(''); setErr('');
+    try {
+      const r = await API.post('/admin/refresh');
+      setRefreshResult(r.data);
+      const total = Object.values(r.data.fetched as Record<string, any>).reduce((s: number, v: any) => s + (v.events || 0), 0);
+      setMsg(`Refreshed: ${total} events fetched, ${r.data.ev_opportunities} EV opportunities found.`);
+    } catch (e: any) {
+      setErr(e.response?.data?.error || 'Refresh failed');
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -100,6 +116,24 @@ export default function AdminPage() {
         <p style={{ color: 'rgba(255,255,255,.45)', fontSize: 14, marginBottom: 28 }}>
           Add anyone on any plan, free of charge — they get an email invite and set their own password.
         </p>
+
+        {/* Scanner controls */}
+        <div className="card" style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Scanner</div>
+            <div style={{ fontSize: 12, color: '#5e7390' }}>Force an immediate odds fetch + EV recompute across all in-season sports.</div>
+          </div>
+          <button onClick={forceRefresh} disabled={refreshing} className="btn btn-primary" style={{ padding: '10px 20px', whiteSpace: 'nowrap' }}>
+            {refreshing ? '⟳ Refreshing...' : '⟳ Refresh now'}
+          </button>
+          {refreshResult && (
+            <div style={{ width: '100%', fontSize: 12, color: '#5e7390', marginTop: 4 }}>
+              {Object.entries(refreshResult.fetched as Record<string, any>).map(([sport, r]: [string, any]) => (
+                <span key={sport} style={{ marginRight: 12 }}>{sport}: {r.events ?? '?'} events ({r.source})</span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Invite form */}
         <form onSubmit={invite} className="card" style={{ marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
