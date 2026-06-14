@@ -304,5 +304,10 @@ DO $$ BEGIN
 EXCEPTION WHEN undefined_table THEN NULL;
 END $$;
 
+DO $$ BEGIN
+  ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS onboarding_data JSONB;
+EXCEPTION WHEN undefined_table THEN NULL;
+END $$;
+
 -- Done.
 SELECT 'Migration complete' AS status;

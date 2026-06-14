@@ -22,7 +22,7 @@ router.get('/me/preferences', requireAuth, async (req, res) => {
 
 // PATCH /api/users/me/preferences
 router.patch('/me/preferences', requireAuth, async (req, res) => {
-  const allowed = ['onboarding_done', 'email_alerts', 'push_alerts', 'alert_min_ev', 'default_stake_aud'];
+  const allowed = ['onboarding_done', 'email_alerts', 'push_alerts', 'alert_min_ev', 'default_stake_aud', 'onboarding_data'];
   const updates = Object.fromEntries(Object.entries(req.body).filter(([k]) => allowed.includes(k)));
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'No valid fields' });
 
