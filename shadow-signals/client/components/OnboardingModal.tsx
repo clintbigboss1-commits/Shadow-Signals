@@ -61,18 +61,18 @@ function toggle(arr: string[], id: string) {
 
 const CHIP_BASE: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 7,
-  padding: '9px 14px', borderRadius: 10,
-  border: '1px solid rgba(255,255,255,.1)',
-  background: 'rgba(255,255,255,.04)',
+  padding: '10px 16px', borderRadius: 10,
+  border: '1px solid rgba(255,255,255,.2)',
+  background: 'rgba(255,255,255,.1)',
   cursor: 'pointer', fontSize: 13, fontWeight: 600,
-  fontFamily: 'Inter, sans-serif', color: '#9eb1c8',
+  fontFamily: 'Inter, sans-serif', color: '#e2e8f0',
   transition: 'all .18s', userSelect: 'none',
 };
 
 const CHIP_ON: React.CSSProperties = {
   ...CHIP_BASE,
   border: '1px solid #2979ff',
-  background: 'rgba(41,121,255,.14)',
+  background: 'rgba(41,121,255,.3)',
   color: '#fff',
 };
 
@@ -119,8 +119,8 @@ export default function OnboardingModal({ userName, onDone }: Props) {
     }}>
       <div style={{
         width: '100%', maxWidth: 500,
-        background: '#0d1829',
-        border: '1px solid rgba(41,121,255,.2)',
+        background: '#111f35',
+        border: '1px solid rgba(41,121,255,.3)',
         borderRadius: 22,
         padding: '36px 36px 28px',
         boxShadow: '0 40px 100px rgba(0,0,0,.75)',
@@ -190,13 +190,13 @@ export default function OnboardingModal({ userName, onDone }: Props) {
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '13px 16px', borderRadius: 11, cursor: 'pointer',
-                    border: sel.stake_range === o.id ? '1px solid #2979ff' : '1px solid rgba(255,255,255,.1)',
-                    background: sel.stake_range === o.id ? 'rgba(41,121,255,.14)' : 'rgba(255,255,255,.03)',
+                    border: sel.stake_range === o.id ? '1px solid #2979ff' : '1px solid rgba(255,255,255,.2)',
+                    background: sel.stake_range === o.id ? 'rgba(41,121,255,.3)' : 'rgba(255,255,255,.08)',
                     transition: 'all .18s',
                   }}
                   onClick={() => setSel(s => ({ ...s, stake_range: o.id }))}
                 >
-                  <span style={{ fontWeight: 700, fontSize: 14, color: sel.stake_range === o.id ? '#fff' : '#9eb1c8' }}>{o.label}</span>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: sel.stake_range === o.id ? '#fff' : '#e2e8f0' }}>{o.label}</span>
                   <span style={{ fontSize: 12, color: '#5e7390' }}>{o.desc}</span>
                 </div>
               ))}
