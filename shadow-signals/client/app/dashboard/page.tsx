@@ -468,7 +468,7 @@ function DashboardInner() {
     <>
       {showOnboarding && <OnboardingModal userName={user?.name} onDone={() => setShowOnboarding(false)} />}
 
-      <AppShell activeSport={activeSport} onSportChange={setActiveSport}>
+      <AppShell activeSport={activeSport} onSportChange={setActiveSport} contentDark>
         <div className="content" style={{ maxWidth:1400 }}>
 
           {/* Upgrade banner */}

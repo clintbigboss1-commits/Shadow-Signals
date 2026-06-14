@@ -28,9 +28,25 @@ interface Props {
   children: React.ReactNode;
   activeSport?: string;
   onSportChange?: (key: string) => void;
+  contentDark?: boolean;
 }
 
-export default function AppShell({ children, activeSport, onSportChange }: Props) {
+const DARK_VARS: React.CSSProperties = {
+  background: '#071120',
+  color: '#ffffff',
+  ['--text' as string]: '#ffffff',
+  ['--text-soft' as string]: '#9eb1c8',
+  ['--muted' as string]: '#5e7390',
+  ['--bg' as string]: '#071120',
+  ['--bg2' as string]: '#0c1c31',
+  ['--bg3' as string]: '#122944',
+  ['--bg4' as string]: '#173353',
+  ['--border' as string]: 'rgba(255,255,255,.08)',
+  ['--border2' as string]: 'rgba(255,255,255,.04)',
+  ['--border-strong' as string]: 'rgba(255,255,255,.14)',
+};
+
+export default function AppShell({ children, activeSport, onSportChange, contentDark }: Props) {
   const path = usePathname();
   const [user, setUser]     = useState<User | null>(() => getUser());
   const [unread, setUnread] = useState(0);
@@ -207,7 +223,7 @@ export default function AppShell({ children, activeSport, onSportChange }: Props
       </aside>
 
       {/* ── Main content ─────────────────────────────────────── */}
-      <div className="main-area">
+      <div className="main-area" style={contentDark ? DARK_VARS : {}}>
         {children}
       </div>
     </div>
