@@ -10,8 +10,8 @@ import API from '../lib/api';
 const SPORT_NAV = [
   { key: 'aussierules_afl',           label: 'AFL',        icon: '🏈' },
   { key: 'rugbyleague_nrl',           label: 'NRL',        icon: '🏉' },
-  { key: 'horse_racing_au',           label: 'Racing',     icon: '🐎' },
-  { key: 'greyhound_racing_au',       label: 'Greyhounds', icon: '🐕' },
+  { key: 'horse_racing_gb',            label: 'UK Racing',  icon: '🐎' },
+  { key: 'horse_racing_ire',           label: 'IRE Racing', icon: '🐎' },
   { key: 'basketball_nba',            label: 'NBA',        icon: '🏀' },
   { key: 'soccer_epl',                label: 'EPL',        icon: '⚽' },
   { key: 'soccer_a_league',           label: 'A-League',   icon: '⚽' },

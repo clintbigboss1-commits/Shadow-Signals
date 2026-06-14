@@ -14,8 +14,8 @@ const SPORT_TABS = [
   { key: 'soccer_epl',             label: '⚽ EPL' },
   { key: 'basketball_nba',         label: '🏀 NBA' },
   { key: 'mma_ufc',                label: '🥊 UFC' },
-  { key: 'horse_racing_au',        label: '🐎 Racing' },
-  { key: 'greyhound_racing_au',    label: '🐕 Greyhounds' },
+  { key: 'horse_racing_gb',        label: '🐎 UK Racing' },
+  { key: 'horse_racing_ire',       label: '🐎 IRE Racing' },
 ];
 
 const EV_FILTERS = [

@@ -72,7 +72,7 @@ async function computeEVFromCache(sportKey = null) {
       sport_key, event_id, home_team, away_team,
       commence_time, bookmaker, market, selection, odds
     FROM odds_cache
-    WHERE expires_at > NOW() AND market = 'h2h'
+    WHERE expires_at > NOW() AND market IN ('h2h', 'win')
   `;
   const params = [];
   if (sportKey) {

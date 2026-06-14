@@ -1,6 +1,7 @@
 'use strict';
 const cron = require('node-cron');
 const { fetchFromOddsAPI, fetchESPN, fetchPropsForUpcomingEvents } = require('./oddsService');
+const { fetchAndCacheRacing } = require('./racingService');
 const { computeEVFromCache, computePropsEVFromCache } = require('./evCalculator');
 const { findArbs } = require('./arbFinder');
 const { db } = require('../db');
@@ -241,6 +242,11 @@ function initScheduler() {
   // One engine: every minute, fetch whatever is due per its season + cadence
   cron.schedule('* * * * *', fetchDueSports);
 
+  // Horse racing — The Racing API, every 10 minutes 5am–10pm AEST (7pm–12pm UTC)
+  cron.schedule('*/10 19-23,0-12 * * *', async () => {
+    try { await fetchAndCacheRacing(); } catch (e) { console.error('Racing fetch error:', e.message); }
+  });
+
   // Daily cleanup at midnight AEST (2pm UTC)
   cron.schedule('0 14 * * *', async () => {
     await cleanCache();
@@ -314,6 +320,11 @@ function initScheduler() {
       console.error('CLV capture error:', e.message);
     }
   });
+
+  // First-boot racing fetch — runs 3s after launch so models boot first
+  setTimeout(async () => {
+    try { await fetchAndCacheRacing(); } catch (e) { console.error('Boot racing fetch error:', e.message); }
+  }, 3000);
 
   // First-boot: ingest game-outcome models + NBA player stats + props odds
   setTimeout(async () => {
