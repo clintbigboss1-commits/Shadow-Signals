@@ -92,7 +92,7 @@ function fmtKickoff(dt: string) {
 function pickBookieCols(allBookmakers: Record<string, Record<string, number>>, evPicks: GameEvent['ev_picks']): string[] {
   const available = Object.keys(allBookmakers);
   const evBookies = evPicks.map(p => p.bookie);
-  const ordered = [...new Set([...evBookies, ...PREFERRED_BOOKIES])].filter(b => available.includes(b));
+  const ordered = Array.from(new Set([...evBookies, ...PREFERRED_BOOKIES])).filter(b => available.includes(b));
   return ordered.slice(0, 5);
 }
 
