@@ -32,7 +32,7 @@ interface Props {
 
 export default function AppShell({ children, activeSport, onSportChange }: Props) {
   const path = usePathname();
-  const [user, setUser]     = useState<User | null>(null);
+  const [user, setUser]     = useState<User | null>(() => getUser());
   const [unread, setUnread] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifs, setNotifs] = useState<{ id: string; title: string; body: string | null; read: boolean; created_at: string }[]>([]);

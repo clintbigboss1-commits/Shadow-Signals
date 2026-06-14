@@ -23,7 +23,7 @@ const PLAN_COL: Record<string, string> = {
 
 export default function Navbar() {
   const path = usePathname();
-  const [user, setUser]           = useState<User | null>(null);
+  const [user, setUser]           = useState<User | null>(() => getUser());
   const [menuOpen, setMenuOpen]   = useState(false);
   const [unread, setUnread]       = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);

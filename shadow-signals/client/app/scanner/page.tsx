@@ -64,7 +64,7 @@ function ScannerInner() {
   const bestEdge = [...allEdgesFlat].sort((a, b) => b.ev_percent - a.ev_percent)[0] ?? null;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#030711', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#f0f4f9', fontFamily: 'Inter, sans-serif' }}>
       <Navbar />
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 20px' }}>
 
@@ -72,12 +72,12 @@ function ScannerInner() {
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <h1 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 4, letterSpacing: -0.5 }}>+EV Scanner</h1>
-              <p style={{ color: '#6b8aaa', fontSize: 13 }}>
+              <h1 style={{ fontSize: 26, fontWeight: 900, color: '#071120', marginBottom: 4, letterSpacing: -0.5 }}>+EV Scanner</h1>
+              <p style={{ color: '#5a7a9a', fontSize: 13 }}>
                 {loading ? 'Scanning bookmakers…' : `${filtered.length} events · ${totalEdges} edges`}
               </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#6b8aaa' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#5a7a9a' }}>
               <span className="dot-live" />
               {updated.toLocaleTimeString()}
             </div>
@@ -86,24 +86,24 @@ function ScannerInner() {
 
         {/* Summary strip */}
         {!loading && filtered.length > 0 && (
-          <div style={{ background: '#0c1c31', border: '1px solid rgba(255,255,255,.07)', borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ background: '#ffffff', border: '1px solid #dde8f5', borderRadius: 12, padding: '14px 20px', marginBottom: 16, display: 'flex', gap: 28, flexWrap: 'wrap', alignItems: 'center', boxShadow: '0 1px 4px rgba(7,17,32,.06)' }}>
             <div>
-              <div style={{ fontSize: 9, fontWeight: 800, color: '#5e7390', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Events</div>
-              <div style={{ fontFamily: 'var(--mono)', fontWeight: 900, fontSize: 20, color: '#fff' }}>{filtered.length}</div>
+              <div style={{ fontSize: 9, fontWeight: 800, color: '#9eb1c8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Events</div>
+              <div style={{ fontFamily: 'DM Mono, monospace', fontWeight: 900, fontSize: 20, color: '#071120' }}>{filtered.length}</div>
             </div>
-            <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,.07)' }} />
+            <div style={{ width: 1, height: 36, background: '#dde8f5' }} />
             <div>
-              <div style={{ fontSize: 9, fontWeight: 800, color: '#5e7390', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Total Edges</div>
-              <div style={{ fontFamily: 'var(--mono)', fontWeight: 900, fontSize: 20, color: '#2979ff' }}>{totalEdges}</div>
+              <div style={{ fontSize: 9, fontWeight: 800, color: '#9eb1c8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Total Edges</div>
+              <div style={{ fontFamily: 'DM Mono, monospace', fontWeight: 900, fontSize: 20, color: '#2979ff' }}>{totalEdges}</div>
             </div>
             {bestEdge && (
               <>
-                <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,.07)' }} />
+                <div style={{ width: 1, height: 36, background: '#dde8f5' }} />
                 <div>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: '#5e7390', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Best Edge</div>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: '#9eb1c8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Best Edge</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontFamily: 'var(--mono)', fontWeight: 900, fontSize: 20, color: '#00e676' }}>+{bestEdge.ev_percent.toFixed(1)}%</span>
-                    <span style={{ fontSize: 12, color: '#9eb1c8', fontWeight: 600 }}>{bestEdge.selection}</span>
+                    <span style={{ fontFamily: 'DM Mono, monospace', fontWeight: 900, fontSize: 20, color: '#008a3d' }}>+{bestEdge.ev_percent.toFixed(1)}%</span>
+                    <span style={{ fontSize: 12, color: '#5a7a9a', fontWeight: 600 }}>{bestEdge.selection}</span>
                   </div>
                 </div>
               </>
@@ -136,9 +136,9 @@ function ScannerInner() {
             Scanning bookmakers…
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 64, textAlign: 'center', color: '#6b8aaa', background: 'rgba(255,255,255,.03)', borderRadius: 14, border: '1px solid rgba(255,255,255,.06)' }}>
+          <div style={{ padding: 64, textAlign: 'center', color: '#5a7a9a', background: '#ffffff', borderRadius: 14, border: '1px solid #dde8f5', boxShadow: '0 1px 4px rgba(7,17,32,.06)' }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
-            <div style={{ fontWeight: 700, marginBottom: 6, color: '#fff' }}>No events match this filter</div>
+            <div style={{ fontWeight: 700, marginBottom: 6, color: '#071120' }}>No events match this filter</div>
             <div style={{ fontSize: 13 }}>Try "All Events" or a different sport.</div>
           </div>
         ) : (

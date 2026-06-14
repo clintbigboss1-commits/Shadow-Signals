@@ -139,6 +139,20 @@ input, select, textarea { font-family: var(--font); }
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* ── Light content area ──────────────────────────────── */
+  background: #f0f4f9;
+  color: #071120;
+  --text:          #071120;
+  --text-soft:     #1e3a5f;
+  --muted:         #5a7a9a;
+  --faint:         #9eb1c8;
+  --bg:            #f0f4f9;
+  --bg2:           #ffffff;
+  --bg3:           #e8edf5;
+  --bg4:           #dde8f5;
+  --border:        rgba(7,17,32,.09);
+  --border2:       rgba(7,17,32,.05);
+  --border-strong: rgba(7,17,32,.14);
 }
 
 .topbar {
@@ -503,6 +517,9 @@ input, select, textarea { font-family: var(--font); }
 }
 .tab:hover { color: var(--text); }
 .tab.active { background: rgba(34,211,238,.08); border-color: rgba(34,211,238,.3); color: var(--cyan); }
+.main-area .tab { border-color: rgba(7,17,32,.08); background: #ffffff; color: #5a7a9a; }
+.main-area .tab:hover { color: #071120; background: #f0f4f9; }
+.main-area .tab.active { background: #eef4ff; border-color: #c7d9ff; color: #2979ff; }
 
 /* ── Form inputs ────────────────────────────────────────── */
 input, select, textarea {
@@ -515,6 +532,12 @@ input, select, textarea {
 }
 input:focus, select:focus { border-color: var(--cyan); }
 input::placeholder { color: var(--faint); }
+.main-area input, .main-area select, .main-area textarea {
+  background: #ffffff;
+  border-color: #dde8f5;
+  color: #071120;
+}
+.main-area input::placeholder { color: #9eb1c8; }
 
 /* ── Alerts ─────────────────────────────────────────────── */
 .alert-error   { background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;color:var(--red);font-size:13px; }
@@ -523,6 +546,7 @@ input::placeholder { color: var(--faint); }
 /* ── Edge bar ───────────────────────────────────────────── */
 .edge-bar-track { height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden; }
 .edge-bar-fill  { height:100%;border-radius:99px;transition:width .5s; }
+.main-area .edge-bar-track { background: rgba(7,17,32,.08); }
 
 /* ── Live radar card ────────────────────────────────────── */
 .radar-event {

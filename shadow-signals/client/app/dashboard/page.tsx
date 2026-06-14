@@ -489,8 +489,8 @@ function DashboardInner() {
             {/* LEFT: live events grouped by sport */}
             <div>
               <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:16 }}>
-                <h2 style={{ fontSize:18,fontWeight:900,letterSpacing:-.3 }}>LIVE MARKETS</h2>
-                <span style={{ fontSize:13,color:'var(--muted)' }}>· {games.length} events · {totalSignals} edges</span>
+                <h2 style={{ fontSize:18,fontWeight:900,letterSpacing:-.3,color:'#071120' }}>LIVE MARKETS</h2>
+                <span style={{ fontSize:13,color:'#5a7a9a' }}>· {games.length} events · {totalSignals} edges</span>
               </div>
 
               {games.length === 0 ? (
@@ -549,7 +549,7 @@ function DashboardInner() {
                   {/* Other sports not in SPORTS_NAV */}
                   {otherGames.length > 0 && (
                     <div>
-                      <div style={{ fontWeight:800,fontSize:16,letterSpacing:.3,color:'#fff',marginBottom:12 }}>OTHER MARKETS</div>
+                      <div style={{ fontWeight:800,fontSize:16,letterSpacing:.3,color:'#071120',marginBottom:12 }}>OTHER MARKETS</div>
                       <div style={{ display:'flex',flexDirection:'column',gap:10 }}>
                         {otherGames.map(ev => <EventCard key={ev.event_id} event={ev} />)}
                       </div>
