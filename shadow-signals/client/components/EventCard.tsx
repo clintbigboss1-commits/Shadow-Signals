@@ -64,6 +64,19 @@ const BOOKIE_FULL: Record<string, string> = {
 };
 const PREFERRED_BOOKIES = ['sportsbet', 'tab', 'bet365', 'ladbrokes', 'neds', 'pointsbet', 'bluebet', 'unibet'];
 
+const BOOKIE_COLOR: Record<string, string> = {
+  sportsbet:     '#f97316',
+  tab:           '#1e63d9',
+  bet365:        '#007a33',
+  ladbrokes:     '#c0392b',
+  neds:          '#7c3aed',
+  pointsbet:     '#db2777',
+  bluebet:       '#2563eb',
+  betfair_ex_au: '#d97706',
+  betright:      '#4f46e5',
+  unibet:        '#00963f',
+};
+
 function shortBookie(key: string) { return BOOKIE_SHORT[key] || key.slice(0, 4).toUpperCase(); }
 function fullBookie(key: string)  { return BOOKIE_FULL[key]  || key.replace(/_/g, ' '); }
 
@@ -179,11 +192,18 @@ export default function EventCard({ event }: { event: GameEvent }) {
             <div style={{ fontSize: 9, fontWeight: 800, color: '#6b8aaa', textTransform: 'uppercase', letterSpacing: 1.2 }}>
               {racing ? 'Runner' : 'Outcome'}
             </div>
-            {bookieCols.map(b => (
-              <div key={b} style={{ fontSize: 9, fontWeight: 800, color: '#6b8aaa', textTransform: 'uppercase', letterSpacing: .8, textAlign: 'center' }}>
-                {shortBookie(b)}
-              </div>
-            ))}
+            {bookieCols.map(b => {
+              const col = BOOKIE_COLOR[b] || '#6b8aaa';
+              return (
+                <div key={b} style={{ textAlign: 'center' }}>
+                  <span style={{
+                    display: 'inline-block', padding: '2px 7px', borderRadius: 5,
+                    fontSize: 9, fontWeight: 800, letterSpacing: .8, textTransform: 'uppercase',
+                    color: col, background: `${col}18`, border: `1px solid ${col}28`,
+                  }}>{shortBookie(b)}</span>
+                </div>
+              );
+            })}
           </div>
 
           {/* Rows */}

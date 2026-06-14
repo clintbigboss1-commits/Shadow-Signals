@@ -223,6 +223,90 @@ function RecentBetsPanel({ bets }: { bets: Bet[] }) {
   );
 }
 
+/* ─── best pick hero ─────────────────────────────────────── */
+function BestPickHero({ games }: { games: GameEvent[] }) {
+  const allPicks = games
+    .flatMap(g => g.ev_picks.map(p => ({
+      ...p,
+      event_name: g.event_name,
+      event_id: g.event_id,
+      sport_key: g.sport_key,
+    })))
+    .sort((a, b) => b.ev_percent - a.ev_percent);
+
+  const best = allPicks[0];
+  if (!best) return null;
+
+  const sportLabel = SPORT_LABEL[best.sport_key] || best.sport_key.split('_').pop()?.toUpperCase() || '';
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #001f0e 0%, #001835 60%, #080012 100%)',
+      border: '1.5px solid rgba(0,168,78,.35)',
+      borderRadius: 18,
+      padding: '22px 26px',
+      marginBottom: 22,
+      position: 'relative',
+      overflow: 'hidden',
+      boxShadow: '0 8px 40px rgba(0,168,78,.10), 0 2px 8px rgba(0,0,0,.4)',
+    }}>
+      <div style={{ position:'absolute',inset:0,background:'linear-gradient(105deg,transparent 30%,rgba(0,168,78,.03) 50%,transparent 70%)',backgroundSize:'200% 100%',animation:'shimmer 5s infinite linear' }} />
+      <div style={{ position:'relative' }}>
+        <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:14 }}>
+          <span style={{ fontSize:9,fontWeight:800,color:'#00e676',textTransform:'uppercase',letterSpacing:1.8,background:'rgba(0,230,118,.07)',padding:'3px 12px',borderRadius:20,border:'1px solid rgba(0,230,118,.2)' }}>
+            🔥 Best Edge Right Now
+          </span>
+          {sportLabel && <span style={{ fontSize:10,color:'rgba(255,255,255,.25)',fontWeight:600 }}>{sportLabel}</span>}
+          <div style={{ flex:1 }} />
+          <span className="dot-live" />
+        </div>
+
+        <div style={{ display:'grid',gridTemplateColumns:'1fr auto',gap:20,alignItems:'center' }}>
+          <div>
+            <div style={{ fontSize:19,fontWeight:900,color:'#fff',marginBottom:10,lineHeight:1.2 }}>{best.event_name}</div>
+            <div style={{ display:'flex',alignItems:'center',flexWrap:'wrap',gap:10 }}>
+              <span style={{ fontSize:16,color:'#86efac',fontWeight:800 }}>{best.selection}</span>
+              <span style={{ fontSize:12,color:'rgba(255,255,255,.25)' }}>at</span>
+              <span style={{ fontFamily:'var(--mono)',fontSize:24,fontWeight:900,color:'#fff' }}>${best.bookie_odds.toFixed(2)}</span>
+              <span style={{ fontSize:12,color:'rgba(255,255,255,.45)',fontWeight:700,textTransform:'capitalize' }}>
+                {BOOKIE_LABEL[best.bookie] || best.bookie}
+              </span>
+            </div>
+            <div style={{ marginTop:8,fontSize:11,color:'rgba(255,255,255,.25)' }}>
+              Fair: ${best.fair_odds.toFixed(2)} · Kelly: {best.kelly_percent.toFixed(1)}%
+            </div>
+          </div>
+
+          <div style={{ textAlign:'right',flexShrink:0 }}>
+            <div style={{ fontFamily:'var(--mono)',fontSize:46,fontWeight:900,color:'#00e676',lineHeight:1,textShadow:'0 0 30px rgba(0,230,118,.3)' }}>
+              +{best.ev_percent.toFixed(1)}%
+            </div>
+            <div style={{ fontSize:9,color:'rgba(255,255,255,.25)',textTransform:'uppercase',letterSpacing:1.2,marginTop:2 }}>Expected Value</div>
+            <Link href={`/match/${encodeURIComponent(best.event_id)}`} style={{
+              display:'inline-flex',alignItems:'center',gap:5,marginTop:10,
+              padding:'9px 18px',borderRadius:9,
+              background:'rgba(0,168,78,.85)',color:'#fff',
+              fontWeight:800,fontSize:13,border:'1px solid rgba(0,230,118,.3)',
+            }}>View Pick →</Link>
+          </div>
+        </div>
+
+        {allPicks.length > 1 && (
+          <div style={{ marginTop:14,paddingTop:12,borderTop:'1px solid rgba(255,255,255,.05)',display:'flex',gap:8,flexWrap:'wrap',alignItems:'center' }}>
+            <span style={{ fontSize:9,color:'rgba(255,255,255,.2)',fontWeight:700,textTransform:'uppercase',letterSpacing:1 }}>Also →</span>
+            {allPicks.slice(1, 5).map((p, i) => (
+              <div key={i} style={{ background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,255,255,.07)',borderRadius:8,padding:'4px 12px',fontSize:12,display:'flex',alignItems:'center',gap:8 }}>
+                <span style={{ fontWeight:700,color:'#fff' }}>{p.selection}</span>
+                <span style={{ color:'#00e676',fontWeight:800,fontSize:11 }}>+{p.ev_percent.toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── top confidence panel ───────────────────────────────── */
 function TopConfidencePanel({ games }: { games: GameEvent[] }) {
   const top = games
@@ -360,23 +444,41 @@ function DashboardInner() {
           )}
 
           {/* Header */}
-          <div style={{ marginBottom:24 }}>
-            <h1 style={{ fontSize:28,fontWeight:900,letterSpacing:-0.5,marginBottom:4 }}>DASHBOARD</h1>
-            <p style={{ color:'var(--muted)',fontSize:14 }}>G&apos;day, {user?.name?.split(' ')[0] || 'there'}. Here&apos;s what the market is showing right now.</p>
+          <div style={{ marginBottom:20,display:'flex',alignItems:'baseline',justifyContent:'space-between',flexWrap:'wrap',gap:8 }}>
+            <div>
+              <h1 style={{ fontSize:26,fontWeight:900,letterSpacing:-0.5,marginBottom:2 }}>
+                G&apos;day, {user?.name?.split(' ')[0] || 'there'}.
+              </h1>
+              <p style={{ color:'var(--muted)',fontSize:13 }}>
+                {totalSignals > 0
+                  ? `${totalSignals} edge${totalSignals !== 1 ? 's' : ''} live right now across ${games.length} event${games.length !== 1 ? 's' : ''}.`
+                  : 'Markets are scanning — edges appear as odds update.'}
+              </p>
+            </div>
+            <div style={{ display:'flex',alignItems:'center',gap:6,fontSize:12,color:'var(--muted)' }}>
+              <span className="dot-live" />
+              Live
+            </div>
           </div>
 
+          {/* Best Edge Hero */}
+          <BestPickHero games={games} />
+
           {/* 4 stat cards */}
-          <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:24 }}>
+          <div style={{ display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:24 }}>
             {[
-              { label:'LIVE EVENTS',  value:String(games.length),   sub:`${totalSignals} EV edges found`, color:'var(--cyan)' },
-              { label:'HOT PICKS',    value:String(hotPicks),        sub:'Shadow Signals ≥ 8% EV',       color:hotPicks>0?'var(--green)':'var(--muted)' },
-              { label:'TOTAL P&L',    value:`${profit>=0?'+':''}$${Math.abs(profit).toFixed(0)}`, sub:'All settled bets', color:profit>=0?'var(--green)':'var(--red)' },
-              { label:'BETS TRACKED', value:String(bets.length),    sub:`${wins.length}W · ${settled.length-wins.length}L · ${bets.filter(b=>b.result==='pending').length} pending`, color:'var(--text)' },
+              { label:'LIVE EVENTS',  value:String(games.length),   sub:`${totalSignals} edges found`, color:'#2979ff', pulse:true },
+              { label:'HOT PICKS',    value:String(hotPicks),        sub:'Shadow Signals ≥ 8% EV',     color:hotPicks>0?'#f97316':'var(--muted)', pulse:false },
+              { label:'TOTAL P&L',    value:`${profit>=0?'+':''}$${Math.abs(profit).toFixed(0)}`, sub:'All settled bets', color:profit>=0?'#00e676':'#ff1744', pulse:false },
+              { label:'WIN RATE',     value:`${clvWin}%`, sub:`${wins.length}W · ${settled.length-wins.length}L · ${bets.filter(b=>b.result==='pending').length} pending`, color:clvWin>=55?'#00e676':clvWin>=45?'#ffab00':'var(--muted)', pulse:false },
             ].map(c => (
-              <div key={c.label} className="stat-card">
-                <div className="label">{c.label}</div>
-                <div className="value" style={{ color:c.color,fontSize:28,marginTop:4 }}>{c.value}</div>
-                <div style={{ fontSize:11,color:'var(--muted)',marginTop:2 }}>{c.sub}</div>
+              <div key={c.label} style={{ background:'var(--bg2)',border:'1px solid var(--border)',borderTop:`3px solid ${c.color}`,borderRadius:14,padding:'18px 20px',position:'relative',overflow:'hidden' }}>
+                <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8 }}>
+                  <div style={{ fontSize:10,fontWeight:800,color:'var(--muted)',textTransform:'uppercase',letterSpacing:1.2 }}>{c.label}</div>
+                  {c.pulse && <span className="dot-live" />}
+                </div>
+                <div style={{ fontFamily:'var(--mono)',fontSize:30,fontWeight:900,color:c.color,lineHeight:1,marginBottom:6 }}>{c.value}</div>
+                <div style={{ fontSize:11,color:'var(--muted)' }}>{c.sub}</div>
               </div>
             ))}
           </div>

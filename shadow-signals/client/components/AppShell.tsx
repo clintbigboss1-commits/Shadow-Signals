@@ -66,12 +66,36 @@ export default function AppShell({ children, activeSport, onSportChange }: Props
 
   const planCol = PLAN_COLOR[user?.plan || 'free'];
 
-  const NAV_ITEMS = [
-    { href: '/dashboard', label: 'Dashboard',  icon: '⊞' },
-    { href: '/markets',   label: 'Markets',    icon: '~' },
-    { href: '/scanner',   label: 'Signals',    icon: '◎' },
-    { href: '/wins',      label: 'My Wins',    icon: '↗' },
-    { href: '/settings',  label: 'Settings',   icon: '⚙' },
+  const NAV_ITEMS: { href: string; label: string; icon: React.ReactNode }[] = [
+    { href: '/dashboard', label: 'Dashboard', icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+    )},
+    { href: '/markets', label: 'Markets', icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    )},
+    { href: '/scanner', label: 'Signals', icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>
+        <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
+      </svg>
+    )},
+    { href: '/wins', label: 'My Wins', icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+    )},
+    { href: '/settings', label: 'Settings', icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+      </svg>
+    )},
   ];
 
   return (
@@ -136,7 +160,8 @@ export default function AppShell({ children, activeSport, onSportChange }: Props
           {NAV_ITEMS.map(item => (
             <Link key={item.href} href={item.href}>
               <button className={`nav-item${path === item.href ? ' active' : ''}`}>
-                <span>{item.icon}</span> {item.label}
+                <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{item.icon}</span>
+                {item.label}
               </button>
             </Link>
           ))}
