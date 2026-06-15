@@ -60,4 +60,27 @@ router.post('/post-now', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// POST /api/ghost/fire-today — flush up to N queued posts immediately (default 10)
+// Use this to get a batch of scheduled content out in one go.
+router.post('/fire-today', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    if (!process.env.META_PAGE_ID || !process.env.META_PAGE_ACCESS_TOKEN) {
+      return res.status(400).json({ error: 'Meta credentials not configured (META_PAGE_ID, META_PAGE_ACCESS_TOKEN)' });
+    }
+    const limit = Math.min(parseInt(req.body?.limit || 10, 10), 20);
+    const results = [];
+    for (let i = 0; i < limit; i++) {
+      const post = await pickNextPost();
+      if (!post) break;
+      const result = await publish(post);
+      results.push({ id: post.id, kind: post.kind, preview: post.body.slice(0, 60), result });
+      // 3-second gap between posts to respect Meta rate limits
+      if (i < limit - 1) await new Promise(r => setTimeout(r, 3000));
+    }
+    res.json({ fired: results.length, results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

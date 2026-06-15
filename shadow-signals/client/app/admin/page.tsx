@@ -27,6 +27,11 @@ export default function AdminPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshResult, setRefreshResult] = useState<any>(null);
 
+  // GHOST
+  const [ghostStatus, setGhostStatus] = useState<any>(null);
+  const [firing, setFiring] = useState(false);
+  const [fireResult, setFireResult] = useState<any>(null);
+
   // Invite form
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -44,7 +49,22 @@ export default function AdminPage() {
     API.get('/auth/admin/users')
       .then(r => setUsers(r.data))
       .catch(() => setErr('Could not load users — log out and back in to refresh your admin access.'));
+    API.get('/ghost/status').then(r => setGhostStatus(r.data)).catch(() => {});
   }, [checked, me]);
+
+  async function fireAllToday() {
+    setFiring(true); setFireResult(null); setMsg(''); setErr('');
+    try {
+      const r = await API.post('/ghost/fire-today', { limit: 10 });
+      setFireResult(r.data);
+      setMsg(`✅ GHOST fired ${r.data.fired} post${r.data.fired !== 1 ? 's' : ''} to Facebook.`);
+      API.get('/ghost/status').then(r => setGhostStatus(r.data)).catch(() => {});
+    } catch (e: any) {
+      setErr(e.response?.data?.error || 'GHOST fire failed — check Meta credentials in Railway.');
+    } finally {
+      setFiring(false);
+    }
+  }
 
   async function invite(e: React.FormEvent) {
     e.preventDefault();
@@ -130,6 +150,40 @@ export default function AdminPage() {
             <div style={{ width: '100%', fontSize: 12, color: '#5e7390', marginTop: 4 }}>
               {Object.entries(refreshResult.fetched as Record<string, any>).map(([sport, r]: [string, any]) => (
                 <span key={sport} style={{ marginRight: 12 }}>{sport}: {r.events ?? '?'} events ({r.source})</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* GHOST social panel */}
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: ghostStatus ? 14 : 0 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>👻 GHOST — Social Automation</div>
+              <div style={{ fontSize: 12, color: '#5e7390' }}>
+                {ghostStatus
+                  ? ghostStatus.configured
+                    ? `Live · ${ghostStatus.counts?.queued ?? 0} queued · ${ghostStatus.counts?.posted ?? 0} posted`
+                    : `Dry-run — set META_PAGE_ID + META_PAGE_ACCESS_TOKEN in Railway to go live`
+                  : 'Loading…'}
+              </div>
+            </div>
+            <button
+              onClick={fireAllToday}
+              disabled={firing || !ghostStatus?.configured}
+              className="btn btn-primary"
+              style={{ padding: '10px 20px', whiteSpace: 'nowrap', background: ghostStatus?.configured ? undefined : 'rgba(255,255,255,.08)', color: ghostStatus?.configured ? undefined : '#334155' }}
+              title={!ghostStatus?.configured ? 'Meta credentials not set on Railway' : 'Fire all queued posts now'}
+            >
+              {firing ? '⟳ Firing...' : '⚡ Fire All Today'}
+            </button>
+          </div>
+          {fireResult && (
+            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {fireResult.results?.map((r: any, i: number) => (
+                <div key={i} style={{ fontSize: 11, color: r.result?.error ? '#ef4444' : '#00e676', background: r.result?.error ? 'rgba(239,68,68,.06)' : 'rgba(0,230,118,.06)', padding: '5px 10px', borderRadius: 6 }}>
+                  {r.result?.error ? '✗' : '✓'} [{r.kind}] {r.preview}…
+                </div>
               ))}
             </div>
           )}
