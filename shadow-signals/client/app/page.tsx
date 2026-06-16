@@ -6,6 +6,7 @@ import ExitPopup from '../components/ExitPopup';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import OperativePeek from '../components/OperativePeek';
+import { getUser, type User } from '../lib/auth';
 
 const BOOKIES = ['Sportsbet','TAB','Bet365 AU','Ladbrokes','Neds','PointsBet','BlueBet','Betfair Exchange'];
 
@@ -61,8 +62,10 @@ interface PublicStats {
 
 export default function Home() {
   const [stats, setStats] = useState<PublicStats | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    setUser(getUser());
     fetch('/api/stats/public')
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setStats(d); })
@@ -128,12 +131,25 @@ export default function Home() {
 
             {/* CTAs */}
             <div style={{ display: 'flex', gap: 14, marginBottom: 32, flexWrap: 'wrap' }}>
-              <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, fontSize: 16, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', boxShadow: '0 10px 30px -5px rgba(41,121,255,.45)' }}>
-                ⚡ Start 7-Day Free Trial
-              </Link>
-              <Link href="/markets" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', border: '1px solid rgba(255,255,255,.12)', background: 'transparent' }}>
-                View Live Signals →
-              </Link>
+              {user ? (
+                <>
+                  <Link href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, fontSize: 16, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', boxShadow: '0 10px 30px -5px rgba(41,121,255,.45)' }}>
+                    ⚡ Go to Dashboard →
+                  </Link>
+                  <Link href="/markets" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', border: '1px solid rgba(255,255,255,.12)', background: 'transparent' }}>
+                    View Live Signals →
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, fontSize: 16, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', boxShadow: '0 10px 30px -5px rgba(41,121,255,.45)' }}>
+                    ⚡ Start 7-Day Free Trial
+                  </Link>
+                  <Link href="/markets" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, fontSize: 16, fontWeight: 700, color: '#fff', border: '1px solid rgba(255,255,255,.12)', background: 'transparent' }}>
+                    View Live Signals →
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Social proof */}
@@ -411,8 +427,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Pricing — all 4 tiers ───────────────────────────── */}
-      <section style={{ padding: '64px 32px', borderTop: '1px solid rgba(255,255,255,.06)' }}>
+      {/* ── Pricing — hidden when logged in ─────────────────── */}
+      {!user && <section style={{ padding: '64px 32px', borderTop: '1px solid rgba(255,255,255,.06)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 16 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#2979ff', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 12 }}>Pricing</div>
@@ -469,7 +485,7 @@ export default function Home() {
             7-day free trial on every paid plan · Cancel anytime · <Link href="/pricing" style={{ color: '#2979ff' }}>Compare all plans →</Link>
           </p>
         </div>
-      </section>
+      </section>}
 
       {/* ── Bottom CTA ──────────────────────────────────────── */}
       <section style={{ padding: '80px 32px', borderTop: '1px solid rgba(255,255,255,.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
@@ -485,9 +501,15 @@ export default function Home() {
           <p style={{ color: '#9eb1c8', fontSize: 16, marginBottom: 32, lineHeight: 1.65 }}>
             Join the punters who stopped guessing and started backing signals with a real edge.
           </p>
-          <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '17px 38px', borderRadius: 12, fontSize: 17, fontWeight: 800, color: '#0a1929', background: 'linear-gradient(135deg,#00e676,#00c853)', boxShadow: '0 10px 36px -5px rgba(0,230,118,.4)', marginBottom: 28 }}>
-            ⚡ Start free trial now
-          </Link>
+          {user ? (
+            <Link href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '17px 38px', borderRadius: 12, fontSize: 17, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', boxShadow: '0 10px 36px -5px rgba(41,121,255,.4)', marginBottom: 28 }}>
+              ⚡ Go to Dashboard →
+            </Link>
+          ) : (
+            <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '17px 38px', borderRadius: 12, fontSize: 17, fontWeight: 800, color: '#0a1929', background: 'linear-gradient(135deg,#00e676,#00c853)', boxShadow: '0 10px 36px -5px rgba(0,230,118,.4)', marginBottom: 28 }}>
+              ⚡ Start free trial now
+            </Link>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <div style={{ display: 'flex' }}>
               {[

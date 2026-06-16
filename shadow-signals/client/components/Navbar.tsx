@@ -80,7 +80,14 @@ export default function Navbar() {
 
           {/* Nav links (hidden on mobile, shown on desktop unless open) */}
           <div className={`navbar-links${menuOpen ? ' open' : ''}`}>
-            {(user ? [{ href: '/dashboard', label: 'Dashboard' }, ...NAV] : NAV).map((l, i) => {
+            {(user
+              ? [{ href: '/dashboard', label: 'Dashboard' }, ...NAV.filter(l => {
+                  // Hide Pricing for paying subscribers — they can still access /pricing directly
+                  if (l.href === '/pricing' && user.plan !== 'free') return false;
+                  return true;
+                })]
+              : NAV
+            ).map((l, i) => {
               const active = path === l.href;
               const isGhost = l.href === '/ghost';
               return (
