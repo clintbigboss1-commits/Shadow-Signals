@@ -237,6 +237,22 @@ interface MultiOddsResult {
   payout_multiplier: number;
 }
 
+/* ─── Grade helpers shared across cards ────────────────────────────── */
+const GRADE_COLORS: Record<string, [string, string]> = {
+  STRONG: ['#ffab00', 'rgba(255,171,0,.15)'],
+  SOLID:  ['#00c853', 'rgba(0,200,83,.12)'],
+  WEAK:   ['#64748b', 'rgba(100,116,139,.1)'],
+  AVOID:  ['#ef4444', 'rgba(239,68,68,.1)'],
+};
+
+function pickGrade(pick: EVPick): { grade: string; fg: string; bg: string } {
+  const wp = pick.fair_odds > 0 ? 1 / pick.fair_odds : 0.5;
+  const conf = localConfidence(wp, pick.ev_percent);
+  const grade = localGrade(conf);
+  const [fg, bg] = GRADE_COLORS[grade] || ['#64748b', 'rgba(255,255,255,.06)'];
+  return { grade, fg, bg };
+}
+
 /* ─── Game Card ───────────────────────────────────────────────────────── */
 function GameCard({
   game, onOpen, onAddToSlip, inSlip,
@@ -246,6 +262,8 @@ function GameCard({
   onAddToSlip: (item: SlipItem) => void;
   inSlip: (sel: string) => boolean;
 }) {
+  const [signalTab, setSignalTab] = useState<'value' | 'prob'>('prob');
+
   const meta = sportMeta(game.sport_key);
   const picks = game.ev_picks || [];
   const isShadowPick = game.shadow_pick;
@@ -253,27 +271,23 @@ function GameCard({
   const ms = msUntil(game.commence_time);
   const isLive = ms < 0;
   const isSoon = ms > 0 && ms < 3600000;
-  const isTwoWay = !game.best_odds.some(o => o.selection === 'Draw');
 
-  // Per-outcome signals
-  const homePick = picks.find(p => p.selection === game.home_team);
-  const awayPick = picks.find(p => p.selection === game.away_team);
-  const drawPick = picks.find(p => p.selection === 'Draw');
-  const drawBest = game.best_odds.find(o => o.selection === 'Draw');
+  // All picks sorted by win probability (highest first)
+  const picksByWinProb = [...picks].sort((a, b) => {
+    const wA = a.fair_odds > 0 ? 1 / a.fair_odds : 0;
+    const wB = b.fair_odds > 0 ? 1 / b.fair_odds : 0;
+    return wB - wA;
+  });
 
-  // Derive win probabilities from fair odds
-  let homeWinProb: number | null = homePick ? Math.round(100 / homePick.fair_odds) : null;
-  let awayWinProb: number | null = awayPick ? Math.round(100 / awayPick.fair_odds) : null;
-  if (homeWinProb !== null && awayWinProb === null && isTwoWay) awayWinProb = 100 - homeWinProb;
-  if (awayWinProb !== null && homeWinProb === null && isTwoWay) homeWinProb = 100 - awayWinProb;
+  // All picks sorted by EV% (highest first)
+  const picksByEV = [...picks].sort((a, b) => b.ev_percent - a.ev_percent);
 
-  const accentLeft = isShadowPick ? '3px solid #ffab00' : hasEdge ? '3px solid #00e676' : '3px solid transparent';
-  const cardBorder = isShadowPick ? '1px solid rgba(255,171,0,.3)' : hasEdge ? '1px solid rgba(0,230,118,.2)' : '1px solid rgba(255,255,255,.07)';
+  // Featured pick = highest win probability signal
+  const featuredPick = picksByWinProb[0] ?? null;
+  const featuredWinProb = featuredPick && featuredPick.fair_odds > 0 ? Math.round(100 / featuredPick.fair_odds) : null;
 
-  const outcomes: { team: string; pick: EVPick | undefined; winProb: number | null }[] = [
-    { team: game.home_team, pick: homePick, winProb: homeWinProb },
-    { team: game.away_team, pick: awayPick, winProb: awayWinProb },
-  ];
+  const accentLeft = isShadowPick ? '3px solid #ffab00' : hasEdge ? '3px solid #2979ff' : '3px solid transparent';
+  const cardBorder = isShadowPick ? '1px solid rgba(255,171,0,.3)' : hasEdge ? '1px solid rgba(41,121,255,.25)' : '1px solid rgba(255,255,255,.07)';
 
   return (
     <div
@@ -307,138 +321,277 @@ function GameCard({
       )}
 
       {/* Header */}
-      <div style={{ padding: '9px 14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 13 }}>{meta.emoji}</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>{meta.label}</span>
-          {isLive  && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4 }}>LIVE</span>}
-          {isSoon && !isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ffab00', background: 'rgba(255,171,0,.1)', border: '1px solid rgba(255,171,0,.25)', padding: '1px 7px', borderRadius: 4 }}>SOON</span>}
+      <div style={{ padding: '9px 14px 8px', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13 }}>{meta.emoji}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>{meta.label}</span>
+            {isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4 }}>LIVE</span>}
+            {isSoon && !isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ffab00', background: 'rgba(255,171,0,.1)', border: '1px solid rgba(255,171,0,.25)', padding: '1px 7px', borderRadius: 4 }}>SOON</span>}
+          </div>
+          <span style={{ fontSize: 11, color: '#2d3f5c', fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>{countdown(game.commence_time)}</span>
         </div>
-        <span style={{ fontSize: 11, color: '#2d3f5c', fontWeight: 600 }}>{countdown(game.commence_time)}</span>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {game.event_name}
+        </div>
       </div>
 
-      {/* Outcome rows — one per team */}
-      {outcomes.map(({ team, pick, winProb }, idx) => {
-        const bestOdds = game.best_odds.find(o => o.selection === team);
-        const color = teamColor(team);
-        const isInSlip = inSlip(team);
-        const evPct = pick?.ev_percent ?? 0;
-        const barColor = evPct >= 8 ? '#ffab00' : '#00e676';
-
-        return (
-          <div key={team} style={{ padding: '11px 14px', borderBottom: idx === 0 ? '1px solid rgba(255,255,255,.04)' : 'none', background: pick ? 'rgba(0,230,118,.025)' : 'transparent' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <SportIcon sportKey={game.sport_key} name={team} color={color} size={30} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                {/* Team name + win prob + grade badge */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: pick ? 5 : 0 }}>
-                  <span style={{ fontWeight: pick ? 800 : 600, fontSize: 13, color: pick ? '#fff' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 110 }}>{team}</span>
-                  {winProb !== null && (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#334155', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.06)', padding: '1px 6px', borderRadius: 4, flexShrink: 0 }}>
-                      {winProb}%
-                    </span>
-                  )}
-                  {pick && (() => {
-                    const wp = pick.fair_odds ? 1 / pick.fair_odds : 0.5;
-                    const conf = localConfidence(wp, evPct);
-                    const grade = localGrade(conf);
-                    const gradeColors: Record<string, [string, string]> = {
-                      STRONG: ['#ffab00', 'rgba(255,171,0,.15)'],
-                      SOLID:  ['#00c853', 'rgba(0,200,83,.12)'],
-                      WEAK:   ['#94a3b8', 'rgba(148,163,184,.1)'],
-                      AVOID:  ['#ef4444', 'rgba(239,68,68,.1)'],
-                    };
-                    const [fg, bg] = gradeColors[grade] || ['#64748b', 'rgba(255,255,255,.06)'];
-                    return (
-                      <span style={{ fontSize: 9, fontWeight: 900, color: fg, background: bg, padding: '1px 6px', borderRadius: 4, letterSpacing: .8, flexShrink: 0 }}>
-                        {grade}
-                      </span>
-                    );
-                  })()}
-                </div>
-
-                {/* EV bar + bookie name */}
-                {pick && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min(evPct / 12 * 100, 100)}%`, background: barColor, borderRadius: 2 }} />
-                    </div>
-                    <span style={{ fontSize: 9, color: '#334155', flexShrink: 0 }}>
-                      +{evPct.toFixed(1)}% · {pick.bookie?.replace(/_/g, ' ').split(' ')[0]}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Best odds button */}
-              {bestOdds && (
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    onAddToSlip({
-                      event_id: game.event_id, event_name: game.event_name,
-                      sport_key: game.sport_key, selection: team,
-                      bookie: bestOdds.bookmaker, odds: bestOdds.odds,
-                      fair_odds: pick?.fair_odds,
-                      ev_percent: pick?.ev_percent,
-                      kelly_percent: pick?.kelly_percent,
-                      commence_time: game.commence_time,
-                    });
-                  }}
-                  style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16,
-                    color: isInSlip ? '#2979ff' : pick ? (evPct >= 8 ? '#ffab00' : '#00e676') : '#94a3b8',
-                    background: isInSlip ? 'rgba(41,121,255,.12)' : pick ? `rgba(${evPct >= 8 ? '255,171,0' : '0,230,118'},.1)` : 'rgba(255,255,255,.05)',
-                    border: `1px solid ${isInSlip ? 'rgba(41,121,255,.3)' : pick ? `rgba(${evPct >= 8 ? '255,171,0' : '0,230,118'},.25)` : 'rgba(255,255,255,.08)'}`,
-                    borderRadius: 9, padding: '6px 12px', cursor: 'pointer', minWidth: 64, textAlign: 'center', flexShrink: 0,
-                  }}
-                >
-                  {bestOdds.odds.toFixed(2)}
-                  <span style={{ fontSize: 8, fontWeight: 600, color: '#334155', textTransform: 'capitalize', marginTop: 2 }}>
-                    {bestOdds.bookmaker?.replace(/_/g, ' ').split(' ')[0]}
-                  </span>
-                </button>
-              )}
-            </div>
+      {/* ── FEATURED: HIGHEST WIN PROBABILITY ─────────────────── */}
+      {featuredPick && featuredWinProb !== null && (
+        <div style={{
+          background: 'linear-gradient(135deg,rgba(41,121,255,.12),rgba(12,20,40,.0))',
+          borderBottom: '1px solid rgba(41,121,255,.18)',
+          padding: '12px 14px',
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 900, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 9 }}>
+            ⭐ Highest Win Probability
           </div>
-        );
-      })}
-
-      {/* Draw row for soccer */}
-      {drawBest && (
-        <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,.04)', background: drawPick ? 'rgba(0,230,118,.025)' : 'transparent' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,.04)', display: 'grid', placeItems: 'center', fontSize: 12, color: '#334155', flexShrink: 0 }}>≡</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: drawPick ? 5 : 0 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#475569' }}>Draw</span>
-                {drawPick && <span style={{ fontSize: 10, fontWeight: 900, color: '#00e676' }}>+{drawPick.ev_percent.toFixed(1)}% EV</span>}
+              <div style={{ fontWeight: 900, fontSize: 15, color: '#fff', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {featuredPick.selection}
               </div>
-              {drawPick && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${Math.min(drawPick.ev_percent / 12 * 100, 100)}%`, background: '#00e676', borderRadius: 2 }} />
-                  </div>
-                  <span style={{ fontSize: 9, color: '#334155', flexShrink: 0, textTransform: 'capitalize' }}>{drawPick.bookie?.replace(/_/g, ' ').split(' ')[0]}</span>
-                </div>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{
+                  fontSize: 13, fontWeight: 900, color: '#2979ff',
+                  background: 'rgba(41,121,255,.15)', border: '1px solid rgba(41,121,255,.35)',
+                  padding: '3px 10px', borderRadius: 7,
+                }}>
+                  {featuredWinProb}% WIN
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#00e676' }}>+{featuredPick.ev_percent.toFixed(1)}% EV</span>
+                {(() => {
+                  const { grade, fg, bg } = pickGrade(featuredPick);
+                  return <span style={{ fontSize: 9, fontWeight: 900, color: fg, background: bg, padding: '2px 7px', borderRadius: 4, letterSpacing: .8 }}>{grade}</span>;
+                })()}
+                <span style={{ fontSize: 10, color: '#475569' }}>{featuredPick.bookie?.replace(/_/g, ' ').split(' ')[0]}</span>
+              </div>
             </div>
             <button
-              onClick={e => { e.stopPropagation(); onAddToSlip({ event_id: game.event_id, event_name: game.event_name, sport_key: game.sport_key, selection: 'Draw', bookie: drawBest.bookmaker, odds: drawBest.odds, fair_odds: drawPick?.fair_odds, ev_percent: drawPick?.ev_percent, kelly_percent: drawPick?.kelly_percent, commence_time: game.commence_time }); }}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 16, color: inSlip('Draw') ? '#2979ff' : '#64748b', background: inSlip('Draw') ? 'rgba(41,121,255,.12)' : 'rgba(255,255,255,.05)', border: `1px solid ${inSlip('Draw') ? 'rgba(41,121,255,.3)' : 'rgba(255,255,255,.08)'}`, borderRadius: 9, padding: '6px 12px', cursor: 'pointer', minWidth: 64, textAlign: 'center', flexShrink: 0 }}
+              onClick={e => {
+                e.stopPropagation();
+                onAddToSlip({
+                  event_id: game.event_id, event_name: game.event_name,
+                  sport_key: game.sport_key, selection: featuredPick.selection,
+                  bookie: featuredPick.bookie, odds: featuredPick.bookie_odds,
+                  fair_odds: featuredPick.fair_odds, ev_percent: featuredPick.ev_percent,
+                  kelly_percent: featuredPick.kelly_percent, commence_time: game.commence_time,
+                });
+              }}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                fontFamily: 'JetBrains Mono, monospace', fontWeight: 900, fontSize: 19,
+                color: inSlip(featuredPick.selection) ? '#2979ff' : '#fff',
+                background: inSlip(featuredPick.selection) ? 'rgba(41,121,255,.2)' : 'rgba(41,121,255,.15)',
+                border: '1px solid rgba(41,121,255,.4)',
+                borderRadius: 10, padding: '8px 14px', cursor: 'pointer', flexShrink: 0, textAlign: 'center',
+              }}
             >
-              {drawBest.odds.toFixed(2)}
-              <span style={{ fontSize: 8, fontWeight: 600, color: '#334155', marginTop: 2 }}>Draw</span>
+              ${featuredPick.bookie_odds.toFixed(2)}
+              <span style={{ fontSize: 8, fontWeight: 700, color: '#2979ff', letterSpacing: .5 }}>
+                {inSlip(featuredPick.selection) ? '✓ ADDED' : '+ ADD'}
+              </span>
             </button>
           </div>
         </div>
       )}
 
+      {/* ── SIGNAL SECTIONS: tab toggle ───────────────────────── */}
+      {picks.length > 0 && (
+        <>
+          {/* Tab row */}
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,.06)', background: 'rgba(0,0,0,.15)' }}
+          >
+            <button
+              onClick={e => { e.stopPropagation(); setSignalTab('prob'); }}
+              style={{
+                flex: 1, padding: '7px 0', fontSize: 10, fontWeight: 800,
+                color: signalTab === 'prob' ? '#60a5fa' : '#334155',
+                background: signalTab === 'prob' ? 'rgba(41,121,255,.08)' : 'transparent',
+                border: 'none', borderBottom: signalTab === 'prob' ? '2px solid #2979ff' : '2px solid transparent',
+                cursor: 'pointer', letterSpacing: .6,
+              }}
+            >
+              📊 WIN PROBABILITY
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); setSignalTab('value'); }}
+              style={{
+                flex: 1, padding: '7px 0', fontSize: 10, fontWeight: 800,
+                color: signalTab === 'value' ? '#00e676' : '#334155',
+                background: signalTab === 'value' ? 'rgba(0,230,118,.06)' : 'transparent',
+                border: 'none', borderBottom: signalTab === 'value' ? '2px solid #00e676' : '2px solid transparent',
+                cursor: 'pointer', letterSpacing: .6,
+              }}
+            >
+              💰 VALUE BETS
+            </button>
+          </div>
+
+          {/* WIN PROBABILITY tab — all signals by win prob */}
+          {signalTab === 'prob' && picksByWinProb.map((p, i) => {
+            const winProb = p.fair_odds > 0 ? Math.round(100 / p.fair_odds) : null;
+            const { grade, fg, bg } = pickGrade(p);
+            const isInSlip = inSlip(p.selection);
+            const isTop = i === 0;
+            return (
+              <div
+                key={`wp-${p.selection}-${i}`}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  padding: '8px 14px',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  borderBottom: '1px solid rgba(255,255,255,.04)',
+                  background: isTop ? 'rgba(41,121,255,.05)' : 'transparent',
+                }}
+              >
+                {/* Win prob */}
+                <div style={{ width: 42, flexShrink: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 900, color: isTop ? '#60a5fa' : '#334155', lineHeight: 1 }}>
+                    {winProb !== null ? `${winProb}%` : '—'}
+                  </div>
+                  <div style={{ height: 2, background: 'rgba(255,255,255,.06)', borderRadius: 1, marginTop: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${winProb ?? 0}%`, background: isTop ? '#2979ff' : '#1e3a5f', borderRadius: 1 }} />
+                  </div>
+                </div>
+                {/* Name */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: isTop ? 800 : 600, color: isTop ? '#fff' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.selection}
+                  </div>
+                  <div style={{ fontSize: 9, color: '#334155', marginTop: 1 }}>{p.bookie?.replace(/_/g, ' ').split(' ')[0]}</div>
+                </div>
+                {/* Grade */}
+                <span style={{ fontSize: 9, fontWeight: 900, color: fg, background: bg, padding: '2px 6px', borderRadius: 4, letterSpacing: .7, flexShrink: 0 }}>{grade}</span>
+                {/* EV% */}
+                <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: p.ev_percent >= 5 ? '#00e676' : '#475569', flexShrink: 0, minWidth: 40, textAlign: 'right' }}>
+                  +{p.ev_percent.toFixed(1)}%
+                </span>
+                {/* Odds + add */}
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onAddToSlip({
+                      event_id: game.event_id, event_name: game.event_name,
+                      sport_key: game.sport_key, selection: p.selection,
+                      bookie: p.bookie, odds: p.bookie_odds,
+                      fair_odds: p.fair_odds, ev_percent: p.ev_percent,
+                      kelly_percent: p.kelly_percent, commence_time: game.commence_time,
+                    });
+                  }}
+                  style={{
+                    fontFamily: 'monospace', fontWeight: 800, fontSize: 13,
+                    color: isInSlip ? '#2979ff' : '#94a3b8',
+                    background: isInSlip ? 'rgba(41,121,255,.12)' : 'rgba(255,255,255,.05)',
+                    border: `1px solid ${isInSlip ? 'rgba(41,121,255,.3)' : 'rgba(255,255,255,.08)'}`,
+                    borderRadius: 7, padding: '4px 9px', cursor: 'pointer', flexShrink: 0,
+                  }}
+                >
+                  ${p.bookie_odds.toFixed(2)}
+                </button>
+              </div>
+            );
+          })}
+
+          {/* VALUE BETS tab — all signals by EV% */}
+          {signalTab === 'value' && picksByEV.map((p, i) => {
+            const isInSlip = inSlip(p.selection);
+            const evColor = p.ev_percent >= 8 ? '#ffab00' : '#00e676';
+            const isTop = i === 0;
+            return (
+              <div
+                key={`ev-${p.selection}-${i}`}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  padding: '8px 14px',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  borderBottom: '1px solid rgba(255,255,255,.04)',
+                  background: isTop ? 'rgba(0,230,118,.04)' : 'transparent',
+                }}
+              >
+                {/* EV bar */}
+                <div style={{ width: 42, flexShrink: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: evColor, lineHeight: 1 }}>
+                    +{p.ev_percent.toFixed(1)}%
+                  </div>
+                  <div style={{ height: 2, background: 'rgba(255,255,255,.06)', borderRadius: 1, marginTop: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${Math.min(Math.max(p.ev_percent, 0) / 12 * 100, 100)}%`, background: evColor, borderRadius: 1 }} />
+                  </div>
+                </div>
+                {/* Name */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: isTop ? 800 : 600, color: isTop ? '#fff' : '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.selection}
+                  </div>
+                  <div style={{ fontSize: 9, color: '#334155', marginTop: 1 }}>{p.bookie?.replace(/_/g, ' ').split(' ')[0]}</div>
+                </div>
+                {/* Grade */}
+                {(() => {
+                  const { grade, fg, bg } = pickGrade(p);
+                  return <span style={{ fontSize: 9, fontWeight: 900, color: fg, background: bg, padding: '2px 6px', borderRadius: 4, letterSpacing: .7, flexShrink: 0 }}>{grade}</span>;
+                })()}
+                {/* Win prob */}
+                {p.fair_odds > 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#334155', flexShrink: 0, minWidth: 32, textAlign: 'right' }}>
+                    {Math.round(100 / p.fair_odds)}%
+                  </span>
+                )}
+                {/* Odds + add */}
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onAddToSlip({
+                      event_id: game.event_id, event_name: game.event_name,
+                      sport_key: game.sport_key, selection: p.selection,
+                      bookie: p.bookie, odds: p.bookie_odds,
+                      fair_odds: p.fair_odds, ev_percent: p.ev_percent,
+                      kelly_percent: p.kelly_percent, commence_time: game.commence_time,
+                    });
+                  }}
+                  style={{
+                    fontFamily: 'monospace', fontWeight: 800, fontSize: 13,
+                    color: isInSlip ? '#2979ff' : evColor,
+                    background: isInSlip ? 'rgba(41,121,255,.12)' : `${evColor}18`,
+                    border: `1px solid ${isInSlip ? 'rgba(41,121,255,.3)' : `${evColor}40`}`,
+                    borderRadius: 7, padding: '4px 9px', cursor: 'pointer', flexShrink: 0,
+                  }}
+                >
+                  ${p.bookie_odds.toFixed(2)}
+                </button>
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      {/* No signals fallback — show best odds for each outcome */}
+      {picks.length === 0 && game.best_odds.length > 0 && (
+        <div style={{ padding: '10px 14px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {game.best_odds.map(o => (
+            <button
+              key={o.selection}
+              onClick={e => { e.stopPropagation(); onAddToSlip({ event_id: game.event_id, event_name: game.event_name, sport_key: game.sport_key, selection: o.selection, bookie: o.bookmaker, odds: o.odds, commence_time: game.commence_time }); }}
+              style={{
+                flex: '1 1 80px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                padding: '8px 10px', borderRadius: 9, cursor: 'pointer',
+                background: inSlip(o.selection) ? 'rgba(41,121,255,.1)' : 'rgba(255,255,255,.04)',
+                border: `1px solid ${inSlip(o.selection) ? 'rgba(41,121,255,.3)' : 'rgba(255,255,255,.08)'}`,
+              }}
+            >
+              <span style={{ fontSize: 11, color: '#475569', fontWeight: 600, textAlign: 'center', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.selection}</span>
+              <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 16, color: '#e2e8f0' }}>${o.odds.toFixed(2)}</span>
+              <span style={{ fontSize: 9, color: '#334155' }}>{o.bookmaker?.replace(/_/g, ' ').split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Footer */}
-      <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.2)' }}>
+      <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.2)', marginTop: 'auto' }}>
         <span style={{ fontSize: 11, color: '#1e3a5f' }}>{fmtTime(game.commence_time)} AEST</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 11, color: '#1e3a5f' }}>{game.bookmaker_count} books</span>
           {picks.length > 0 && (
             <span style={{ fontSize: 10, fontWeight: 800, color: isShadowPick ? '#ffab00' : '#00e676', background: isShadowPick ? 'rgba(255,171,0,.1)' : 'rgba(0,230,118,.1)', padding: '1px 7px', borderRadius: 4 }}>
@@ -467,6 +620,9 @@ function RaceCard({
   onAddToSlip: (item: SlipItem) => void;
   inSlip: (sel: string) => boolean;
 }) {
+  const [signalTab, setSignalTab] = useState<'value' | 'prob'>('prob');
+  const [showAll, setShowAll] = useState(false);
+
   const meta = sportMeta(game.sport_key);
   const picks = game.ev_picks || [];
   const ms = msUntil(game.commence_time);
@@ -479,30 +635,35 @@ function RaceCard({
     ? game.home_team
     : (game.home_team || 'Race');
 
-  // Compute approximate normalised win probabilities from best_odds
   const allRunners = game.best_odds;
   const sumInv = allRunners.reduce((acc, r) => acc + 1 / r.odds, 0);
 
-  const runnersWithData = allRunners.map(r => {
+  const runnersEnriched = allRunners.map(r => {
     const pick = picks.find(p => p.selection === r.selection);
-    const rawProb = (1 / r.odds) / sumInv;
-    const winProb = pick
+    const rawProb = sumInv > 0 ? (1 / r.odds) / sumInv : 0;
+    const winProb = pick && pick.fair_odds > 0
       ? Math.round((1 / pick.fair_odds) * 100)
       : Math.round(rawProb * 100);
     return { ...r, pick, winProb };
-  }).sort((a, b) => {
-    if (a.pick && !b.pick) return -1;
-    if (!a.pick && b.pick) return 1;
-    return b.winProb - a.winProb;
   });
 
-  const MAX_SHOW = 6;
-  const displayed = runnersWithData.slice(0, MAX_SHOW);
-  const hiddenCount = runnersWithData.length - MAX_SHOW;
+  // Featured: runner with highest win probability among signals (or best odds)
+  const pickedRunners = runnersEnriched.filter(r => r.pick);
+  const featuredRunner = pickedRunners.length > 0
+    ? [...pickedRunners].sort((a, b) => b.winProb - a.winProb)[0]
+    : runnersEnriched.sort((a, b) => b.winProb - a.winProb)[0];
 
-  const accentColor = isShadowPick ? '#ffab00' : hasEdge ? '#00e676' : '#2979ff';
-  const accentLeft = `3px solid ${isShadowPick ? '#ffab00' : hasEdge ? '#00e676' : 'transparent'}`;
-  const cardBorder = isShadowPick ? '1px solid rgba(255,171,0,.3)' : hasEdge ? '1px solid rgba(0,230,118,.2)' : '1px solid rgba(255,255,255,.07)';
+  // Sorted views for tabs
+  const byWinProb = [...runnersEnriched].sort((a, b) => b.winProb - a.winProb);
+  const byEV = picks.length > 0
+    ? [...picks].sort((a, b) => b.ev_percent - a.ev_percent)
+    : [];
+
+  const MAX_SHOW = 6;
+  const displayedByProb = showAll ? byWinProb : byWinProb.slice(0, MAX_SHOW);
+
+  const accentLeft = isShadowPick ? '3px solid #ffab00' : hasEdge ? '3px solid #2979ff' : '3px solid transparent';
+  const cardBorder = isShadowPick ? '1px solid rgba(255,171,0,.3)' : hasEdge ? '1px solid rgba(41,121,255,.25)' : '1px solid rgba(255,255,255,.07)';
 
   return (
     <div
@@ -536,105 +697,262 @@ function RaceCard({
       )}
 
       {/* Header */}
-      <div style={{ padding: '9px 14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 13 }}>{meta.emoji}</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>{meta.label}</span>
-          {isLive  && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4 }}>LIVE</span>}
-          {isSoon && !isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ffab00', background: 'rgba(255,171,0,.1)', border: '1px solid rgba(255,171,0,.25)', padding: '1px 7px', borderRadius: 4 }}>SOON</span>}
+      <div style={{ padding: '9px 14px 8px', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13 }}>{meta.emoji}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: .8 }}>{meta.label}</span>
+            {isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ff1744', background: 'rgba(255,23,68,.12)', border: '1px solid rgba(255,23,68,.3)', padding: '1px 7px', borderRadius: 4 }}>LIVE</span>}
+            {isSoon && !isLive && <span style={{ fontSize: 10, fontWeight: 800, color: '#ffab00', background: 'rgba(255,171,0,.1)', border: '1px solid rgba(255,171,0,.25)', padding: '1px 7px', borderRadius: 4 }}>SOON</span>}
+          </div>
+          <span style={{ fontSize: 11, color: '#2d3f5c', fontWeight: 600 }}>{countdown(game.commence_time)}</span>
         </div>
-        <span style={{ fontSize: 11, color: '#2d3f5c', fontWeight: 600 }}>{countdown(game.commence_time)}</span>
-      </div>
-
-      {/* Race name */}
-      <div style={{ padding: '8px 14px 6px', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{raceName}</div>
         <div style={{ fontSize: 10, color: '#334155', marginTop: 2 }}>{allRunners.length} runners · {game.bookmaker_count} books</div>
       </div>
 
-      {/* Runner rows */}
-      <div style={{ padding: '6px 0' }}>
-        {displayed.map((runner, idx) => {
-          const isTop = idx === 0;
-          const pick = runner.pick;
-          const evPct = pick?.ev_percent ?? 0;
-          const barColor = evPct >= 8 ? '#ffab00' : '#00e676';
-          const isInSlip = inSlip(runner.selection);
-
-          return (
-            <div
-              key={runner.selection}
-              style={{ padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 10, background: pick ? 'rgba(0,230,118,.025)' : isTop ? 'rgba(41,121,255,.03)' : 'transparent', borderBottom: idx < displayed.length - 1 ? '1px solid rgba(255,255,255,.03)' : 'none' }}
-            >
-              {/* Position badge */}
-              <div style={{ width: 20, height: 20, borderRadius: 4, background: isTop ? 'rgba(41,121,255,.15)' : 'rgba(255,255,255,.04)', display: 'grid', placeItems: 'center', fontSize: 9, fontWeight: 800, color: isTop ? accentColor : '#334155', flexShrink: 0 }}>
-                {isTop ? '★' : idx + 1}
-              </div>
-
-              {/* Runner name + win prob */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: pick ? 4 : 0 }}>
-                  <span style={{ fontSize: 12, fontWeight: pick ? 800 : 600, color: pick ? '#fff' : isTop ? '#cbd5e1' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
-                    {runner.selection}
-                  </span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#334155', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.06)', padding: '1px 5px', borderRadius: 3, flexShrink: 0 }}>
-                    {runner.winProb}%
-                  </span>
-                  {pick && (
-                    <span style={{ fontSize: 10, fontWeight: 900, color: evPct >= 8 ? '#ffab00' : '#00e676', flexShrink: 0 }}>
-                      +{evPct.toFixed(1)}% EV
-                    </span>
-                  )}
-                </div>
-                {pick && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ flex: 1, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min(evPct / 12 * 100, 100)}%`, background: barColor, borderRadius: 2 }} />
-                    </div>
-                    <span style={{ fontSize: 9, color: '#334155', flexShrink: 0 }}>{pick.bookie?.replace(/_/g, ' ').split(' ')[0]}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Odds button */}
-              <button
-                onClick={e => {
-                  e.stopPropagation();
-                  onAddToSlip({
-                    event_id: game.event_id, event_name: raceName,
-                    sport_key: game.sport_key, selection: runner.selection,
-                    bookie: runner.bookmaker, odds: runner.odds,
-                    fair_odds: pick?.fair_odds,
-                    ev_percent: pick?.ev_percent,
-                    kelly_percent: pick?.kelly_percent,
-                    commence_time: game.commence_time,
-                  });
-                }}
-                style={{
-                  fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 14,
-                  color: isInSlip ? '#2979ff' : pick ? (evPct >= 8 ? '#ffab00' : '#00e676') : '#64748b',
-                  background: isInSlip ? 'rgba(41,121,255,.12)' : pick ? `rgba(${evPct >= 8 ? '255,171,0' : '0,230,118'},.1)` : 'rgba(255,255,255,.05)',
-                  border: `1px solid ${isInSlip ? 'rgba(41,121,255,.3)' : pick ? `rgba(${evPct >= 8 ? '255,171,0' : '0,230,118'},.25)` : 'rgba(255,255,255,.08)'}`,
-                  borderRadius: 8, padding: '5px 10px', cursor: 'pointer', minWidth: 58, textAlign: 'center', flexShrink: 0,
-                }}
-              >
-                {runner.odds.toFixed(2)}
-              </button>
-            </div>
-          );
-        })}
-
-        {hiddenCount > 0 && (
-          <div style={{ padding: '6px 14px', fontSize: 11, color: '#334155', textAlign: 'center' }}>
-            +{hiddenCount} more runners — click to view all
+      {/* ── FEATURED: HIGHEST WIN PROBABILITY ─────────────────── */}
+      {featuredRunner && (
+        <div style={{
+          background: 'linear-gradient(135deg,rgba(41,121,255,.12),rgba(12,20,40,0))',
+          borderBottom: '1px solid rgba(41,121,255,.18)',
+          padding: '11px 14px',
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 900, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>
+            ⭐ Highest Win Probability
           </div>
-        )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 900, fontSize: 15, color: '#fff', marginBottom: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {featuredRunner.selection}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{
+                  fontSize: 13, fontWeight: 900, color: '#2979ff',
+                  background: 'rgba(41,121,255,.15)', border: '1px solid rgba(41,121,255,.35)',
+                  padding: '3px 10px', borderRadius: 7,
+                }}>
+                  {featuredRunner.winProb}% WIN
+                </span>
+                {featuredRunner.pick && (
+                  <>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#00e676' }}>+{featuredRunner.pick.ev_percent.toFixed(1)}% EV</span>
+                    {(() => {
+                      const { grade, fg, bg } = pickGrade(featuredRunner.pick!);
+                      return <span style={{ fontSize: 9, fontWeight: 900, color: fg, background: bg, padding: '2px 7px', borderRadius: 4, letterSpacing: .8 }}>{grade}</span>;
+                    })()}
+                  </>
+                )}
+                <span style={{ fontSize: 10, color: '#475569' }}>{featuredRunner.bookmaker?.replace(/_/g, ' ').split(' ')[0]}</span>
+              </div>
+            </div>
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                onAddToSlip({
+                  event_id: game.event_id, event_name: raceName,
+                  sport_key: game.sport_key, selection: featuredRunner.selection,
+                  bookie: featuredRunner.pick?.bookie ?? featuredRunner.bookmaker,
+                  odds: featuredRunner.pick?.bookie_odds ?? featuredRunner.odds,
+                  fair_odds: featuredRunner.pick?.fair_odds,
+                  ev_percent: featuredRunner.pick?.ev_percent,
+                  kelly_percent: featuredRunner.pick?.kelly_percent,
+                  commence_time: game.commence_time,
+                });
+              }}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                fontFamily: 'JetBrains Mono, monospace', fontWeight: 900, fontSize: 19,
+                color: inSlip(featuredRunner.selection) ? '#2979ff' : '#fff',
+                background: inSlip(featuredRunner.selection) ? 'rgba(41,121,255,.2)' : 'rgba(41,121,255,.15)',
+                border: '1px solid rgba(41,121,255,.4)',
+                borderRadius: 10, padding: '8px 14px', cursor: 'pointer', flexShrink: 0, textAlign: 'center',
+              }}
+            >
+              ${(featuredRunner.pick?.bookie_odds ?? featuredRunner.odds).toFixed(2)}
+              <span style={{ fontSize: 8, fontWeight: 700, color: '#2979ff', letterSpacing: .5 }}>
+                {inSlip(featuredRunner.selection) ? '✓ ADDED' : '+ ADD'}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── SIGNAL SECTIONS tab toggle ────────────────────────── */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,.06)', background: 'rgba(0,0,0,.15)' }}
+      >
+        <button
+          onClick={e => { e.stopPropagation(); setSignalTab('prob'); }}
+          style={{
+            flex: 1, padding: '7px 0', fontSize: 10, fontWeight: 800,
+            color: signalTab === 'prob' ? '#60a5fa' : '#334155',
+            background: signalTab === 'prob' ? 'rgba(41,121,255,.08)' : 'transparent',
+            border: 'none', borderBottom: signalTab === 'prob' ? '2px solid #2979ff' : '2px solid transparent',
+            cursor: 'pointer', letterSpacing: .6,
+          }}
+        >
+          📊 WIN PROBABILITY
+        </button>
+        <button
+          onClick={e => { e.stopPropagation(); setSignalTab('value'); }}
+          style={{
+            flex: 1, padding: '7px 0', fontSize: 10, fontWeight: 800,
+            color: signalTab === 'value' ? '#00e676' : '#334155',
+            background: signalTab === 'value' ? 'rgba(0,230,118,.06)' : 'transparent',
+            border: 'none', borderBottom: signalTab === 'value' ? '2px solid #00e676' : '2px solid transparent',
+            cursor: 'pointer', letterSpacing: .6,
+          }}
+        >
+          💰 VALUE BETS {byEV.length > 0 && <span style={{ background: '#00e676', color: '#071120', fontSize: 8, fontWeight: 900, padding: '1px 5px', borderRadius: 10, marginLeft: 3 }}>{byEV.length}</span>}
+        </button>
       </div>
 
+      {/* WIN PROBABILITY tab — all runners sorted by win prob */}
+      {signalTab === 'prob' && (
+        <>
+          {displayedByProb.map((runner, idx) => {
+            const pick = runner.pick;
+            const evPct = pick?.ev_percent ?? 0;
+            const isInSlip = inSlip(runner.selection);
+            const isTop = idx === 0;
+            return (
+              <div
+                key={`wp-${runner.selection}-${idx}`}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 8,
+                  borderBottom: '1px solid rgba(255,255,255,.03)',
+                  background: pick ? 'rgba(0,230,118,.025)' : isTop ? 'rgba(41,121,255,.03)' : 'transparent',
+                }}
+              >
+                {/* Position + win prob */}
+                <div style={{ width: 42, flexShrink: 0, textAlign: 'center' }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: isTop ? '#60a5fa' : '#1e3a5f', marginBottom: 1 }}>#{idx + 1}</div>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: isTop ? '#60a5fa' : '#334155' }}>{runner.winProb}%</div>
+                </div>
+                {/* Name */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: pick ? 800 : 600, color: pick ? '#fff' : isTop ? '#cbd5e1' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {runner.selection}
+                  </div>
+                  {pick && (
+                    <div style={{ fontSize: 9, color: evPct >= 8 ? '#ffab00' : '#00e676', fontWeight: 700, marginTop: 1 }}>
+                      +{evPct.toFixed(1)}% EV · {pick.bookie?.replace(/_/g, ' ').split(' ')[0]}
+                    </div>
+                  )}
+                </div>
+                {/* Grade if has signal */}
+                {pick && (() => {
+                  const { grade, fg, bg } = pickGrade(pick);
+                  return <span style={{ fontSize: 9, fontWeight: 900, color: fg, background: bg, padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>{grade}</span>;
+                })()}
+                {/* Odds button */}
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onAddToSlip({
+                      event_id: game.event_id, event_name: raceName,
+                      sport_key: game.sport_key, selection: runner.selection,
+                      bookie: pick?.bookie ?? runner.bookmaker,
+                      odds: pick?.bookie_odds ?? runner.odds,
+                      fair_odds: pick?.fair_odds, ev_percent: pick?.ev_percent,
+                      kelly_percent: pick?.kelly_percent, commence_time: game.commence_time,
+                    });
+                  }}
+                  style={{
+                    fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 13,
+                    color: isInSlip ? '#2979ff' : pick ? (evPct >= 8 ? '#ffab00' : '#00e676') : '#475569',
+                    background: isInSlip ? 'rgba(41,121,255,.12)' : pick ? `${evPct >= 8 ? 'rgba(255,171,0,.1)' : 'rgba(0,230,118,.1)'}` : 'rgba(255,255,255,.04)',
+                    border: `1px solid ${isInSlip ? 'rgba(41,121,255,.3)' : pick ? (evPct >= 8 ? 'rgba(255,171,0,.25)' : 'rgba(0,230,118,.2)') : 'rgba(255,255,255,.07)'}`,
+                    borderRadius: 7, padding: '4px 9px', cursor: 'pointer', flexShrink: 0,
+                  }}
+                >
+                  ${(pick?.bookie_odds ?? runner.odds).toFixed(2)}
+                </button>
+              </div>
+            );
+          })}
+          {byWinProb.length > MAX_SHOW && (
+            <button
+              onClick={e => { e.stopPropagation(); setShowAll(s => !s); }}
+              style={{
+                width: '100%', padding: '7px', background: 'rgba(255,255,255,.02)',
+                border: 'none', borderTop: '1px solid rgba(255,255,255,.05)',
+                fontSize: 11, color: '#2979ff', fontWeight: 700, cursor: 'pointer',
+              }}
+            >
+              {showAll ? '↑ Show fewer' : `↓ Show all ${byWinProb.length} runners`}
+            </button>
+          )}
+        </>
+      )}
+
+      {/* VALUE BETS tab — only EV signals sorted by EV% */}
+      {signalTab === 'value' && (
+        byEV.length === 0
+          ? <div style={{ padding: '16px 14px', textAlign: 'center', fontSize: 12, color: '#334155' }}>No value signals found</div>
+          : byEV.map((p, i) => {
+            const isInSlip = inSlip(p.selection);
+            const evColor = p.ev_percent >= 8 ? '#ffab00' : '#00e676';
+            const isTop = i === 0;
+            return (
+              <div
+                key={`ev-${p.selection}-${i}`}
+                onClick={e => e.stopPropagation()}
+                style={{
+                  padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8,
+                  borderBottom: '1px solid rgba(255,255,255,.04)',
+                  background: isTop ? 'rgba(0,230,118,.04)' : 'transparent',
+                }}
+              >
+                <div style={{ width: 42, flexShrink: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: evColor }}>{p.ev_percent >= 0 ? '+' : ''}{p.ev_percent.toFixed(1)}%</div>
+                  <div style={{ height: 2, background: 'rgba(255,255,255,.06)', borderRadius: 1, marginTop: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${Math.min(Math.max(p.ev_percent, 0) / 12 * 100, 100)}%`, background: evColor, borderRadius: 1 }} />
+                  </div>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: isTop ? 800 : 600, color: isTop ? '#fff' : '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.selection}
+                  </div>
+                  <div style={{ fontSize: 9, color: '#334155', marginTop: 1 }}>{p.bookie?.replace(/_/g, ' ').split(' ')[0]} · {p.fair_odds > 0 ? `${Math.round(100 / p.fair_odds)}% win` : ''}</div>
+                </div>
+                {(() => {
+                  const { grade, fg, bg } = pickGrade(p);
+                  return <span style={{ fontSize: 9, fontWeight: 900, color: fg, background: bg, padding: '2px 6px', borderRadius: 4, flexShrink: 0 }}>{grade}</span>;
+                })()}
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    onAddToSlip({
+                      event_id: game.event_id, event_name: raceName,
+                      sport_key: game.sport_key, selection: p.selection,
+                      bookie: p.bookie, odds: p.bookie_odds,
+                      fair_odds: p.fair_odds, ev_percent: p.ev_percent,
+                      kelly_percent: p.kelly_percent, commence_time: game.commence_time,
+                    });
+                  }}
+                  style={{
+                    fontFamily: 'monospace', fontWeight: 800, fontSize: 13,
+                    color: isInSlip ? '#2979ff' : evColor,
+                    background: isInSlip ? 'rgba(41,121,255,.12)' : `${evColor}18`,
+                    border: `1px solid ${isInSlip ? 'rgba(41,121,255,.3)' : `${evColor}40`}`,
+                    borderRadius: 7, padding: '4px 9px', cursor: 'pointer', flexShrink: 0,
+                  }}
+                >
+                  ${p.bookie_odds.toFixed(2)}
+                </button>
+              </div>
+            );
+          })
+      )}
+
       {/* Footer */}
-      <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.2)' }}>
+      <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,.04)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.2)', marginTop: 'auto' }}>
         <span style={{ fontSize: 11, color: '#1e3a5f' }}>{fmtTime(game.commence_time)} AEST</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {picks.length > 0 && (
             <span style={{ fontSize: 10, fontWeight: 800, color: isShadowPick ? '#ffab00' : '#00e676', background: isShadowPick ? 'rgba(255,171,0,.1)' : 'rgba(0,230,118,.1)', padding: '1px 7px', borderRadius: 4 }}>
               {picks.length} signal{picks.length > 1 ? 's' : ''}
@@ -1087,6 +1405,10 @@ export default function MarketsPage() {
 
         <style>{`
           div[style*="overflowX: auto"]::-webkit-scrollbar { display: none; }
+          @media (max-width: 480px) {
+            .card-signal-row { padding: 6px 10px !important; gap: 5px !important; }
+            .card-signal-row .odds-btn { font-size: 12px !important; padding: 4px 7px !important; }
+          }
         `}</style>
       </div>
     </ProtectedRoute>
