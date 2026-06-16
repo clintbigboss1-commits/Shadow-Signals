@@ -175,6 +175,20 @@ input, select, textarea { font-family: var(--font); }
   overflow-y: auto;
 }
 
+/* ── Mobile top bar (AppShell) ──────────────────────────── */
+.mobile-topbar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 16px;
+  background: #050d18;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
 /* ── Responsive Sidebar/Topbar overrides ─────────────────── */
 @media (max-width: 1023px) {
   .sidebar {
@@ -193,6 +207,9 @@ input, select, textarea { font-family: var(--font); }
   }
   .sidebar-toggle {
     display: inline-flex;
+  }
+  .mobile-topbar {
+    display: flex;
   }
 }
 
@@ -217,6 +234,36 @@ input, select, textarea { font-family: var(--font); }
   .landing-hero-grid p {
     margin-left: auto;
     margin-right: auto;
+  }
+  /* hide phone mockup panel on mobile — hero text is enough */
+  .landing-hero-phone {
+    display: none !important;
+  }
+}
+
+/* ── Landing stats bar — 4-col → 2-col on mobile ─────────── */
+.landing-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+@media (max-width: 640px) {
+  .landing-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .landing-stats-grid > div {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    padding: 16px 8px !important;
+  }
+  .landing-stats-grid > div:nth-child(odd) {
+    border-right: 1px solid rgba(255,255,255,.06) !important;
+  }
+}
+
+/* ── Bottom CTA — hide operative images on small screens ──── */
+@media (max-width: 768px) {
+  .landing-operative {
+    display: none !important;
   }
 }
 

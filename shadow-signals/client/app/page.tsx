@@ -157,7 +157,7 @@ export default function Home() {
           </div>
 
           {/* ── RIGHT: phone mockup of dashboard */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 580, flex: 1 }}>
+          <div className="landing-hero-phone" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 580, flex: 1 }}>
             {/* Glow behind phone */}
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 320, height: 320, background: 'radial-gradient(ellipse, rgba(41,121,255,.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
@@ -256,7 +256,7 @@ export default function Home() {
 
       {/* ── Stats bar ─────────────────────────────────────── */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,.06)', borderBottom: '1px solid rgba(255,255,255,.06)', background: 'rgba(0,0,0,.15)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', padding: '28px 24px' }}>
+        <div className="landing-stats-grid" style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px' }}>
           {STATS.map((s, i) => (
             <div key={i} style={{ textAlign: 'center', padding: '0 16px', borderRight: i < 3 ? '1px solid rgba(255,255,255,.06)' : 'none' }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 'clamp(20px,3vw,30px)', fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -475,9 +475,9 @@ export default function Home() {
       <section style={{ padding: '80px 32px', borderTop: '1px solid rgba(255,255,255,.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -150, left: '50%', transform: 'translateX(-50%)', width: 700, height: 500, background: 'radial-gradient(ellipse, rgba(0,230,118,.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
         {/* Operative image left */}
-        <img src="/operatives/landing.png" alt="" style={{ position: 'absolute', bottom: 0, left: 'clamp(-40px,2vw,60px)', height: 420, objectFit: 'contain', opacity: .85, pointerEvents: 'none', filter: 'drop-shadow(0 0 30px rgba(41,121,255,.3))', animation: 'float 7s ease infinite' }} />
+        <img src="/operatives/landing.png" alt="" className="landing-operative" style={{ position: 'absolute', bottom: 0, left: 'clamp(-40px,2vw,60px)', height: 420, objectFit: 'contain', opacity: .85, pointerEvents: 'none', filter: 'drop-shadow(0 0 30px rgba(41,121,255,.3))', animation: 'float 7s ease infinite' }} />
         {/* Operative image right */}
-        <img src="/operatives/markets.png" alt="" style={{ position: 'absolute', bottom: 0, right: 'clamp(-40px,2vw,60px)', height: 400, objectFit: 'contain', opacity: .75, pointerEvents: 'none', filter: 'drop-shadow(0 0 30px rgba(0,230,118,.25)) scaleX(-1)', transform: 'scaleX(-1)', animation: 'float 9s ease infinite 1s' }} />
+        <img src="/operatives/markets.png" alt="" className="landing-operative" style={{ position: 'absolute', bottom: 0, right: 'clamp(-40px,2vw,60px)', height: 400, objectFit: 'contain', opacity: .75, pointerEvents: 'none', filter: 'drop-shadow(0 0 30px rgba(0,230,118,.25)) scaleX(-1)', transform: 'scaleX(-1)', animation: 'float 9s ease infinite 1s' }} />
         <div style={{ maxWidth: 560, margin: '0 auto', position: 'relative' }}>
           <h2 style={{ fontSize: 'clamp(26px,4vw,42px)', fontWeight: 900, letterSpacing: -1, marginBottom: 14 }}>
             Your results could be next.

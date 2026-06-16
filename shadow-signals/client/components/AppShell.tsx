@@ -52,9 +52,10 @@ const DARK_VARS: React.CSSProperties = {
 
 export default function AppShell({ children, activeSport, onSportChange, contentDark }: Props) {
   const path = usePathname();
-  const [user, setUser]     = useState<User | null>(() => getUser());
-  const [unread, setUnread] = useState(0);
+  const [user, setUser]       = useState<User | null>(() => getUser());
+  const [unread, setUnread]   = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifs, setNotifs] = useState<{ id: string; title: string; body: string | null; read: boolean; created_at: string }[]>([]);
 
   useEffect(() => {
@@ -120,8 +121,16 @@ export default function AppShell({ children, activeSport, onSportChange, content
 
   return (
     <div className="app-shell">
+      {/* ── Mobile overlay ───────────────────────────────────── */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 49, backdropFilter: 'blur(2px)' }}
+        />
+      )}
+
       {/* ── Sidebar ──────────────────────────────────────────── */}
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         {/* Logo */}
         <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--border)' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
@@ -228,6 +237,29 @@ export default function AppShell({ children, activeSport, onSportChange, content
 
       {/* ── Main content ─────────────────────────────────────── */}
       <div className="main-area" style={contentDark ? DARK_VARS : {}}>
+        {/* Mobile topbar */}
+        <div className="mobile-topbar">
+          <button className="sidebar-toggle" onClick={() => setSidebarOpen(o => !o)} aria-label="Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#2979ff,#1e63d9)', display: 'grid', placeItems: 'center', fontSize: 14 }}>⚡</div>
+            <span style={{ fontWeight: 900, fontSize: 13, letterSpacing: .5, color: '#fff' }}>SHADOW <span style={{ color: '#2979ff' }}>SIGNALS</span></span>
+          </Link>
+          <button
+            onClick={() => { setNotifOpen(o => !o); if (unread > 0) markRead(); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative', fontSize: 18, padding: 4, marginLeft: 'auto' }}
+          >
+            🔔
+            {unread > 0 && (
+              <span style={{ position: 'absolute', top: 0, right: 0, background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800, width: 14, height: 14, borderRadius: '50%', display: 'grid', placeItems: 'center' }}>
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
+          </button>
+        </div>
         {children}
       </div>
     </div>
