@@ -33,7 +33,7 @@ async function getRaceRunners(eventId) {
         bookmaker, selection, odds
       FROM odds_cache
       WHERE event_id = $1
-        AND market = 'h2h'
+        AND market IN ('h2h', 'win')
         AND expires_at > NOW()
       ORDER BY bookmaker, selection, fetched_at DESC
     `, [eventId]);
@@ -104,10 +104,14 @@ async function generatePredictions() {
     const { rows: events } = await db.query(`
       SELECT DISTINCT event_id, sport_key, home_team, commence_time
       FROM odds_cache
-      WHERE sport_key IN ('horse_racing_au','horse_racing_us','horse_racing_greyhounds_au','horse_racing_greyhounds_us')
+      WHERE sport_key IN (
+        'horse_racing_au','horse_racing_gb','horse_racing_ire','horse_racing_us','horse_racing_intl',
+        'greyhound_racing_au','greyhound_racing_gb','greyhound_racing_ire','greyhound_racing_us'
+      )
         AND expires_at > NOW()
         AND commence_time > NOW()
-      LIMIT 100
+        AND market IN ('h2h', 'win')
+      LIMIT 200
     `);
 
     let count = 0;

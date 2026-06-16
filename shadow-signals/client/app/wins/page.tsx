@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import OperativePeek from '../../components/OperativePeek';
 import API from '../../lib/api';
+import { getUser } from '../../lib/auth';
+import type { User } from '../../lib/auth';
 
 interface Win {
   name: string; location?: string; sport: string; event: string;
@@ -36,8 +38,10 @@ const SPORT_COLORS: Record<string, string> = {
 export default function WinsPage() {
   const [wins, setWins]   = useState<Win[]>(FALLBACK_WINS);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [user, setUser]   = useState<User | null>(null);
 
   useEffect(() => {
+    setUser(getUser());
     API.get('/bets/wins').then(r => {
       if (r.data.wins?.length > 0) setWins(r.data.wins);
       if (r.data.stats) setStats(r.data.stats);
@@ -66,8 +70,14 @@ export default function WinsPage() {
           </Link>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Link href="/markets" style={{ fontSize: 13, color: '#64748b', padding: '6px 12px' }}>Markets</Link>
-            <Link href="/login"   style={{ padding: '7px 16px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, color: '#94a3b8', textDecoration: 'none' }}>Sign In</Link>
-            <Link href="/signup"  style={{ padding: '8px 18px', borderRadius: 9, fontSize: 13, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', textDecoration: 'none' }}>Get Edge →</Link>
+            {user ? (
+              <Link href="/dashboard" style={{ padding: '8px 18px', borderRadius: 9, fontSize: 13, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', textDecoration: 'none' }}>Dashboard →</Link>
+            ) : (
+              <>
+                <Link href="/login"  style={{ padding: '7px 16px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, color: '#94a3b8', textDecoration: 'none' }}>Sign In</Link>
+                <Link href="/signup" style={{ padding: '8px 18px', borderRadius: 9, fontSize: 13, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#2979ff,#1e63d9)', textDecoration: 'none' }}>Get Edge →</Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

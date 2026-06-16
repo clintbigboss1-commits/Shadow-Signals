@@ -3,7 +3,7 @@
 // ── GHOST automation — autonomous FB + IG poster ───────────────────────────
 // Cadence:
 //   GHOST_TEST_MODE=true  → one post every hour (72-hour testing phase)
-//   otherwise             → 12 posts/day, 80% inside AU peak windows
+//   otherwise             → 15 posts/day FB, 4 posts/day IG, 80% AU peak windows
 //                           (7–9 AM, 12–1 PM, 6–9 PM Sydney), 20% off-peak
 // Posting requires Meta Graph API credentials:
 //   META_PAGE_ID, META_PAGE_ACCESS_TOKEN          → Facebook page feed
@@ -174,8 +174,13 @@ async function publish(post) {
   try {
     const fbId = await postToFacebook(post.body);
     let igId = null;
-    try { igId = await postToInstagram(post.body); }
-    catch (e) { console.warn('👻 GHOST IG post failed:', e.response?.data?.error?.message || e.message); }
+    const igToday = await igPostsToday();
+    if (igToday < 4) {
+      try { igId = await postToInstagram(post.body); }
+      catch (e) { console.warn('👻 GHOST IG post failed:', e.response?.data?.error?.message || e.message); }
+    } else {
+      console.log(`👻 GHOST IG cap reached (${igToday}/4 today) — FB only`);
+    }
 
     await db.query(
       `UPDATE ghost_posts SET status = 'posted', fb_post_id = $2, ig_post_id = $3, posted_at = NOW() WHERE id = $1`,
@@ -197,6 +202,16 @@ async function lastPostedAt() {
   return r.rows[0].t ? new Date(r.rows[0].t) : null;
 }
 
+async function igPostsToday() {
+  const { db } = require('../db');
+  const r = await db.query(
+    `SELECT COUNT(*) AS n FROM ghost_posts
+     WHERE status = 'posted' AND ig_post_id IS NOT NULL
+       AND posted_at > NOW() - INTERVAL '24 hours'`
+  );
+  return parseInt(r.rows[0].n, 10);
+}
+
 async function shouldPostNow() {
   const last = await lastPostedAt();
   const minsSince = last ? (Date.now() - last.getTime()) / 60000 : Infinity;
@@ -204,9 +219,31 @@ async function shouldPostNow() {
   if (process.env.GHOST_TEST_MODE === 'true') {
     return minsSince >= 58; // hourly during the 72-hour test
   }
-  // Steady state: ~12/day. Peak windows post on a 2h gap; off-peak stretches
-  // to 4h so ~80% of volume lands in peak.
-  return isPeakWindow() ? minsSince >= 110 : minsSince >= 235;
+  // Daily guarantee — if it has been >20h since the last post, always fire.
+  if (minsSince >= 20 * 60) return true;
+  // Steady state: ~15/day FB. Peak: post every 88 mins; off-peak every 200 mins
+  // so ~80% of volume lands in the AU peak windows.
+  return isPeakWindow() ? minsSince >= 88 : minsSince >= 200;
+}
+
+// Force a post immediately, bypassing shouldPostNow() time gates.
+// Used by the guaranteed morning/evening daily crons.
+async function forcePost() {
+  try {
+    if (process.env.GHOST_ENABLED === 'false') return;
+    if (!isConfigured()) {
+      console.log('👻 GHOST forcePost: dry-run (Meta creds not set)');
+      return;
+    }
+    const post = await pickNextPost();
+    if (post) {
+      await publish(post);
+    } else {
+      console.warn('👻 GHOST forcePost: no posts in queue');
+    }
+  } catch (e) {
+    console.error('👻 GHOST forcePost error:', e.message);
+  }
 }
 
 async function tick() {
@@ -233,11 +270,11 @@ async function initGhost() {
     await ensureTable();
     await seedTeasers();
     cron.schedule('*/5 * * * *', tick); // check every 5 min; cadence gates above
-    const mode = process.env.GHOST_TEST_MODE === 'true' ? 'TEST (hourly)' : 'steady (12/day, peak-weighted)';
+    const mode = process.env.GHOST_TEST_MODE === 'true' ? 'TEST (hourly)' : 'steady (15/day FB · 4/day IG · peak-weighted)';
     console.log(`👻 GHOST automation ready — ${isConfigured() ? 'LIVE' : 'dry-run'} · ${mode} · ${SEED_TEASERS.length} teasers seeded`);
   } catch (e) {
     console.error('👻 GHOST init failed:', e.message);
   }
 }
 
-module.exports = { initGhost, pickNextPost, publish, tick, confidenceFromEV };
+module.exports = { initGhost, pickNextPost, publish, tick, forcePost, confidenceFromEV };

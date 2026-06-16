@@ -89,8 +89,7 @@ CREATE INDEX IF NOT EXISTS idx_ev_event_id
   WHERE is_active = TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_odds_commence
-  ON odds_cache(commence_time)
-  WHERE expires_at > NOW();
+  ON odds_cache(commence_time);
 
 -- ── 4. RLS — our app connects as the DB owner (BYPASSRLS) via DATABASE_URL.  ─
 --  We don't use Supabase PostgREST or anon/authenticated roles, so RLS on    --

@@ -33,21 +33,25 @@ const SPORT_CFG: Record<string, { icon: string; label: string; color: string }> 
   soccer_la_liga:        { icon: '⚽', label: 'La Liga',    color: '#ee8200' },
   basketball_nba:        { icon: '🏀', label: 'NBA',        color: '#c9082a' },
   basketball_nbl:        { icon: '🏀', label: 'NBL',        color: '#004b87' },
-  mma_ufc:               { icon: '🥊', label: 'UFC',        color: '#8b0000' },
-  mma_boxing:            { icon: '🥊', label: 'Boxing',     color: '#8b0000' },
-  cricket_t20:           { icon: '🏏', label: 'Cricket',    color: '#1a4a1a' },
+  mma_ufc:                    { icon: '🥊', label: 'UFC',         color: '#8b0000' },
+  mma_mixed_martial_arts:     { icon: '🥊', label: 'UFC/MMA',     color: '#8b0000' },
+  mma_boxing:                 { icon: '🥊', label: 'Boxing',      color: '#8b0000' },
+  boxing_boxing:              { icon: '🥊', label: 'Boxing',      color: '#8b0000' },
+  cricket_t20:                { icon: '🏏', label: 'Cricket',     color: '#1a4a1a' },
+  cricket_international_t20:  { icon: '🏏', label: 'T20 Cricket', color: '#1a4a1a' },
+  cricket_big_bash:           { icon: '🏏', label: 'BBL',         color: '#1a4a1a' },
   americanfootball_nfl:  { icon: '🏈', label: 'NFL',        color: '#013369' },
   baseball_mlb:          { icon: '⚾', label: 'MLB',        color: '#002d72' },
   icehockey_nhl:         { icon: '🏒', label: 'NHL',        color: '#041e42' },
   tennis_atp:            { icon: '🎾', label: 'Tennis',     color: '#1a5c1a' },
   golf_pga:              { icon: '⛳', label: 'Golf',       color: '#2e7d32' },
-  horse_racing_au:       { icon: '🐎', label: 'Racing',      color: '#5c2d00' },
-  horse_racing_us:       { icon: '🐎', label: 'Racing',      color: '#5c2d00' },
-  horse_racing_gb:       { icon: '🐎', label: 'UK Racing',   color: '#6b1a00' },
-  horse_racing_ire:      { icon: '🐎', label: 'IRE Racing',  color: '#0a3d1a' },
-  greyhound_racing_au:   { icon: '🐕', label: 'Greyhounds',  color: '#2d1a5c' },
-  greyhound_racing_us:   { icon: '🐕', label: 'Greyhounds',  color: '#2d1a5c' },
-  greyhound_racing_ire:  { icon: '🐕', label: 'IRE Greys',   color: '#1a0a3d' },
+  horse_racing_au:       { icon: '🐎', label: 'AU Racing',  color: '#7c3500' },
+  horse_racing_us:       { icon: '🐎', label: 'US Racing',  color: '#5c2d00' },
+  horse_racing_gb:       { icon: '🐎', label: 'UK Racing',  color: '#6b1a00' },
+  horse_racing_ire:      { icon: '🐎', label: 'IRE Racing', color: '#0a3d1a' },
+  greyhound_racing_au:   { icon: '🐕', label: 'Greyhounds', color: '#2d1a5c' },
+  greyhound_racing_us:   { icon: '🐕', label: 'Greyhounds', color: '#2d1a5c' },
+  greyhound_racing_ire:  { icon: '🐕', label: 'IRE Greys',  color: '#1a0a3d' },
 };
 
 function getSportCfg(key: string) {
@@ -69,15 +73,15 @@ const PREFERRED_BOOKIES = ['sportsbet', 'tab', 'bet365', 'ladbrokes', 'neds', 'p
 
 const BOOKIE_COLOR: Record<string, string> = {
   sportsbet:     '#f97316',
-  tab:           '#1e63d9',
-  bet365:        '#007a33',
-  ladbrokes:     '#c0392b',
-  neds:          '#7c3aed',
-  pointsbet:     '#db2777',
-  bluebet:       '#2563eb',
-  betfair_ex_au: '#d97706',
-  betright:      '#4f46e5',
-  unibet:        '#00963f',
+  tab:           '#2979ff',
+  bet365:        '#00a843',
+  ladbrokes:     '#ef4444',
+  neds:          '#a78bfa',
+  pointsbet:     '#ec4899',
+  bluebet:       '#3b82f6',
+  betfair_ex_au: '#f59e0b',
+  betright:      '#6366f1',
+  unibet:        '#00a843',
 };
 
 function shortBookie(key: string) { return BOOKIE_SHORT[key] || key.slice(0, 4).toUpperCase(); }
@@ -122,6 +126,11 @@ export default function EventCard({ event }: { event: GameEvent }) {
   const countdown = fmtCountdown(event.commence_time);
   const isLive  = countdown === 'LIVE';
 
+  // Best EV pick for the shadow pick banner
+  const topPick = event.ev_picks.length > 0
+    ? [...event.ev_picks].sort((a, b) => b.ev_percent - a.ev_percent)[0]
+    : null;
+
   // Outcomes: racing sorted fav-first, limited to 10 unless expanded
   const allOutcomes = racing
     ? [...event.best_odds].sort((a, b) => a.odds - b.odds)
@@ -138,18 +147,20 @@ export default function EventCard({ event }: { event: GameEvent }) {
 
   return (
     <div style={{
-      background: '#fff',
-      border: `1.5px solid ${event.shadow_pick ? '#86efac' : '#e2eaf7'}`,
+      background: event.shadow_pick
+        ? 'linear-gradient(135deg,rgba(0,168,78,.08),rgba(12,18,36,.95))'
+        : 'rgba(255,255,255,.04)',
+      border: `1.5px solid ${event.shadow_pick ? 'rgba(0,230,118,.3)' : 'rgba(255,255,255,.09)'}`,
       borderRadius: 14,
       overflow: 'hidden',
       boxShadow: event.shadow_pick
-        ? '0 4px 24px rgba(0,168,78,.14), 0 1px 4px rgba(7,17,32,.05)'
-        : '0 2px 10px rgba(7,17,32,.07)',
+        ? '0 4px 24px rgba(0,168,78,.12)'
+        : '0 2px 8px rgba(0,0,0,.3)',
     }}>
 
       {/* ── Header ─────────────────────────────────────────── */}
       <div style={{
-        background: `linear-gradient(120deg, ${cfg.color}f0 0%, #071120 100%)`,
+        background: `linear-gradient(120deg, ${cfg.color}cc 0%, #071120 100%)`,
         padding: '11px 16px',
         display: 'flex',
         alignItems: 'center',
@@ -157,7 +168,7 @@ export default function EventCard({ event }: { event: GameEvent }) {
       }}>
         <span style={{
           fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase',
-          background: 'rgba(255,255,255,.18)', color: '#fff',
+          background: 'rgba(255,255,255,.15)', color: '#fff',
           padding: '3px 9px', borderRadius: 20, flexShrink: 0,
         }}>{cfg.icon} {cfg.label}</span>
 
@@ -173,8 +184,8 @@ export default function EventCard({ event }: { event: GameEvent }) {
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', fontWeight: 600 }}>⏱ {countdown}</span>
           )}
           {event.shadow_pick && (
-            <span style={{ fontSize: 9, fontWeight: 800, background: 'linear-gradient(135deg,#f97316,#dc2626)', color: '#fff', padding: '3px 10px', borderRadius: 20, letterSpacing: .5 }}>
-              🔥 HOT
+            <span style={{ fontSize: 9, fontWeight: 800, background: 'linear-gradient(135deg,#00e676,#00a843)', color: '#071120', padding: '3px 10px', borderRadius: 20, letterSpacing: .5 }}>
+              ⚡ SHADOW PICK
             </span>
           )}
           {event.bookmaker_count > 1 && (
@@ -183,26 +194,52 @@ export default function EventCard({ event }: { event: GameEvent }) {
         </div>
       </div>
 
+      {/* ── Shadow Pick banner ───────────────────────────────── */}
+      {event.shadow_pick && topPick && (
+        <div style={{
+          background: 'linear-gradient(90deg,rgba(0,168,78,.12),rgba(0,230,118,.06))',
+          borderBottom: '1px solid rgba(0,230,118,.15)',
+          padding: '10px 16px',
+          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 900, color: '#00e676', textTransform: 'uppercase', letterSpacing: 1 }}>
+              Top Pick
+            </span>
+          </div>
+          <span style={{ fontWeight: 800, fontSize: 14, color: '#fff' }}>{topPick.selection}</span>
+          <span style={{
+            fontFamily: 'DM Mono, monospace', fontWeight: 900, fontSize: 15, color: '#fff',
+            background: 'rgba(41,121,255,.2)', border: '1px solid rgba(41,121,255,.35)',
+            padding: '3px 10px', borderRadius: 7,
+          }}>${topPick.bookie_odds.toFixed(2)}</span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,.6)' }}>{fullBookie(topPick.bookie)}</span>
+          <span style={{ marginLeft: 'auto', fontFamily: 'DM Mono, monospace', fontWeight: 900, fontSize: 18, color: '#00e676' }}>
+            +{topPick.ev_percent.toFixed(1)}% EV
+          </span>
+        </div>
+      )}
+
       {/* ── Odds grid (multi-bookie) ─────────────────────────── */}
       {showGrid && (
         <>
           {/* Column headers */}
           <div style={{
             display: 'grid', gridTemplateColumns: colTemplate,
-            background: '#f5f8ff', borderBottom: '1.5px solid #e2eaf7',
+            background: 'rgba(255,255,255,.03)', borderBottom: '1px solid rgba(255,255,255,.07)',
             padding: '7px 16px', gap: 4,
           }}>
-            <div style={{ fontSize: 9, fontWeight: 800, color: '#6b8aaa', textTransform: 'uppercase', letterSpacing: 1.2 }}>
+            <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: 1.2 }}>
               {racing ? 'Runner' : 'Outcome'}
             </div>
             {bookieCols.map(b => {
-              const col = BOOKIE_COLOR[b] || '#6b8aaa';
+              const col = BOOKIE_COLOR[b] || '#60a5fa';
               return (
                 <div key={b} style={{ textAlign: 'center' }}>
                   <span style={{
                     display: 'inline-block', padding: '2px 7px', borderRadius: 5,
                     fontSize: 9, fontWeight: 800, letterSpacing: .8, textTransform: 'uppercase',
-                    color: col, background: `${col}18`, border: `1px solid ${col}28`,
+                    color: col, background: `${col}1a`, border: `1px solid ${col}30`,
                   }}>{shortBookie(b)}</span>
                 </div>
               );
@@ -217,23 +254,23 @@ export default function EventCard({ event }: { event: GameEvent }) {
               <div key={o.selection + i} style={{
                 display: 'grid', gridTemplateColumns: colTemplate, gap: 4,
                 padding: '9px 16px',
-                borderBottom: i < outcomes.length - 1 ? '1px solid #f0f4fa' : 'none',
-                background: hasEV ? 'rgba(0,168,78,.04)' : 'transparent',
+                borderBottom: i < outcomes.length - 1 ? '1px solid rgba(255,255,255,.05)' : 'none',
+                background: hasEV ? 'rgba(0,168,78,.06)' : 'transparent',
                 alignItems: 'center',
               }}>
                 {/* Name */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                  {hasEV && <div style={{ width: 3, height: 28, background: '#00a84e', borderRadius: 2, flexShrink: 0 }} />}
+                  {hasEV && <div style={{ width: 3, height: 28, background: '#00e676', borderRadius: 2, flexShrink: 0 }} />}
                   <div style={{ minWidth: 0 }}>
                     <div style={{
-                      fontWeight: hasEV ? 800 : 600, fontSize: 13, color: '#071120',
+                      fontWeight: hasEV ? 800 : 600, fontSize: 13, color: hasEV ? '#ffffff' : 'rgba(255,255,255,.8)',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
-                      {racing && <span style={{ color: '#9eb1c8', marginRight: 4 }}>{i + 1}.</span>}
+                      {racing && <span style={{ color: 'rgba(255,255,255,.3)', marginRight: 4 }}>{i + 1}.</span>}
                       {o.selection}
                     </div>
                     {hasEV && pick && (
-                      <div style={{ fontSize: 10, color: '#008a3d', fontWeight: 700, marginTop: 1 }}>
+                      <div style={{ fontSize: 10, color: '#00e676', fontWeight: 700, marginTop: 1 }}>
                         +{pick.ev_percent.toFixed(1)}% EV · {fullBookie(pick.bookie)}
                       </div>
                     )}
@@ -243,7 +280,7 @@ export default function EventCard({ event }: { event: GameEvent }) {
                 {/* Per-bookie odds cells */}
                 {bookieCols.map(bookie => {
                   const price = event.all_bookmakers[bookie]?.[o.selection];
-                  const isBest  = price !== undefined && price >= o.odds - 0.005;
+                  const isBest   = price !== undefined && price >= o.odds - 0.005;
                   const isEVCell = hasEV && pick?.bookie === bookie;
 
                   return (
@@ -256,14 +293,14 @@ export default function EventCard({ event }: { event: GameEvent }) {
                           fontFamily: 'DM Mono, JetBrains Mono, monospace',
                           fontWeight: 700, fontSize: 13,
                           minWidth: 54,
-                          background: isEVCell ? '#dcfce7' : isBest ? '#eef4ff' : '#f8fafc',
-                          color:      isEVCell ? '#008a3d' : isBest ? '#2979ff' : '#4a6580',
-                          border:     isEVCell ? '1px solid #86efac' : isBest ? '1px solid #c7d9ff' : '1px solid transparent',
+                          background: isEVCell ? 'rgba(0,230,118,.15)' : isBest ? 'rgba(41,121,255,.12)' : 'rgba(255,255,255,.04)',
+                          color:      isEVCell ? '#00e676'              : isBest ? '#60a5fa'              : 'rgba(255,255,255,.5)',
+                          border:     isEVCell ? '1px solid rgba(0,230,118,.35)' : isBest ? '1px solid rgba(41,121,255,.25)' : '1px solid transparent',
                         }}>
                           ${price.toFixed(2)}
                         </span>
                       ) : (
-                        <span style={{ color: '#dde8f5', fontSize: 12 }}>—</span>
+                        <span style={{ color: 'rgba(255,255,255,.15)', fontSize: 12 }}>—</span>
                       )}
                     </div>
                   );
@@ -277,9 +314,10 @@ export default function EventCard({ event }: { event: GameEvent }) {
             <button
               onClick={() => setShowAllRunners(!showAllRunners)}
               style={{
-                width: '100%', padding: '9px 16px', background: '#f8fafc',
-                border: 'none', borderTop: '1px solid #f0f4fa', cursor: 'pointer',
-                fontSize: 12, color: '#2979ff', fontWeight: 700, textAlign: 'center',
+                width: '100%', padding: '9px 16px',
+                background: 'rgba(255,255,255,.03)',
+                border: 'none', borderTop: '1px solid rgba(255,255,255,.06)', cursor: 'pointer',
+                fontSize: 12, color: '#60a5fa', fontWeight: 700, textAlign: 'center',
               }}
             >
               {showAllRunners ? '↑ Show fewer runners' : `↓ Show all ${allOutcomes.length} runners`}
@@ -297,14 +335,14 @@ export default function EventCard({ event }: { event: GameEvent }) {
               <div key={o.selection} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                 padding: '10px 16px', borderRadius: 10, flex: '1 1 90px', minWidth: 90,
-                background: pick ? '#dcfce7' : '#f5f8ff',
-                border: `1.5px solid ${pick ? '#86efac' : '#dde8f5'}`,
+                background: pick ? 'rgba(0,230,118,.1)' : 'rgba(255,255,255,.04)',
+                border: `1.5px solid ${pick ? 'rgba(0,230,118,.3)' : 'rgba(255,255,255,.09)'}`,
               }}>
-                <span style={{ fontSize: 11, color: pick ? '#008a3d' : '#6b8aaa', fontWeight: 600, textAlign: 'center' }}>{o.selection}</span>
-                <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 18, color: pick ? '#008a3d' : '#1e3a5f' }}>
+                <span style={{ fontSize: 11, color: pick ? '#00e676' : 'rgba(255,255,255,.5)', fontWeight: 600, textAlign: 'center' }}>{o.selection}</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: 18, color: pick ? '#00e676' : '#e2e8f0' }}>
                   ${o.odds.toFixed(2)}
                 </span>
-                <span style={{ fontSize: 10, color: pick ? '#008a3d' : '#9eb1c8', fontWeight: 600 }}>
+                <span style={{ fontSize: 10, color: pick ? '#00e676' : 'rgba(255,255,255,.35)', fontWeight: 600 }}>
                   {pick ? `+${pick.ev_percent.toFixed(1)}% EV` : fullBookie(o.bookmaker)}
                 </span>
               </div>
@@ -315,12 +353,12 @@ export default function EventCard({ event }: { event: GameEvent }) {
 
       {/* ── Footer ───────────────────────────────────────────── */}
       <div style={{
-        padding: '8px 16px', borderTop: '1px solid #f0f4fa',
+        padding: '8px 16px', borderTop: '1px solid rgba(255,255,255,.06)',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        background: '#fafcff',
+        background: 'rgba(255,255,255,.02)',
       }}>
-        <span style={{ fontSize: 11, color: '#9eb1c8' }}>{fmtKickoff(event.commence_time)}</span>
-        <Link href={`/match/${encodeURIComponent(event.event_id)}`} style={{ fontSize: 12, color: '#2979ff', fontWeight: 700 }}>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,.3)' }}>{fmtKickoff(event.commence_time)}</span>
+        <Link href={`/match/${encodeURIComponent(event.event_id)}`} style={{ fontSize: 12, color: '#60a5fa', fontWeight: 700 }}>
           Full analysis →
         </Link>
       </div>

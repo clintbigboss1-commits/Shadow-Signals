@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  plan: 'free' | 'starter' | 'pro' | 'elite';
+  plan: 'free' | 'starter' | 'pro' | 'elite' | 'recruit' | 'commander' | 'syndicate';
   role?: 'admin' | 'customer';
   created_at: string;
 }

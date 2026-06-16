@@ -79,7 +79,7 @@ router.get('/schedule', requireAuth, async (req, res) => {
         WHERE expires_at > NOW()
           AND commence_time > NOW()
           AND commence_time < NOW() + ($1 || ' hours')::INTERVAL
-          AND market = 'h2h'
+          AND market IN ('h2h', 'win')
           AND sport_key = $2
         ORDER BY event_id, fetched_at DESC
         LIMIT $3
@@ -93,7 +93,7 @@ router.get('/schedule', requireAuth, async (req, res) => {
         WHERE expires_at > NOW()
           AND commence_time > NOW()
           AND commence_time < NOW() + ($1 || ' hours')::INTERVAL
-          AND market = 'h2h'
+          AND market IN ('h2h', 'win')
         ORDER BY event_id, fetched_at DESC
         LIMIT $2
       `;
@@ -117,7 +117,7 @@ router.get('/in-season', requireAuth, async (req, res) => {
       WHERE expires_at > NOW()
         AND commence_time > NOW()
         AND commence_time < NOW() + INTERVAL '14 days'
-        AND market = 'h2h'
+        AND market IN ('h2h', 'win')
       GROUP BY sport_key
       ORDER BY fixture_count DESC
     `);
@@ -137,6 +137,8 @@ router.get('/', requireAuth, async (req, res) => {
     // cache (stale commence_time / team-name spelling differences between
     // bookmaker rows previously split the GROUP BY and produced duplicate
     // cards). The freshest row wins as the representative.
+    // NOTE: racing is stored with market='win'; team sports with market='h2h'.
+    // Both are included so racing events appear alongside team sports.
     let eventsQuery = `
       SELECT * FROM (
         SELECT DISTINCT ON (oc.event_id)
@@ -150,12 +152,12 @@ router.get('/', requireAuth, async (req, res) => {
         JOIN (
           SELECT event_id, COUNT(DISTINCT bookmaker) AS bookmaker_count
           FROM odds_cache
-          WHERE expires_at > NOW() AND market = 'h2h'
+          WHERE expires_at > NOW() AND market IN ('h2h', 'win')
           GROUP BY event_id
         ) cnt ON cnt.event_id = oc.event_id
         WHERE oc.expires_at > NOW()
           AND oc.commence_time > NOW()
-          AND oc.market = 'h2h'
+          AND oc.market IN ('h2h', 'win')
           {{SPORT_FILTER}}
         ORDER BY oc.event_id, oc.fetched_at DESC
       ) ev
@@ -179,25 +181,25 @@ router.get('/', requireAuth, async (req, res) => {
 
     const eventIds = eventsResult.rows.map(r => r.event_id);
 
-    // Best h2h price per (event, selection) across all bookmakers
+    // Best price per (event, selection) across all bookmakers — includes racing 'win' market
     const oddsResult = await db.query(
       `SELECT DISTINCT ON (event_id, selection)
          event_id, selection, bookmaker, odds
        FROM odds_cache
        WHERE event_id = ANY($1)
-         AND market = 'h2h'
+         AND market IN ('h2h', 'win')
          AND expires_at > NOW()
        ORDER BY event_id, selection, odds DESC`,
       [eventIds]
     );
 
-    // All bookmaker prices for h2h (for the odds comparison strip)
+    // All bookmaker prices for odds comparison strip — includes racing 'win' market
     const allOddsResult = await db.query(
       `SELECT DISTINCT ON (event_id, bookmaker, selection)
          event_id, bookmaker, selection, odds
        FROM odds_cache
        WHERE event_id = ANY($1)
-         AND market = 'h2h'
+         AND market IN ('h2h', 'win')
          AND expires_at > NOW()
        ORDER BY event_id, bookmaker, selection, fetched_at DESC`,
       [eventIds]

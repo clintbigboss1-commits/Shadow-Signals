@@ -12,12 +12,13 @@ function stripe() {
   return new Stripe(key, { apiVersion: '2024-04-10' });
 }
 
-function prices() {
+function prices(billing = 'monthly') {
+  const annual = billing === 'annual';
   return {
     free:    process.env.STRIPE_PRICE_FREE_MONTH,
-    starter: process.env.STRIPE_PRICE_STARTER_MONTH,
-    pro:     process.env.STRIPE_PRICE_PRO_MONTH,
-    elite:   process.env.STRIPE_PRICE_ELITE_MONTH,
+    starter: annual ? process.env.STRIPE_PRICE_STARTER_YEAR : process.env.STRIPE_PRICE_STARTER_MONTH,
+    pro:     annual ? process.env.STRIPE_PRICE_PRO_YEAR     : process.env.STRIPE_PRICE_PRO_MONTH,
+    elite:   annual ? process.env.STRIPE_PRICE_ELITE_YEAR   : process.env.STRIPE_PRICE_ELITE_MONTH,
   };
 }
 
@@ -135,12 +136,12 @@ const router = express.Router();
 
 router.post('/checkout', requireAuth, async (req, res) => {
   try {
-    const { plan } = req.body;
-    const p = prices();
+    const { plan, billing = 'monthly' } = req.body;
+    const p = prices(billing);
     if (!plan || !p[plan])
       return res.status(400).json({ error: `Invalid plan: ${plan}` });
     if (!p[plan] || p[plan] === 'price_xxx')
-      return res.status(500).json({ error: 'Price ID not set. Run: node scripts/stripeSetup.js' });
+      return res.status(500).json({ error: `Price ID not set for ${plan} ${billing}` });
 
     const userRow = await db.query(
       'SELECT stripe_customer_id, email FROM users WHERE id = $1',

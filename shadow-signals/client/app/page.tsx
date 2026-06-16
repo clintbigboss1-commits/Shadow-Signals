@@ -46,10 +46,10 @@ const SPORTS = [
   { key: 'soccer_a_league',      label: 'Soccer',     sub: 'A-League · EPL · UCL',        photo: '/sports/soccer.jpg' },
   { key: 'horse_racing_au',      label: 'Racing',     sub: 'Every AU meet',               photo: '/sports/racing.jpg' },
   { key: 'greyhound_racing_au',  label: 'Greyhounds', sub: 'Every track, every night',    photo: '/sports/greyhounds.jpg' },
-  { key: 'mma_ufc',              label: 'UFC / MMA',  sub: 'Every PPV + Fight Night',     photo: '/sports/ufc.jpg' },
+  { key: 'mma_mixed_martial_arts', label: 'UFC / MMA', sub: 'Every PPV + Fight Night',     photo: '/sports/ufc.jpg' },
   { key: 'basketball_nba',       label: 'NBA',        sub: 'NBA · NBL',                   photo: '/sports/nba.jpg' },
   { key: 'americanfootball_nfl', label: 'NFL',        sub: 'Regular + Playoffs',          photo: 'https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=1200&q=85' },
-  { key: 'cricket_t20',          label: 'Cricket',    sub: 'BBL · Tests · ODI · T20',     photo: '/sports/cricket.jpg' },
+  { key: 'cricket_international_t20', label: 'Cricket', sub: 'BBL · Tests · ODI · T20', photo: '/sports/cricket.jpg' },
 ];
 
 interface PublicStats {
@@ -148,7 +148,7 @@ export default function Home() {
                 ))}
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>7,416+ Aussie sharps signed up</div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>7,400+ Aussie sharps signed up</div>
                 <div style={{ fontSize: 12, color: '#9eb1c8', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ color: '#ffab00' }}>★★★★★</span> 4.9 / 5 rating
                 </div>
@@ -498,7 +498,7 @@ export default function Home() {
                 <img key={i} src={src} alt="" width={32} height={32} style={{ borderRadius: '50%', border: '2px solid #0a1929', marginLeft: i > 0 ? -8 : 0, objectFit: 'cover' }} />
               ))}
             </div>
-            <span style={{ fontSize: 13, color: '#9eb1c8', fontWeight: 600 }}>7,410 Aussie sharps signed up</span>
+            <span style={{ fontSize: 13, color: '#9eb1c8', fontWeight: 600 }}>7,400+ Aussie sharps signed up</span>
           </div>
         </div>
       </section>

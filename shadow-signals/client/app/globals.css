@@ -467,7 +467,7 @@ input, select, textarea { font-family: var(--font); }
 }
 .btn-primary {
   background: linear-gradient(135deg,var(--cyan),var(--cyan2));
-  color: #0a1929;
+  color: #ffffff;
 }
 .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
 .btn-green {

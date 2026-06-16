@@ -8,16 +8,20 @@ import { connectSocket, getSocket } from '../lib/socket';
 import API from '../lib/api';
 
 const SPORT_NAV = [
-  { key: 'aussierules_afl',           label: 'AFL',        icon: '🏈' },
-  { key: 'rugbyleague_nrl',           label: 'NRL',        icon: '🏉' },
-  { key: 'horse_racing_gb',            label: 'UK Racing',  icon: '🐎' },
-  { key: 'horse_racing_ire',           label: 'IRE Racing', icon: '🐎' },
-  { key: 'basketball_nba',            label: 'NBA',        icon: '🏀' },
-  { key: 'soccer_epl',                label: 'EPL',        icon: '⚽' },
-  { key: 'soccer_a_league',           label: 'A-League',   icon: '⚽' },
-  { key: 'mma_mixed_martial_arts',    label: 'MMA',        icon: '🥊' },
-  { key: 'cricket_international_t20', label: 'T20I',       icon: '🏏' },
-  { key: 'baseball_mlb',              label: 'MLB',        icon: '⚾' },
+  { key: 'aussierules_afl',      label: 'AFL',        icon: '🏈' },
+  { key: 'rugbyleague_nrl',      label: 'NRL',        icon: '🏉' },
+  { key: 'horse_racing_au',      label: 'AU Racing',  icon: '🐎' },
+  { key: 'horse_racing_gb',      label: 'UK Racing',  icon: '🐎' },
+  { key: 'horse_racing_ire',     label: 'IRE Racing', icon: '🐎' },
+  { key: 'greyhound_racing_au',  label: 'Greyhounds', icon: '🐕' },
+  { key: 'greyhound_racing_ire', label: 'IRE Greys',  icon: '🐕' },
+  { key: 'basketball_nba',       label: 'NBA',        icon: '🏀' },
+  { key: 'soccer_epl',           label: 'EPL',        icon: '⚽' },
+  { key: 'soccer_a_league',      label: 'A-League',   icon: '⚽' },
+  { key: 'mma_mixed_martial_arts',    label: 'UFC/MMA',  icon: '🥊' },
+  { key: 'cricket_international_t20', label: 'T20',     icon: '🏏' },
+  { key: 'americanfootball_nfl', label: 'NFL',        icon: '🏈' },
+  { key: 'baseball_mlb',         label: 'MLB',        icon: '⚾' },
 ];
 
 const PLAN_COLOR: Record<string, string> = {

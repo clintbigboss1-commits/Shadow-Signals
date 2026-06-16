@@ -104,8 +104,12 @@ function sportMeta(key: string): { emoji: string; label: string } {
     politics_us_presidential_election_winner: { emoji: '🗳️', label: 'US Election' },
     horse_racing_au:                       { emoji: '🏇', label: 'Horse Racing' },
     horse_racing_us:                       { emoji: '🏇', label: 'Horse Racing US' },
-    horse_racing_greyhounds_au:            { emoji: '🐕', label: 'Greyhounds' },
-    horse_racing_greyhounds_us:            { emoji: '🐕', label: 'Greyhounds US' },
+    greyhound_racing_au:                   { emoji: '🐕', label: 'Greyhounds AU' },
+    greyhound_racing_gb:                   { emoji: '🐕', label: 'Greyhounds UK' },
+    greyhound_racing_ire:                  { emoji: '🐕', label: 'Greyhounds IRE' },
+    greyhound_racing_us:                   { emoji: '🐕', label: 'Greyhounds US' },
+    horse_racing_gb:                       { emoji: '🏇', label: 'Horse Racing UK' },
+    horse_racing_ire:                      { emoji: '🏇', label: 'Horse Racing IRE' },
   };
   return m[key] || { emoji: '🏆', label: key.replace(/_/g, ' ').toUpperCase() };
 }
@@ -198,10 +202,14 @@ const SPORT_TABS = [
   // Tennis / Golf
   { key: 'tennis_wta_queens_club_champ',     label: 'Tennis',      emoji: '🎾' },
   { key: 'golf_us_open_winner',              label: 'Golf',        emoji: '⛳' },
-  // Horse racing
-  { key: 'horse_racing_au',                  label: 'Horse Racing',emoji: '🏇' },
-  { key: 'horse_racing_us',                  label: 'Racing US',   emoji: '🏇' },
-  { key: 'horse_racing_greyhounds_au',       label: 'Dogs',        emoji: '🐕' },
+  // Horse racing & greyhounds
+  { key: 'horse_racing_au',                  label: 'Horses AU',   emoji: '🏇' },
+  { key: 'horse_racing_gb',                  label: 'Horses UK',   emoji: '🏇' },
+  { key: 'horse_racing_ire',                 label: 'Horses IRE',  emoji: '🏇' },
+  { key: 'horse_racing_us',                  label: 'Horses US',   emoji: '🏇' },
+  { key: 'greyhound_racing_au',              label: 'Dogs AU',     emoji: '🐕' },
+  { key: 'greyhound_racing_gb',              label: 'Dogs UK',     emoji: '🐕' },
+  { key: 'greyhound_racing_ire',             label: 'Dogs IRE',    emoji: '🐕' },
 ];
 
 /* ─── Bet Slip types ──────────────────────────────────────────────────── */
@@ -447,7 +455,7 @@ function GameCard({
 /* ─── Racing helpers ─────────────────────────────────────────────── */
 
 function isRacingSport(key: string) {
-  return key.startsWith('horse_racing') || key.includes('greyhound');
+  return key.startsWith('horse_racing') || key.startsWith('greyhound_racing');
 }
 
 /* ─── Race Card — multi-runner layout for horse racing / greyhounds ── */

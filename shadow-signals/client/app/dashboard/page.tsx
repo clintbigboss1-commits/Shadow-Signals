@@ -27,15 +27,25 @@ type EVPick = {
 /* ─── sport config ───────────────────────────────────────── */
 const SPORT_LABEL: Record<string,string> = {
   aussierules_afl:'AFL', rugbyleague_nrl:'NRL', soccer_a_league:'A-League',
-  soccer_epl:'EPL', basketball_nba:'NBA', mma_ufc:'UFC', cricket_t20:'T20',
-  horse_racing_au:'Racing', horse_racing_gb:'UK Racing', horse_racing_ire:'IRE Racing',
+  soccer_epl:'EPL', soccer_ucl:'UCL', soccer_bundesliga:'Bundesliga',
+  basketball_nba:'NBA', basketball_nbl:'NBL',
+  mma_mixed_martial_arts:'UFC/MMA', mma_ufc:'UFC', boxing_boxing:'Boxing',
+  cricket_international_t20:'T20', cricket_t20:'Cricket', cricket_big_bash:'Big Bash',
+  americanfootball_nfl:'NFL', baseball_mlb:'MLB',
+  icehockey_nhl:'NHL', tennis_atp:'Tennis', golf_pga:'Golf',
+  horse_racing_au:'AU Racing', horse_racing_gb:'UK Racing', horse_racing_ire:'IRE Racing',
   horse_racing_us:'US Racing', greyhound_racing_au:'Greyhounds',
-  greyhound_racing_ire:'IRE Greyhounds',
+  greyhound_racing_ire:'IRE Greys', greyhound_racing_us:'US Greys',
 };
 const SPORT_ICON: Record<string,string> = {
   aussierules_afl:'🏈', rugbyleague_nrl:'🏉', soccer_a_league:'⚽', soccer_epl:'⚽',
-  basketball_nba:'🏀', mma_ufc:'🥊', horse_racing_gb:'🐎', horse_racing_ire:'🐎',
-  horse_racing_au:'🐎', horse_racing_us:'🐎', greyhound_racing_au:'🐕', cricket_t20:'🏏',
+  soccer_ucl:'⚽', soccer_bundesliga:'⚽', basketball_nba:'🏀', basketball_nbl:'🏀',
+  mma_mixed_martial_arts:'🥊', mma_ufc:'🥊', boxing_boxing:'🥊', horse_racing_gb:'🐎', horse_racing_ire:'🐎',
+  horse_racing_au:'🐎', horse_racing_us:'🐎', greyhound_racing_au:'🐕',
+  greyhound_racing_ire:'🐕', greyhound_racing_us:'🐕',
+  cricket_t20:'🏏', cricket_international_t20:'🏏', cricket_big_bash:'🏏',
+  americanfootball_nfl:'🏈', baseball_mlb:'⚾', icehockey_nhl:'🏒',
+  tennis_atp:'🎾', golf_pga:'⛳',
 };
 const BOOKIE_LABEL: Record<string,string> = {
   sportsbet:'Sportsbet', tab:'TAB', bet365:'Bet365', ladbrokes:'Ladbrokes',
@@ -43,14 +53,19 @@ const BOOKIE_LABEL: Record<string,string> = {
   betfair:'Betfair', williamhill:'William Hill', unibet:'Unibet',
 };
 const SPORTS_NAV_CFG = [
-  { key:'aussierules_afl',  label:'AFL',       icon:'🏈', accent:'#FFD700',  grad:'linear-gradient(135deg,#003087,#FFD700)' },
-  { key:'rugbyleague_nrl',  label:'NRL',       icon:'🏉', accent:'#00e676',  grad:'linear-gradient(135deg,#00843D,#00B140)' },
-  { key:'horse_racing_gb',  label:'UK Racing', icon:'🐎', accent:'#ff6b35',  grad:'linear-gradient(135deg,#200800,#c0392b)' },
-  { key:'horse_racing_ire', label:'IRE Racing',icon:'🐎', accent:'#2ecc71',  grad:'linear-gradient(135deg,#001a00,#2ecc71)' },
-  { key:'basketball_nba',   label:'NBA',       icon:'🏀', accent:'#f26522',  grad:'linear-gradient(135deg,#17408b,#f26522)' },
-  { key:'soccer_a_league',  label:'A-League',  icon:'⚽', accent:'#e94560',  grad:'linear-gradient(135deg,#1a1a2e,#e94560)' },
-  { key:'mma_ufc',          label:'UFC',       icon:'🥊', accent:'#ff1744',  grad:'linear-gradient(135deg,#0d0d0d,#d4001a)' },
-  { key:'cricket_t20',      label:'Cricket',   icon:'🏏', accent:'#2ecc71',  grad:'linear-gradient(135deg,#1a2a1a,#2ecc71)' },
+  { key:'aussierules_afl',     label:'AFL',        icon:'🏈', accent:'#FFD700', grad:'linear-gradient(135deg,#003087,#FFD700)' },
+  { key:'rugbyleague_nrl',     label:'NRL',        icon:'🏉', accent:'#00e676', grad:'linear-gradient(135deg,#00843D,#00B140)' },
+  { key:'horse_racing_au',     label:'AU Racing',  icon:'🐎', accent:'#ff6b35', grad:'linear-gradient(135deg,#200800,#ff6b35)' },
+  { key:'horse_racing_gb',     label:'UK Racing',  icon:'🐎', accent:'#ff8c42', grad:'linear-gradient(135deg,#200800,#c0392b)' },
+  { key:'horse_racing_ire',    label:'IRE Racing', icon:'🐎', accent:'#2ecc71', grad:'linear-gradient(135deg,#001a00,#2ecc71)' },
+  { key:'greyhound_racing_au', label:'Greyhounds', icon:'🐕', accent:'#a78bfa', grad:'linear-gradient(135deg,#1a0a3d,#a78bfa)' },
+  { key:'greyhound_racing_ire',label:'IRE Greys',  icon:'🐕', accent:'#7c3aed', grad:'linear-gradient(135deg,#0d0025,#7c3aed)' },
+  { key:'basketball_nba',      label:'NBA',        icon:'🏀', accent:'#f26522', grad:'linear-gradient(135deg,#17408b,#f26522)' },
+  { key:'soccer_a_league',     label:'A-League',   icon:'⚽', accent:'#e94560', grad:'linear-gradient(135deg,#1a1a2e,#e94560)' },
+  { key:'soccer_epl',          label:'EPL',        icon:'⚽', accent:'#7c3aed', grad:'linear-gradient(135deg,#200840,#7c3aed)' },
+  { key:'mma_mixed_martial_arts',   label:'UFC/MMA',    icon:'🥊', accent:'#ff1744', grad:'linear-gradient(135deg,#0d0d0d,#d4001a)' },
+  { key:'cricket_international_t20',label:'T20 Cricket',icon:'🏏', accent:'#2ecc71', grad:'linear-gradient(135deg,#1a2a1a,#2ecc71)' },
+  { key:'americanfootball_nfl',     label:'NFL',        icon:'🏈', accent:'#d4af37', grad:'linear-gradient(135deg,#013369,#d4af37)' },
 ];
 
 /* ─── helpers ────────────────────────────────────────────── */
@@ -164,8 +179,8 @@ function NextToJumpStrip({ games }: { games: GameEvent[] }) {
 }
 
 /* ─── OddsJam-style EV pick card ─────────────────────────── */
-function OddsJamCard({ pick }: { pick: EVPick }) {
-  const [exp, setExp]       = useState(false);
+function OddsJamCard({ pick, rank }: { pick: EVPick; rank: number }) {
+  const [exp, setExp]         = useState(false);
   const [tracked, setTracked] = useState(false);
 
   const ev    = pick.ev_percent;
@@ -173,6 +188,7 @@ function OddsJamCard({ pick }: { pick: EVPick }) {
   const fair  = pick.fair_odds;
   const score = confidenceFromEV(ev);
   const hot   = ev >= 8;
+  const isTopPick = rank === 0;
   const icon  = SPORT_ICON[pick.sport_key] || '🎯';
   const lbl   = SPORT_LABEL[pick.sport_key] || pick.sport_key.split('_').pop()?.toUpperCase() || '';
   const kell  = ((score/100)*2).toFixed(1);
@@ -188,27 +204,35 @@ function OddsJamCard({ pick }: { pick: EVPick }) {
     setTracked(true);
   }
 
+  const borderColor = isTopPick ? 'rgba(0,229,255,.5)' : hot ? 'rgba(249,115,22,.4)' : 'rgba(255,255,255,.1)';
+  const bg = isTopPick
+    ? 'linear-gradient(135deg,rgba(0,229,255,.07),rgba(12,18,36,.95))'
+    : hot ? 'linear-gradient(135deg,rgba(249,115,22,.09),rgba(12,18,36,.9))' : 'rgba(255,255,255,.04)';
+
   return (
     <div style={{
-      background: hot ? 'linear-gradient(135deg,rgba(249,115,22,.09),rgba(12,18,36,.9))' : 'rgba(255,255,255,.04)',
-      border:`1.5px solid ${hot ? 'rgba(249,115,22,.4)' : 'rgba(255,255,255,.1)'}`,
-      borderRadius:16, padding:'16px 18px', position:'relative', overflow:'hidden',
+      background: bg,
+      border: `1.5px solid ${borderColor}`,
+      borderRadius: 16, padding: '16px 18px', position: 'relative', overflow: 'hidden',
     }}>
-      {hot && <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:'linear-gradient(90deg,#f97316,#dc2626)' }} />}
+      {/* top accent line */}
+      {isTopPick && <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:'linear-gradient(90deg,#00e5ff,#2979ff)' }} />}
+      {!isTopPick && hot && <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:'linear-gradient(90deg,#f97316,#dc2626)' }} />}
 
-      {/* top: sport badge + EV% */}
+      {/* top: sport badge + badges + EV% */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
         <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
           <span style={{ fontSize:10, fontWeight:800, color:'#60a5fa', background:'rgba(41,121,255,.12)', padding:'2px 9px', borderRadius:20 }}>
             {icon} {lbl}
           </span>
-          {hot && <span style={{ fontSize:10, fontWeight:800, color:'#fff', background:'linear-gradient(135deg,#f97316,#dc2626)', padding:'2px 9px', borderRadius:20 }}>🔥 HOT</span>}
+          {isTopPick && <span style={{ fontSize:10, fontWeight:800, color:'#00e5ff', background:'rgba(0,229,255,.1)', border:'1px solid rgba(0,229,255,.25)', padding:'2px 9px', borderRadius:20 }}>⚡ #1 PICK</span>}
+          {!isTopPick && hot && <span style={{ fontSize:10, fontWeight:800, color:'#fff', background:'linear-gradient(135deg,#f97316,#dc2626)', padding:'2px 9px', borderRadius:20 }}>🔥 HOT</span>}
         </div>
         <div style={{ textAlign:'right', flexShrink:0 }}>
           <div style={{
             fontFamily:'var(--mono)', fontWeight:900, fontSize:24, lineHeight:1,
-            color: hot ? '#fb923c' : '#00e676',
-            textShadow: hot ? '0 0 16px rgba(249,115,22,.5)' : '0 0 16px rgba(0,230,118,.4)',
+            color: isTopPick ? '#00e5ff' : hot ? '#fb923c' : '#00e676',
+            textShadow: isTopPick ? '0 0 16px rgba(0,229,255,.5)' : hot ? '0 0 16px rgba(249,115,22,.5)' : '0 0 16px rgba(0,230,118,.4)',
           }}>+{ev.toFixed(1)}%</div>
           <div style={{ fontSize:8, color:'rgba(255,255,255,.25)', textTransform:'uppercase', letterSpacing:1 }}>EV</div>
         </div>
@@ -240,7 +264,7 @@ function OddsJamCard({ pick }: { pick: EVPick }) {
           background: tracked ? 'rgba(0,168,78,.15)' : 'linear-gradient(135deg,#2979ff,#1e63d9)',
           border: `1.5px solid ${tracked ? '#00e676' : 'transparent'}`,
           color: tracked ? '#00e676' : '#fff', flexShrink:0,
-        }}>{tracked ? '✓' : 'TRACK'}</button>
+        }}>{tracked ? '✓ Tracked' : '+ Track'}</button>
       </div>
 
       {/* confidence bar */}
@@ -541,7 +565,7 @@ function DashboardInner() {
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
                     {allPicks.slice(0, 6).map((p, i) => (
-                      <OddsJamCard key={`pick-${p.event_id}-${p.selection}-${i}`} pick={p} />
+                      <OddsJamCard key={`pick-${p.event_id}-${p.selection}-${i}`} pick={p} rank={i} />
                     ))}
                   </div>
                 </div>

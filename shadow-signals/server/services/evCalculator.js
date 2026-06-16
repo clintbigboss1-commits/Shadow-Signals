@@ -38,8 +38,12 @@ const OUTLIER_RATIO = 2.2;
 // skipped individually rather than disqualifying the whole race.
 const MIN_BOOKS_DEFAULT = 4;
 const MIN_BOOKS_RACING  = 2;
+function isRacingSport(sportKey) {
+  const k = sportKey || '';
+  return k.startsWith('horse_racing') || k.startsWith('greyhound_racing');
+}
 function minBooksForSport(sportKey) {
-  return (sportKey || '').startsWith('horse_racing') ? MIN_BOOKS_RACING : MIN_BOOKS_DEFAULT;
+  return isRacingSport(sportKey) ? MIN_BOOKS_RACING : MIN_BOOKS_DEFAULT;
 }
 
 function median(values) {
@@ -151,7 +155,7 @@ async function computeEVFromCache(sportKey = null) {
       // For racing, thin runners are dropped individually; for team sports
       // thin coverage on any outcome means we can't trust the fair-odds calc.
       const minBooks = minBooksForSport(event.sport_key);
-      const isRacing = (event.sport_key || '').startsWith('horse_racing');
+      const isRacing = isRacingSport(event.sport_key);
       const medians = {};
       const thinSelections = new Set();
       for (const sel of selections) {

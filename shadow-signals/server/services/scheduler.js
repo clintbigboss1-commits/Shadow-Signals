@@ -12,6 +12,7 @@ const { fetchAllScores, backfillHistoricalOdds } = require('./historicalFetcher'
 const { runBacktest } = require('./backtester');
 const { activeModels } = require('./models');
 const { captureClosingLines } = require('./clvTracker');
+const { forcePost } = require('./ghostPoster');
 
 let _io = null;
 function setIO(io) { _io = io; }
@@ -312,6 +313,23 @@ function initScheduler() {
     } catch (e) {
       console.error('NBA player stats ingest error:', e.message);
     }
+  });
+
+  // ── GHOST guaranteed daily posts ─────────────────────────────────────────
+  // 7:00 AM AEST (21:00 UTC) — morning best-bet post
+  cron.schedule('0 21 * * *', async () => {
+    console.log('👻 GHOST daily morning post (7am AEST)');
+    await forcePost();
+  });
+  // 6:00 PM AEST (08:00 UTC) — evening signal/teaser post
+  cron.schedule('0 8 * * *', async () => {
+    console.log('👻 GHOST daily evening post (6pm AEST)');
+    await forcePost();
+  });
+  // 12:00 PM AEST (02:00 UTC) — midday post
+  cron.schedule('0 2 * * *', async () => {
+    console.log('👻 GHOST daily midday post (12pm AEST)');
+    await forcePost();
   });
 
   // CLV closing line capture — every 5 minutes, captures sharp prices for games about to start

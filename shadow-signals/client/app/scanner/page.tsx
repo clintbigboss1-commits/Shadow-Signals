@@ -7,15 +7,20 @@ import EventCard, { type GameEvent } from '../../components/EventCard';
 import API from '../../lib/api';
 
 const SPORT_TABS = [
-  { key: 'all',              label: 'All Sports',   icon: '⚡', color: '#2979ff' },
-  { key: 'aussierules_afl',  label: 'AFL',          icon: '🏈', color: '#FFD700' },
-  { key: 'rugbyleague_nrl',  label: 'NRL',          icon: '🏉', color: '#00e676' },
-  { key: 'soccer_a_league',  label: 'A-League',     icon: '⚽', color: '#e94560' },
-  { key: 'soccer_epl',       label: 'EPL',          icon: '⚽', color: '#7c3aed' },
-  { key: 'basketball_nba',   label: 'NBA',          icon: '🏀', color: '#f26522' },
-  { key: 'mma_ufc',          label: 'UFC',          icon: '🥊', color: '#ff1744' },
-  { key: 'horse_racing_gb',  label: 'UK Racing',    icon: '🐎', color: '#ff6b35' },
-  { key: 'horse_racing_ire', label: 'IRE Racing',   icon: '🐎', color: '#2ecc71' },
+  { key: 'all',                  label: 'All Sports',  icon: '⚡', color: '#2979ff' },
+  { key: 'aussierules_afl',      label: 'AFL',         icon: '🏈', color: '#FFD700' },
+  { key: 'rugbyleague_nrl',      label: 'NRL',         icon: '🏉', color: '#00e676' },
+  { key: 'horse_racing_au',      label: 'AU Racing',   icon: '🐎', color: '#ff6b35' },
+  { key: 'horse_racing_gb',      label: 'UK Racing',   icon: '🐎', color: '#ff8c42' },
+  { key: 'horse_racing_ire',     label: 'IRE Racing',  icon: '🐎', color: '#2ecc71' },
+  { key: 'greyhound_racing_au',  label: 'Greyhounds',  icon: '🐕', color: '#a78bfa' },
+  { key: 'greyhound_racing_ire', label: 'IRE Greys',   icon: '🐕', color: '#7c3aed' },
+  { key: 'soccer_a_league',      label: 'A-League',    icon: '⚽', color: '#e94560' },
+  { key: 'soccer_epl',           label: 'EPL',         icon: '⚽', color: '#9333ea' },
+  { key: 'basketball_nba',       label: 'NBA',         icon: '🏀', color: '#f26522' },
+  { key: 'mma_mixed_martial_arts',    label: 'UFC/MMA',    icon: '🥊', color: '#ff1744' },
+  { key: 'americanfootball_nfl',      label: 'NFL',        icon: '🏈', color: '#d4af37' },
+  { key: 'cricket_international_t20', label: 'T20',        icon: '🏏', color: '#22c55e' },
 ];
 
 const EV_FILTERS = [
@@ -133,7 +138,7 @@ function ScannerInner() {
                 padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700,
                 cursor: 'pointer', flexShrink: 0, transition: 'all .15s',
                 background: active ? s.color : 'rgba(255,255,255,.05)',
-                color: active ? (s.key === 'all' ? '#fff' : '#000') : '#64748b',
+                color: active ? '#fff' : '#64748b',
                 border: `1px solid ${active ? s.color : 'rgba(255,255,255,.08)'}`,
               }}>
                 <span>{s.icon}</span>
