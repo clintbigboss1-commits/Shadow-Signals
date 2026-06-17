@@ -295,6 +295,73 @@ function OddsJamCard({ pick, rank }: { pick: EVPick; rank: number }) {
   );
 }
 
+/* ─── SOLID Pick card ────────────────────────────────────── */
+function SolidPickCard({ pick }: { pick: EVPick }) {
+  const [backed, setBacked] = useState(false);
+  const winProb = Math.round((1 / pick.fair_odds) * 100);
+  const icon = SPORT_ICON[pick.sport_key] || '🎯';
+  const lbl  = SPORT_LABEL[pick.sport_key] || '';
+
+  async function back() {
+    if (backed) return;
+    try {
+      await API.post('/bets', {
+        event_name: pick.event_name, selection: pick.selection,
+        bookie: pick.bookie, odds_taken: pick.bookie_odds, stake_aud: 10,
+      });
+    } catch { /* optimistic */ }
+    setBacked(true);
+  }
+
+  return (
+    <div style={{
+      background:'linear-gradient(135deg,rgba(0,230,118,.05),rgba(12,18,36,.95))',
+      border:'1.5px solid rgba(0,230,118,.2)', borderRadius:16, padding:'14px 16px',
+      position:'relative', overflow:'hidden',
+    }}>
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:2, background:'linear-gradient(90deg,#00e676,#2979ff)' }} />
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
+        <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+          <span style={{ fontSize:10, fontWeight:800, color:'#60a5fa', background:'rgba(41,121,255,.12)', padding:'2px 9px', borderRadius:20 }}>
+            {icon} {lbl}
+          </span>
+          <span style={{ fontSize:10, fontWeight:800, color:'#00e676', background:'rgba(0,230,118,.1)', border:'1px solid rgba(0,230,118,.25)', padding:'2px 9px', borderRadius:20 }}>✓ SOLID</span>
+        </div>
+        <div style={{ textAlign:'right', flexShrink:0 }}>
+          <div style={{ fontFamily:'var(--mono)', fontWeight:900, fontSize:22, color:'#00e676', lineHeight:1 }}>{winProb}%</div>
+          <div style={{ fontSize:8, color:'rgba(255,255,255,.25)', textTransform:'uppercase', letterSpacing:1 }}>Win prob</div>
+        </div>
+      </div>
+      <div style={{ fontSize:11, color:'rgba(255,255,255,.4)', marginBottom:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{pick.event_name}</div>
+      <div style={{ fontSize:16, fontWeight:900, color:'#fff', marginBottom:10 }}>{pick.selection}</div>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+        <div style={{ fontFamily:'var(--mono)', fontWeight:900, fontSize:17, color:'#fff', background:'rgba(41,121,255,.18)', border:'1.5px solid rgba(41,121,255,.35)', padding:'4px 12px', borderRadius:9 }}>
+          ${pick.bookie_odds.toFixed(2)}
+        </div>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,.7)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{bkLabel(pick.bookie)}</div>
+          <div style={{ fontSize:10, color:'rgba(255,255,255,.3)' }}>Fair ${pick.fair_odds.toFixed(2)}</div>
+        </div>
+        <button onClick={back} style={{
+          padding:'7px 12px', borderRadius:9, fontWeight:800, fontSize:12, cursor:'pointer', flexShrink:0,
+          background: backed ? 'rgba(0,168,78,.15)' : 'rgba(0,168,78,.85)',
+          border:`1.5px solid ${backed ? '#00e676' : 'transparent'}`,
+          color: backed ? '#00e676' : '#fff',
+        }}>{backed ? '✓ Backed' : 'Back this'}</button>
+      </div>
+      <div>
+        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+          <span style={{ fontSize:9, color:'rgba(255,255,255,.25)', textTransform:'uppercase', letterSpacing:1 }}>Win Probability</span>
+          <span style={{ fontSize:10, fontWeight:700, color:'#00e676' }}>{winProb}%</span>
+        </div>
+        <div style={{ height:3, background:'rgba(255,255,255,.07)', borderRadius:99, overflow:'hidden' }}>
+          <div style={{ height:'100%', width:`${winProb}%`, background:'#00e676', borderRadius:99 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Best Pick hero (OddsJam notification style) ────────── */
 
 // Picks with kelly < 0.1% have no actionable stake — treat as AVOID and skip.
@@ -536,6 +603,15 @@ function DashboardInner() {
   const displayPicks = activeSport ? allPicks.filter(p => p.sport_key === activeSport) : allPicks;
   const displayGamesBySport = activeSport ? gamesBySport.filter(g => g.sport.key === activeSport) : gamesBySport;
 
+  // SOLID picks: high-probability short-priced favourites (win prob ≥ 65%, odds 1.20–2.50)
+  const solidPicks: EVPick[] = allPicks
+    .filter(p => {
+      const winProb = 1 / p.fair_odds;
+      return winProb >= 0.65 && p.bookie_odds >= 1.20 && p.bookie_odds <= 2.50;
+    })
+    .sort((a, b) => a.fair_odds - b.fair_odds); // highest win prob first (lowest fair_odds)
+  const displaySolidPicks = activeSport ? solidPicks.filter(p => p.sport_key === activeSport) : solidPicks;
+
   return (
     <>
       {showOnboarding && <OnboardingModal userName={user?.name} onDone={() => setShowOnboarding(false)} />}
@@ -593,14 +669,39 @@ function DashboardInner() {
           {/* Next to Jump racing strip */}
           <NextToJumpStrip games={games} />
 
-          {/* Best Pick hero */}
-          {allPicks.length > 0 && <BestPickHero picks={allPicks} />}
+          {/* Best Pick hero — respects active sport filter */}
+          {displayPicks.length > 0 && <BestPickHero picks={displayPicks} />}
 
           {/* Two-column layout */}
           <div className="dash-content-grid">
 
-            {/* LEFT: Expert Signals + Full Markets */}
+            {/* LEFT: SOLID Picks + Expert Signals + Full Markets */}
             <div>
+
+              {/* SOLID PICKS — High Probability Plays */}
+              <div style={{ marginBottom:28 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+                  <div style={{ width:3, height:18, background:'linear-gradient(#00e676,#2979ff)', borderRadius:2 }} />
+                  <h2 style={{ fontSize:13, fontWeight:900, letterSpacing:1, textTransform:'uppercase', margin:0 }}>Solid Picks</h2>
+                  <span style={{ fontSize:12, color:'var(--muted)' }}>High Probability Plays</span>
+                  {displaySolidPicks.length > 0 && (
+                    <span style={{ fontSize:11, fontWeight:700, color:'#00e676', background:'rgba(0,230,118,.1)', border:'1px solid rgba(0,230,118,.2)', padding:'2px 10px', borderRadius:20 }}>
+                      {displaySolidPicks.length} pick{displaySolidPicks.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                {displaySolidPicks.length === 0 ? (
+                  <div style={{ padding:'20px', textAlign:'center', background:'rgba(255,255,255,.03)', borderRadius:12, border:'1px solid rgba(255,255,255,.06)', color:'var(--muted)', fontSize:13 }}>
+                    No solid picks right now — check back soon
+                  </div>
+                ) : (
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                    {displaySolidPicks.map((p, i) => (
+                      <SolidPickCard key={`solid-${p.event_id}-${p.selection}-${i}`} pick={p} />
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Expert Signals — OddsJam card grid */}
               {displayPicks.length > 0 && (
@@ -620,20 +721,22 @@ function DashboardInner() {
               )}
 
               {/* Full markets by sport */}
-              {displayGamesBySport.length > 0 && (
+              {(displayGamesBySport.length > 0 || activeSport) && (
                 <div>
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
                     <div style={{ width:3, height:18, background:'linear-gradient(#2979ff,#8b5cf6)', borderRadius:2 }} />
                     <h2 style={{ fontSize:13, fontWeight:900, letterSpacing:1, textTransform:'uppercase', margin:0 }}>Live Markets</h2>
                     <span style={{ fontSize:12, color:'var(--muted)' }}>{displayGamesBySport.reduce((a,g) => a + g.events.length, 0)} events</span>
-                    {activeSport && <button onClick={() => setActiveSport(null)} style={{ marginLeft:'auto', background:'none', border:'none', fontSize:11, color:'var(--muted)', cursor:'pointer', textDecoration:'underline' }}>Clear filter</button>}
+                    {activeSport && <button onClick={() => setActiveSport(null)} style={{ marginLeft:'auto', background:'none', border:'none', fontSize:11, color:'var(--muted)', cursor:'pointer', textDecoration:'underline' }}>Clear filter ×</button>}
                   </div>
 
                   {displayGamesBySport.length === 0 ? (
-                    <div style={{ padding:'48px 24px', textAlign:'center', background:'var(--bg2)', borderRadius:14, border:'1px solid var(--border)', color:'var(--muted)' }}>
-                      <div style={{ fontSize:32, marginBottom:12 }}>📡</div>
-                      <div style={{ fontWeight:700, marginBottom:6 }}>Markets loading</div>
-                      <div style={{ fontSize:13 }}>AFL &amp; NRL update every 7 min on game days.</div>
+                    <div style={{ padding:'36px 24px', textAlign:'center', background:'var(--bg2)', borderRadius:14, border:'1px solid var(--border)', color:'var(--muted)' }}>
+                      <div style={{ fontSize:28, marginBottom:10 }}>📡</div>
+                      <div style={{ fontWeight:700, marginBottom:6, color:'var(--text)' }}>
+                        No {SPORTS_NAV_CFG.find(s => s.key === activeSport)?.label || 'sport'} events in feed right now
+                      </div>
+                      <div style={{ fontSize:13 }}>Markets update every 7 minutes. Try again shortly.</div>
                     </div>
                   ) : (
                     <div style={{ display:'flex', flexDirection:'column', gap:28 }}>

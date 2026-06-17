@@ -42,7 +42,12 @@ function tipReasoning(winProb, evPct, conf, bookie, signalSource) {
   return `${winPct}% implied win chance — market prices this as an underdog. No edge detected; avoid or pass.`;
 }
 
-const MULTI_NAMES = { 2: 'Power Double', 3: 'Treble', 4: '4-Leg Multi', 5: '5-Leg Multi' };
+const MULTI_NAMES = { 2: 'Solid Double', 3: 'Solid Treble', 4: 'Solid 4-Leg', 5: 'Solid 5-Leg' };
+
+// SOLID pick thresholds for multi legs: high-probability short-priced favourites only.
+const SOLID_MIN_WIN_PROB = 0.65; // 65% fair win probability
+const SOLID_MIN_ODDS     = 1.20;
+const SOLID_MAX_ODDS     = 2.50;
 
 // GET /api/match/:eventId — everything the match detail page needs
 router.get('/:eventId', requireAuth, async (req, res) => {
@@ -155,10 +160,15 @@ router.get('/:eventId', requireAuth, async (req, res) => {
       || [...singles].filter(s => s.tip_grade !== 'AVOID').sort((a, b) => b.win_prob - a.win_prob)[0]
       || null;
 
-    // Multis: anchor our pick with the best verified edges from OTHER matches.
-    // Same-game h2h legs are mutually exclusive, so legs must come from elsewhere.
+    // Solid Multis: only build multis from SOLID legs — win prob ≥ 65%, odds 1.20-2.50.
+    // Longshot stacks are excluded; this produces realistic combined win probabilities.
     let multis = [];
-    if (ourPick) {
+    const anchorIsSOLID = ourPick &&
+      (ourPick.win_prob / 100) >= SOLID_MIN_WIN_PROB &&
+      ourPick.odds >= SOLID_MIN_ODDS &&
+      ourPick.odds <= SOLID_MAX_ODDS;
+
+    if (anchorIsSOLID) {
       const others = await db.query(
         `SELECT DISTINCT ON (event_id)
            event_id, event_name, sport_key, selection, bookie,
@@ -169,47 +179,59 @@ router.get('/:eventId', requireAuth, async (req, res) => {
          ORDER BY event_id, ev_percent DESC`,
         [eventId]
       );
+
+      // Filter to SOLID-only legs, sorted highest win prob first
       const legPool = others.rows
-        .sort((a, b) => b.ev_percent - a.ev_percent)
+        .filter(r => {
+          const odds    = parseFloat(r.bookie_odds);
+          const winProb = 1 / parseFloat(r.fair_odds);
+          return winProb >= SOLID_MIN_WIN_PROB && odds >= SOLID_MIN_ODDS && odds <= SOLID_MAX_ODDS;
+        })
+        .sort((a, b) => parseFloat(a.fair_odds) - parseFloat(b.fair_odds)) // ascending fair_odds = descending win prob
         .slice(0, 4)
         .map(r => ({
           event_name: r.event_name,
-          sport_key: r.sport_key,
-          selection: r.selection,
-          bookie: r.bookie,
-          odds: parseFloat(r.bookie_odds),
-          fair_odds: parseFloat(r.fair_odds),
+          sport_key:  r.sport_key,
+          selection:  r.selection,
+          bookie:     r.bookie,
+          odds:       parseFloat(r.bookie_odds),
+          fair_odds:  parseFloat(r.fair_odds),
           ev_percent: parseFloat(r.ev_percent),
+          win_prob:   parseFloat(((1 / parseFloat(r.fair_odds)) * 100).toFixed(1)),
           commence_time: r.commence_time,
         }));
 
-      const anchorLeg = {
-        event_name: event.event_name,
-        sport_key: event.sport_key,
-        selection: ourPick.selection,
-        bookie: ourPick.bookie,
-        odds: ourPick.odds,
-        fair_odds: ourPick.fair_odds || ourPick.odds,
-        ev_percent: ourPick.ev_percent,
-        commence_time: event.commence_time,
-      };
+      if (legPool.length >= 1) {
+        const anchorLeg = {
+          event_name: event.event_name,
+          sport_key:  event.sport_key,
+          selection:  ourPick.selection,
+          bookie:     ourPick.bookie,
+          odds:       ourPick.odds,
+          fair_odds:  ourPick.fair_odds || ourPick.odds,
+          ev_percent: ourPick.ev_percent,
+          win_prob:   ourPick.win_prob,
+          commence_time: event.commence_time,
+        };
 
-      for (let k = 2; k <= Math.min(5, legPool.length + 1); k++) {
-        const legs = [anchorLeg, ...legPool.slice(0, k - 1)];
-        const combinedOdds = legs.reduce((a, l) => a * l.odds, 1);
-        const combinedProb = legs.reduce((a, l) => a * (1 / l.fair_odds), 1);
-        const ev = (combinedOdds * combinedProb - 1) * 100;
-        const fairCombined = 1 / combinedProb;
-        multis.push({
-          name: MULTI_NAMES[k],
-          legs,
-          combined_odds: parseFloat(combinedOdds.toFixed(2)),
-          ev_percent: parseFloat(ev.toFixed(2)),
-          kelly_percent: kellyFraction(combinedOdds, fairCombined),
-          confidence: confidenceScore(combinedProb, ev),
-        });
+        for (let k = 2; k <= Math.min(5, legPool.length + 1); k++) {
+          const legs           = [anchorLeg, ...legPool.slice(0, k - 1)];
+          const combinedOdds   = legs.reduce((a, l) => a * l.odds, 1);
+          const combinedWinProb = legs.reduce((a, l) => a * (l.win_prob / 100), 1);
+          const fairCombined   = 1 / combinedWinProb;
+          const ev             = (combinedOdds * combinedWinProb - 1) * 100;
+          multis.push({
+            name:              MULTI_NAMES[k],
+            legs,
+            combined_odds:     parseFloat(combinedOdds.toFixed(2)),
+            combined_win_prob: parseFloat((combinedWinProb * 100).toFixed(1)),
+            ev_percent:        parseFloat(ev.toFixed(2)),
+            kelly_percent:     kellyFraction(combinedOdds, fairCombined),
+            confidence:        confidenceScore(combinedWinProb, ev),
+          });
+        }
+        multis = multis.filter(m => m.ev_percent > 0);
       }
-      multis = multis.filter(m => m.ev_percent > 0);
     }
 
     // Non-h2h markets, split into player props vs other bets.

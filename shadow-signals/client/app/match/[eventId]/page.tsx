@@ -29,6 +29,7 @@ interface MultiLeg {
   selection: string;
   bookie: string;
   odds: number;
+  win_prob?: number;
   commence_time: string;
 }
 
@@ -36,6 +37,7 @@ interface Multi {
   name: string;
   legs: MultiLeg[];
   combined_odds: number;
+  combined_win_prob?: number;
   ev_percent: number;
   kelly_percent: number;
   confidence: number;
@@ -415,19 +417,27 @@ export default function MatchDetailPage() {
           {/* ── MAIN ── */}
           <div style={{ minWidth: 0 }}>
 
-            {/* Section 1: MULTIS */}
-            {multis.length > 0 && (
-              <Section title="Multis — our pick combined with today's best edges" count={multis.length}>
+            {/* Section 1: SOLID MULTIS */}
+            <Section title="Solid Multis — high probability combinations" count={multis.length}>
+              {multis.length === 0 ? (
+                <div style={{ padding: '24px', textAlign: 'center', color: '#475569', fontSize: 13, background: 'rgba(255,255,255,.02)', borderRadius: 10, border: '1px solid rgba(255,255,255,.04)' }}>
+                  Not enough solid picks today for a multi. Solid multis require 2+ picks with 65%+ win probability.
+                </div>
+              ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {multis.map((m, i) => (
                     <div key={m.name + i} className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'rgba(41,121,255,.05)', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
-                        <span style={{ fontWeight: 800, fontSize: 14, color: '#e2e8f0' }}>⚡ {m.name}</span>
+                      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: 'rgba(0,230,118,.04)', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
+                        <span style={{ fontWeight: 800, fontSize: 14, color: '#e2e8f0' }}>✓ {m.name}</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                           <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 800, fontSize: 18, color: '#00e676' }}>
                             @ {m.combined_odds.toFixed(2)}
                           </span>
-                          <ConfidenceBar value={m.confidence} />
+                          {m.combined_win_prob !== undefined && (
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#00e676' }}>
+                              Combined Win Prob: {m.combined_win_prob.toFixed(1)}%
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div style={{ padding: '6px 16px' }}>
@@ -439,12 +449,18 @@ export default function MatchDetailPage() {
                               {sportEmoji(l.sport_key)} {l.event_name}
                             </span>
                             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: '#94a3b8' }}>{l.odds.toFixed(2)}</span>
+                            {l.win_prob !== undefined && (
+                              <span style={{ fontSize: 11, color: '#00e676', fontWeight: 700 }}>{l.win_prob.toFixed(0)}%</span>
+                            )}
                           </div>
                         ))}
                       </div>
                       <div style={{ padding: '10px 16px', borderTop: '1px solid rgba(255,255,255,.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', gap: 18, fontSize: 12, color: '#64748b' }}>
-                          <span>Edge <b style={{ color: '#00c853' }}>+{m.ev_percent.toFixed(1)}%</b></span>
+                          {m.combined_win_prob !== undefined
+                            ? <span>Combined Win Prob <b style={{ color: '#00e676' }}>{m.combined_win_prob.toFixed(1)}%</b></span>
+                            : <span>Edge <b style={{ color: '#00c853' }}>+{m.ev_percent.toFixed(1)}%</b></span>
+                          }
                           <span>Suggested stake <b style={{ color: '#2979ff' }}>${stakeFor(m.kelly_percent).toFixed(0)}</b></span>
                         </div>
                         <BackButton label="Back this multi" onBack={() => logMulti(m, event.commence_time, event.sport_key)} />
@@ -452,8 +468,8 @@ export default function MatchDetailPage() {
                     </div>
                   ))}
                 </div>
-              </Section>
-            )}
+              )}
+            </Section>
 
             {/* Section 2: SINGLES */}
             <Section title="Singles — match winner" count={singles.length}>
