@@ -12,7 +12,7 @@ const jwt        = require('jsonwebtoken');
 const { initDB }               = require('./db');
 const { initScheduler, setIO } = require('./services/scheduler');
 const { setIO: setNotifIO }    = require('./services/notifications');
-const { initPulse }            = require('./services/pulse');
+const { initPulse, emitSnapshot } = require('./services/pulse');
 
 const authRoutes          = require('./routes/auth');
 const evRoutes            = require('./routes/ev');
@@ -133,6 +133,7 @@ app.use((err, req, res, _next) => {
 
 // WebSocket
 io.on('connection', (socket) => {
+  emitSnapshot(socket); // send current pulse state immediately on connect
   socket.on('auth', (token) => {
     try {
       const user = jwt.verify(token, process.env.JWT_SECRET);

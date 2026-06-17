@@ -264,8 +264,8 @@ router.get('/', requireAuth, async (req, res) => {
         best_odds:       bestOddsMap[event.event_id] || [],
         all_bookmakers:  allOddsMap[event.event_id] || {},
         ev_picks:        picks,
-        // Shadow pick: any outcome has ≥8% EV
-        shadow_pick:     picks.some(p => p.ev_percent >= 8),
+        // Shadow pick: any outcome has ≥7% EV
+        shadow_pick:     picks.some(p => p.ev_percent >= 7),
       };
     });
 

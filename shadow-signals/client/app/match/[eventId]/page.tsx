@@ -212,7 +212,9 @@ export default function MatchDetailPage() {
   useEffect(() => { const t = setInterval(load, 45000); return () => clearInterval(t); }, [load]);
 
   function stakeFor(kellyPercent: number) {
-    return Math.max(0, Math.round(bankroll * kellyPercent) / 100);
+    if (!kellyPercent || kellyPercent <= 0) return 0;
+    const raw = bankroll * kellyPercent / 100;
+    return Math.max(1, Math.round(raw));
   }
 
   async function logBet(b: BetOption, eventName: string, eventTime: string, sport: string) {
@@ -388,7 +390,7 @@ export default function MatchDetailPage() {
               </span>
               <span style={{ color: '#334155' }}>·</span>
               <span style={{ fontSize: 13, color: '#94a3b8' }}>{fmtTime(event.commence_time)} AEST</span>
-              {our_pick && (() => {
+              {our_pick && our_pick.tip_grade !== 'AVOID' && (() => {
                 const gs = gradeStyle(our_pick.tip_grade);
                 return (
                   <span style={{

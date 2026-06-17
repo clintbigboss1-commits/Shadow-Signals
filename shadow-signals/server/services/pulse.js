@@ -57,4 +57,25 @@ function recordEdge(opp) {
   if (_io) _io.emit('pulse:edge', { event: opp.event_name, ev_percent: opp.ev_percent, ts: entry.ts });
 }
 
-module.exports = { initPulse, recordScan, recordEdge };
+// Send current buffer snapshot immediately to a newly-connected socket
+// so they don't wait up to 5s for the next tick interval.
+function emitSnapshot(socket) {
+  if (!socket) return;
+  _prune();
+  const buckets = Array.from({ length: 12 }, (_, i) => {
+    const from = Date.now() - WINDOW_MS + i * TICK_MS;
+    const to   = from + TICK_MS;
+    const slice = _buffer.filter(e => e.ts >= from && e.ts < to);
+    return { scans: slice.filter(e => e.type === 'scan').length, edges: slice.filter(e => e.type === 'edge').length };
+  });
+  socket.emit('pulse:tick', {
+    buckets,
+    totals: {
+      scans: _buffer.filter(e => e.type === 'scan').length,
+      edges: _buffer.filter(e => e.type === 'edge').length,
+    },
+    window_ms: WINDOW_MS,
+  });
+}
+
+module.exports = { initPulse, recordScan, recordEdge, emitSnapshot };

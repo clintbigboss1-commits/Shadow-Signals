@@ -470,7 +470,7 @@ function DashboardInner() {
     .sort((a,b) => b.ev_percent - a.ev_percent);
 
   const totalSig  = allPicks.length;
-  const hotCount  = allPicks.filter(p => p.ev_percent >= 8).length;
+  const hotCount  = allPicks.filter(p => p.ev_percent >= 7).length;
   const settled   = bets.filter(b => b.result !== 'pending');
   const wins      = settled.filter(b => b.result === 'win');
   const profit    = settled.reduce((a,b) => a + Number(b.profit_aud||0), 0);
@@ -527,7 +527,7 @@ function DashboardInner() {
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
             {[
               { label:'LIVE EVENTS', value:String(games.length),   sub:`${totalSig} edges found`,   color:'#2979ff', dot:true  },
-              { label:'HOT PICKS',   value:String(hotCount),        sub:'Signals ≥ 8% EV',           color:hotCount > 0 ? '#f97316' : 'var(--muted)', dot:false },
+              { label:'HOT PICKS',   value:String(hotCount),        sub:'Signals ≥ 7% EV',           color:hotCount > 0 ? '#f97316' : 'var(--muted)', dot:false },
               { label:'TOTAL P&L',   value:`${profit>=0?'+':''}$${Math.abs(profit).toFixed(0)}`, sub:'All settled bets', color:profit>=0?'#00e676':'#ff1744', dot:false },
               { label:'WIN RATE',    value:`${winRate}%`,           sub:`${wins.length}W / ${settled.length - wins.length}L`, color:winRate>=55?'#00e676':winRate>=45?'#ffab00':'var(--muted)', dot:false },
             ].map(c => (

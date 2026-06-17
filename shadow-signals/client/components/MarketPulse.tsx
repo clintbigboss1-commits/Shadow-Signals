@@ -41,7 +41,7 @@ export default function MarketPulse() {
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px' }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8 }}>Market Pulse</div>
         <div style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center', padding: '16px 0' }}>
-          Waiting for scanner activity...
+          Scanner active — first reading in ~45s
         </div>
       </div>
     );

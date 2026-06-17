@@ -149,9 +149,10 @@ router.get('/:eventId', requireAuth, async (req, res) => {
       };
     }).filter(Boolean).sort((a, b) => b.ev_percent - a.ev_percent);
 
-    // Our pick: best positive-EV selection, else the market favourite
-    const ourPick = singles.find(s => s.ev_percent >= 2)
-      || [...singles].sort((a, b) => b.win_prob - a.win_prob)[0]
+    // Our pick: best positive-EV non-AVOID selection, else the market favourite.
+    // AVOID picks are excluded — surfacing AVOID as #1 contradicts the grade.
+    const ourPick = singles.find(s => s.ev_percent >= 2 && s.tip_grade !== 'AVOID')
+      || [...singles].filter(s => s.tip_grade !== 'AVOID').sort((a, b) => b.win_prob - a.win_prob)[0]
       || null;
 
     // Multis: anchor our pick with the best verified edges from OTHER matches.
