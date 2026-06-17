@@ -33,7 +33,7 @@ router.get('/public', async (req, res) => {
           COUNT(*) FILTER (WHERE clv_percent > 0)::int AS clv_positive,
           COUNT(*)::int AS total
         FROM clv_tracking
-        WHERE recorded_at > NOW() - INTERVAL '30 days'
+        WHERE closed_at > NOW() - INTERVAL '30 days'
       `),
     ]);
 
