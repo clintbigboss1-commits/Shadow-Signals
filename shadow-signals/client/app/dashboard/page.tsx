@@ -296,24 +296,66 @@ function OddsJamCard({ pick, rank }: { pick: EVPick; rank: number }) {
 }
 
 /* ─── Best Pick hero (OddsJam notification style) ────────── */
+
+// Picks with kelly < 0.1% have no actionable stake — treat as AVOID and skip.
+function heroQuality(kelly: number, ev: number): 'strong' | 'moderate' | 'weak' {
+  if (kelly > 2 && ev > 8) return 'strong';
+  if (kelly >= 1 || ev >= 5) return 'moderate';
+  return 'weak';
+}
+
+function heroPillStyle(q: 'strong' | 'moderate' | 'weak') {
+  if (q === 'strong')   return { color:'#00e5ff', bg:'rgba(0,229,255,.07)',  border:'rgba(0,229,255,.2)'  };
+  if (q === 'moderate') return { color:'#ffab00', bg:'rgba(255,171,0,.07)',   border:'rgba(255,171,0,.2)'  };
+  return                       { color:'#f97316', bg:'rgba(249,115,22,.07)',  border:'rgba(249,115,22,.2)' };
+}
+
+function heroPillLabel(q: 'strong' | 'moderate' | 'weak') {
+  if (q === 'strong')   return 'Best Edge Right Now';
+  if (q === 'moderate') return 'Value Opportunity';
+  return 'Low Confidence Signal';
+}
+
+function heroWarning(kelly: number, odds: number): string | null {
+  const lowKelly = kelly < 1;
+  const highOdds = odds > 10;
+  if (lowKelly && highOdds) return '⚠ Speculative longshot — 1 unit max';
+  if (lowKelly)             return '⚠ Low stake recommended — speculative pick';
+  if (highOdds)             return '⚠ High odds — small unit play only';
+  return null;
+}
+
+function heroButtonStyle(q: 'strong' | 'moderate' | 'weak'): React.CSSProperties {
+  if (q === 'strong')   return { background:'rgba(0,168,78,.85)',    color:'#fff',     border:'1px solid rgba(0,230,118,.3)'   };
+  if (q === 'moderate') return { background:'rgba(255,171,0,.18)',   color:'#ffab00',  border:'1px solid rgba(255,171,0,.4)'   };
+  return                       { background:'rgba(100,116,139,.15)', color:'#94a3b8',  border:'1px solid rgba(100,116,139,.3)' };
+}
+
 function BestPickHero({ picks }: { picks: EVPick[] }) {
-  const best = picks[0];
+  // Skip picks with kelly so low they are effectively AVOID (no stake worth placing)
+  const eligible = picks.filter(p => p.kelly_percent >= 0.1);
+  const best = eligible[0];
   if (!best) return null;
+
+  const quality  = heroQuality(best.kelly_percent, best.ev_percent);
+  const pill     = heroPillStyle(quality);
+  const warning  = heroWarning(best.kelly_percent, best.bookie_odds);
+  const btnStyle = heroButtonStyle(quality);
 
   return (
     <div style={{
       background:'linear-gradient(135deg,#0a1628 0%,#050d1a 60%,#091220 100%)',
-      border:'1.5px solid rgba(0,229,255,.2)', borderRadius:18, padding:'20px 24px',
+      border:`1.5px solid ${pill.border}`, borderRadius:18, padding:'20px 24px',
       marginBottom:20, position:'relative', overflow:'hidden',
-      boxShadow:'0 8px 40px rgba(0,229,255,.06)',
+      boxShadow:`0 8px 40px rgba(0,0,0,.2)`,
     }}>
       <div style={{ position:'absolute',inset:0,background:'linear-gradient(105deg,transparent 30%,rgba(0,229,255,.03) 50%,transparent 70%)',backgroundSize:'200% 100%',animation:'shimmer 5s infinite linear' }} />
 
       {/* live pill */}
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14, position:'relative' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:7, background:'rgba(0,229,255,.07)', border:'1px solid rgba(0,229,255,.2)', borderRadius:20, padding:'5px 14px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:7, background:pill.bg, border:`1px solid ${pill.border}`, borderRadius:20, padding:'5px 14px' }}>
           <span className="dot-live" />
-          <span style={{ fontSize:11, fontWeight:800, color:'#00e5ff', letterSpacing:.5 }}>Best Edge Right Now</span>
+          <span style={{ fontSize:11, fontWeight:800, color:pill.color, letterSpacing:.5 }}>{heroPillLabel(quality)}</span>
         </div>
         <span style={{ fontSize:10, color:'rgba(255,255,255,.3)', fontWeight:600 }}>
           {SPORT_ICON[best.sport_key] || '🎯'} {SPORT_LABEL[best.sport_key] || ''}
@@ -340,6 +382,9 @@ function BestPickHero({ picks }: { picks: EVPick[] }) {
               <div style={{ fontSize:11, color:'rgba(255,255,255,.3)' }}>Fair: ${best.fair_odds.toFixed(2)} · Kelly: {best.kelly_percent.toFixed(1)}%</div>
             </div>
           </div>
+          {warning && (
+            <div style={{ marginTop:10, fontSize:11, color:'#f97316', fontWeight:600 }}>{warning}</div>
+          )}
         </div>
 
         <div style={{ textAlign:'center', flexShrink:0 }}>
@@ -350,17 +395,16 @@ function BestPickHero({ picks }: { picks: EVPick[] }) {
           <Link href={`/match/${encodeURIComponent(best.event_id)}`} style={{
             display:'inline-flex', alignItems:'center', gap:5, marginTop:12,
             padding:'9px 18px', borderRadius:9,
-            background:'rgba(0,168,78,.85)', color:'#fff',
-            fontWeight:800, fontSize:13, border:'1px solid rgba(0,230,118,.3)', textDecoration:'none',
+            fontWeight:800, fontSize:13, textDecoration:'none', ...btnStyle,
           }}>View Pick →</Link>
         </div>
       </div>
 
       {/* other picks strip */}
-      {picks.length > 1 && (
+      {eligible.length > 1 && (
         <div style={{ marginTop:14, paddingTop:12, borderTop:'1px solid rgba(255,255,255,.05)', display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', position:'relative' }}>
           <span style={{ fontSize:9, color:'rgba(255,255,255,.2)', fontWeight:700, textTransform:'uppercase', letterSpacing:1 }}>Also →</span>
-          {picks.slice(1, 5).map((p, i) => (
+          {eligible.slice(1, 5).map((p, i) => (
             <div key={`strip-${i}`} style={{ background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.08)', borderRadius:8, padding:'4px 12px', fontSize:11, display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontWeight:700, color:'rgba(255,255,255,.8)' }}>{p.selection}</span>
               <span style={{ color:'#00e676', fontWeight:900, fontSize:11, fontFamily:'var(--mono)' }}>+{p.ev_percent.toFixed(1)}%</span>
