@@ -55,11 +55,8 @@ const BOOKIE_LABEL: Record<string,string> = {
 const SPORTS_NAV_CFG = [
   { key:'aussierules_afl',     label:'AFL',        icon:'🏈', accent:'#FFD700', grad:'linear-gradient(135deg,#003087,#FFD700)' },
   { key:'rugbyleague_nrl',     label:'NRL',        icon:'🏉', accent:'#00e676', grad:'linear-gradient(135deg,#00843D,#00B140)' },
-  { key:'horse_racing_au',     label:'AU Racing',  icon:'🐎', accent:'#ff6b35', grad:'linear-gradient(135deg,#200800,#ff6b35)' },
   { key:'horse_racing_gb',     label:'UK Racing',  icon:'🐎', accent:'#ff8c42', grad:'linear-gradient(135deg,#200800,#c0392b)' },
   { key:'horse_racing_ire',    label:'IRE Racing', icon:'🐎', accent:'#2ecc71', grad:'linear-gradient(135deg,#001a00,#2ecc71)' },
-  { key:'greyhound_racing_au', label:'Greyhounds', icon:'🐕', accent:'#a78bfa', grad:'linear-gradient(135deg,#1a0a3d,#a78bfa)' },
-  { key:'greyhound_racing_ire',label:'IRE Greys',  icon:'🐕', accent:'#7c3aed', grad:'linear-gradient(135deg,#0d0025,#7c3aed)' },
   { key:'basketball_nba',      label:'NBA',        icon:'🏀', accent:'#f26522', grad:'linear-gradient(135deg,#17408b,#f26522)' },
   { key:'soccer_a_league',     label:'A-League',   icon:'⚽', accent:'#e94560', grad:'linear-gradient(135deg,#1a1a2e,#e94560)' },
   { key:'soccer_epl',          label:'EPL',        icon:'⚽', accent:'#7c3aed', grad:'linear-gradient(135deg,#200840,#7c3aed)' },
