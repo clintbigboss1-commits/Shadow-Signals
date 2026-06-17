@@ -413,7 +413,7 @@ function DashboardInner() {
   const [bets, setBets]         = useState<Bet[]>([]);
   const [loading, setLoading]   = useState(true);
   const [upgraded, setUpgraded] = useState(false);
-  const [activeSport, setActiveSport] = useState('aussierules_afl');
+  const [activeSport, setActiveSport] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
@@ -488,11 +488,15 @@ function DashboardInner() {
   const knownKeys  = new Set(SPORTS_NAV_CFG.map(s => s.key));
   const otherGames = games.filter(g => !knownKeys.has(g.sport_key));
 
+  // Filter content by active sport; null = show all
+  const displayPicks = activeSport ? allPicks.filter(p => p.sport_key === activeSport) : allPicks;
+  const displayGamesBySport = activeSport ? gamesBySport.filter(g => g.sport.key === activeSport) : gamesBySport;
+
   return (
     <>
       {showOnboarding && <OnboardingModal userName={user?.name} onDone={() => setShowOnboarding(false)} />}
 
-      <AppShell activeSport={activeSport} onSportChange={setActiveSport} contentDark>
+      <AppShell activeSport={activeSport ?? undefined} onSportChange={key => setActiveSport(prev => prev === key ? null : key)} contentDark>
         <div className="content" style={{ maxWidth:1400 }}>
 
           {/* Upgrade banner */}
@@ -555,16 +559,16 @@ function DashboardInner() {
             <div>
 
               {/* Expert Signals — OddsJam card grid */}
-              {allPicks.length > 0 && (
+              {displayPicks.length > 0 && (
                 <div style={{ marginBottom:28 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
                     <div style={{ width:3, height:18, background:'linear-gradient(#00e676,#00e5ff)', borderRadius:2 }} />
                     <h2 style={{ fontSize:13, fontWeight:900, letterSpacing:1, textTransform:'uppercase', margin:0 }}>Expert Signals</h2>
-                    <span style={{ fontSize:12, color:'var(--muted)' }}>{allPicks.length} edge{allPicks.length !== 1 ? 's' : ''}</span>
+                    <span style={{ fontSize:12, color:'var(--muted)' }}>{displayPicks.length} edge{displayPicks.length !== 1 ? 's' : ''}</span>
                     <Link href="/scanner" style={{ marginLeft:'auto', fontSize:11, color:'var(--cyan)', fontWeight:700 }}>See all →</Link>
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-                    {allPicks.slice(0, 6).map((p, i) => (
+                    {displayPicks.slice(0, 6).map((p, i) => (
                       <OddsJamCard key={`pick-${p.event_id}-${p.selection}-${i}`} pick={p} rank={i} />
                     ))}
                   </div>
@@ -572,15 +576,16 @@ function DashboardInner() {
               )}
 
               {/* Full markets by sport */}
-              {games.length > 0 && (
+              {displayGamesBySport.length > 0 && (
                 <div>
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
                     <div style={{ width:3, height:18, background:'linear-gradient(#2979ff,#8b5cf6)', borderRadius:2 }} />
                     <h2 style={{ fontSize:13, fontWeight:900, letterSpacing:1, textTransform:'uppercase', margin:0 }}>Live Markets</h2>
-                    <span style={{ fontSize:12, color:'var(--muted)' }}>{games.length} events</span>
+                    <span style={{ fontSize:12, color:'var(--muted)' }}>{displayGamesBySport.reduce((a,g) => a + g.events.length, 0)} events</span>
+                    {activeSport && <button onClick={() => setActiveSport(null)} style={{ marginLeft:'auto', background:'none', border:'none', fontSize:11, color:'var(--muted)', cursor:'pointer', textDecoration:'underline' }}>Clear filter</button>}
                   </div>
 
-                  {games.length === 0 ? (
+                  {displayGamesBySport.length === 0 ? (
                     <div style={{ padding:'48px 24px', textAlign:'center', background:'var(--bg2)', borderRadius:14, border:'1px solid var(--border)', color:'var(--muted)' }}>
                       <div style={{ fontSize:32, marginBottom:12 }}>📡</div>
                       <div style={{ fontWeight:700, marginBottom:6 }}>Markets loading</div>
@@ -588,7 +593,7 @@ function DashboardInner() {
                     </div>
                   ) : (
                     <div style={{ display:'flex', flexDirection:'column', gap:28 }}>
-                      {gamesBySport.map(({ sport, events }) => {
+                      {displayGamesBySport.map(({ sport, events }) => {
                         const topEV = Math.max(0, ...events.flatMap(g => g.ev_picks.map(p => p.ev_percent)));
                         const edgeCount = events.flatMap(g => g.ev_picks).length;
                         return (
