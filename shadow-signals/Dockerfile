@@ -10,7 +10,7 @@ WORKDIR /app
 # - timeout 420 turns a silent stall into a fast, visible failure.
 ENV NODE_OPTIONS=--dns-result-order=ipv4first
 COPY shadow-signals/package.json shadow-signals/package-lock.json ./
-RUN timeout 420 npm ci --omit=dev --no-audit --no-fund --loglevel=verbose \
+RUN timeout 420 npm ci --omit=dev --omit=optional --no-audit --no-fund --loglevel=verbose \
     --cache /tmp/npm-cache --prefer-online \
     --fetch-retries=5 --fetch-retry-mintimeout=2000 --fetch-retry-maxtimeout=60000 \
     && rm -rf /tmp/npm-cache
